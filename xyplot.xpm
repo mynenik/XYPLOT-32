@@ -1,0 +1,43 @@
+/* XPM */
+static char *xyplot[] = {
+/* width height num_colors chars_per_pixel */
+"    32    32        4            1",
+/* colors */
+". c #000000",
+"# c #ff0000",
+"a c #0000ff",
+"b c #ffffff",
+/* pixels */
+"bbbbbbbbbbbbbbb##bbbbbbbbbbbbbbb",
+"bbbbbbbbbbbbbb#bb#bbbbbbbbbbbbbb",
+"bbbbbbbbbbbbb#bbbb#bbbbbbbbbbbbb",
+"bbbbbbbbbbbbb#bbbb#bbbbbbbbbbbbb",
+"abbbbbbbbbbb#bbbbbb#bbbbbbbbbbba",
+"abbbbbbbbbbb#bbbbbb#bbbbbbbbbbba",
+"abbbbbbbbbbb#bbbbbb#bbbbbbbbbbba",
+"babbbbbbbbb#bbbbbbbb#bbbbbbbbbab",
+"babbbbbbbbb#bbbbbbbb#bbbbbbbbbab",
+"bbabbbbbbbb#bbbbbbbb#bbbbbbbbabb",
+"bbbabbbbbb#bbbbbbbbbb#bbbbbbabbb",
+"bbbbabbbbb#bbbbbbbbbb#bbbbbabbbb",
+"bbbbbaabbb#bbbbbbbbbb#bbbaabbbbb",
+"bbbbbbbaab#bbbbbbbbbb#baabbbbbbb",
+"bbbbbbbbb#abbbbbbbbbba#bbbbbbbbb",
+"#bbbbbbbb#baaabbbbaaab#bbbbbbbb#",
+"#........#....aaaa....#........#",
+"#bbbbbbb#bbbbbbbbbbbbbb#bbbbbbb#",
+"b#bbbbbb#bbbbbbbbbbbbbb#bbbbbb#b",
+"b#bbbbbb#bbbbbbbbbbbbbb#bbbbbb#b",
+"b#bbbbb#bbbbbbbbbbbbbbbb#bbbbb#b",
+"bb#bbbb#bbbbbbbbbbbbbbbb#bbbb#bb",
+"bb#bbbb#bbbbbbbbbbbbbbbb#bbbb#bb",
+"bbb#bb#bbbbbbbbbbbbbbbbbb#bb#bbb",
+"bbbb##bbbbbbbbbbbbbbbbbbbb##bbbb",
+"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+"bb..b..b.bb.b...bb.bbbb..bb...bb",
+"bbb.b.bb.bb.b.bb.b.bbb.bb.bb.bbb",
+"bbbb.bbbb...b...bb.bbb.bb.bb.bbb",
+"bbb.b.bbbbb.b.bbbb.bbb.bb.bb.bbb",
+"bb..b..bb..bb.bbbb...bb..bbb.bbb"
+};

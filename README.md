@@ -2,7 +2,7 @@
 Extensible Plotting and Data Analysis Program for 32-bit x86 GNU/Linux
 
 ## Introduction
-XYPLOT is an extensible plotting and data analysis program for use by students, teachers, scientists, and engineers. It displays the results from your experiments or calculations in an interactive graphical environment. Fast plotting and a myriad of data manipulation and analysis features make XYPLOT an invaluable tool for visualizing and working with data. With its powerful, built-in Forth interpreter, users may write custom modules to add new data manipulation and analysis, and even data-acquisition functions accessible from menus. Many of XYPLOT's built-in functions are provided in the form of Forth source modules.
+XYPLOT is an extensible plotting and data analysis program for use by students, teachers, scientists, and engineers. It displays the results from your experiments or calculations in an interactive graphical environment. Fast plotting and a myriad of data manipulation and analysis features make XYPLOT an invaluable tool for visualizing and working with data. With its powerful, built-in Forth interpreter, users may write custom modules to add new data manipulation and analysis functions, and even data-acquisition functions accessible from menus. Many of XYPLOT's built-in functions are provided in the form of Forth source modules which are loaded upon startup. For generating publication quality graphs, a module provides the capability to export graphs to Grace.
 
 ## Features
 

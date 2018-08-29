@@ -20,9 +20,9 @@ XYPLOT is an extensible plotting and data analysis program for use by students, 
 
 GNU/Linux system (x86 or x86_64), with the following package groups installed:
 
-  X-Windows development
-  GNU C and C++ development
-  Motif/LessTif development
-  GNU bintools
+     X-Windows development
+     GNU C and C++ development
+     Motif/LessTif development
+     GNU bintools
 
 A specific list of packages will be provided in the documentation. On a 64-bit (x86_64) workstation, the corresponding i686 libraries must be installed also, in order to buid XYPLOT-32.

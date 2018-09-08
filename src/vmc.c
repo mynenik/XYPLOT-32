@@ -1,13 +1,13 @@
 /*
 vmc.c
 
-C portion of the kForth 32-bit Virtual Machine
+  C portion of the kForth Virtual Machine
 
-Copyright (c) 1998--2018 Krishna Myneni, 
+  Copyright (c) 1998--2018 Krishna Myneni, 
   <krishna.myneni@ccreweb.org>
 
-Provided under the terms of the GNU Affero General Public License
-(AGPL), v3.0 or later.
+  This software is provided under the terms of the GNU
+  Affero General Public License (AGPL), v3.0 or later.
 
 */
 
@@ -43,7 +43,6 @@ Provided under the terms of the GNU Affero General Public License
 
 #define byte unsigned char
 
-double pow10(double);
 
 /*  Provided by ForthVM.cpp  */
 extern int* GlobalSp;
@@ -167,7 +166,7 @@ int C_fexpm1() { DOUBLE_FUNC(expm1) return 0; }
 int C_fln   () { DOUBLE_FUNC(log)   return 0; }
 int C_flnp1 () { DOUBLE_FUNC(log1p) return 0; }
 int C_flog  () { DOUBLE_FUNC(log10) return 0; }
-int C_falog () { DOUBLE_FUNC(pow10) return 0; }
+int C_falog () { DOUBLE_FUNC(exp10) return 0; }
 
 int C_fpow ()
 {

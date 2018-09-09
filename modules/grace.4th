@@ -37,6 +37,8 @@
 \              to grace file, not just those with corresponding plots;
 \              implemented line attributes and plot visibility; updated
 \              MAXGRACEPTS to 65536
+\ 2018-09-09   fixed bug in WRITE_DATASETS_INFO; added GET_PLOT_LIST and
+\              PLOTS_FOR_SET; allow histogram plots to be exported/imported.
 Begin-Module
 
 Private:
@@ -77,15 +79,42 @@ create xyplot_set_specifier 14 allot
 s" # @xyplot s?? " xyplot_set_specifier swap cmove
 
 variable  flag_symbol
-variable  flag_line
+variable  linetype
 variable  hdr_line_count
 fvariable xmin
 fvariable xmax
 fvariable ymin
 fvariable ymax
 
+MAXPLOTS PlotInfo% %size ARRAY PlotList{
+variable nplots  \ number of plots in plot list (set by get_plot_list)
+
+MAXPLOTS INTEGER ARRAY PlotsForSet{
+variable nplots_for_set
+
 Public:
 
+: get_plot_list ( -- )
+    0 nplots !
+    MAXPLOTS 0 DO
+      I PlotList{ I } get_plot 0< IF leave THEN
+      1 nplots +!
+    LOOP
+;
+
+\ For data set n, make a list of the plot numbers for the set,
+\ and return the number of plots in the list. GET_PLOT_LIST
+\ must be called prior to using this.
+: plots_for_set ( n -- u )
+    MAXPLOTS 0 DO 0 PlotsForSet{ I } ! LOOP
+    0 nplots_for_set !
+    nplots @ 0 ?DO
+      dup PlotList{ I } PlotInfo->Set @ = IF 1 nplots_for_set +! THEN
+    LOOP
+    drop
+    nplots_for_set @
+;
+   
 : write_grace_colormap ( -- )
     s" @map color 0 to (255, 255, 255), 'white'" 	rep(',")  >grfile
     s" @map color 1 to (0, 0, 0), 'black'"       	rep(',")  >grfile
@@ -117,7 +146,12 @@ Public:
 \ Write info about all xyplot data sets and their corresponding plot
 \ attributes. A data set without a corresponding plot will have its
 \ grace "symbol" and "line type" attributes set to "0".
+\ In xyplot, there may be multiple plots associated with a data set.
+\ However, Grace permits only one plot for a set, so we simply write
+\ the plot attributes for the first plot of the set.
 : write_datasets_info ( -- )
+    get_plot_list
+
     MAXSETS 0 DO
       I ds1 get_ds 0< IF leave THEN
       I [char] 0 + set_specifier 7 + c!
@@ -147,9 +181,12 @@ Public:
       ELSE 2drop 
       THEN
 
-      
       \ Write dataset plot info
-      I pl1 get_plot 0 >= IF
+      I plots_for_set 0> IF
+        PlotsForSet{ 0 } @ pl1 get_plot 0< IF
+          ." Error obtaining plot information for set " I . cr
+          abort
+        THEN
         set_specifier 9 s" hidden false" strcat >grfile
         set_specifier 9 s" type xy" strcat >grfile
 	set_specifier 9 s" symbol " strcat	  
@@ -171,12 +208,20 @@ Public:
 	  set_specifier 9 s" symbol fill pattern 1" strcat >grfile
 	THEN
 
-	set_specifier 9 s" line type " strcat
-	pl1 PlotInfo->Symbol @ 
-        dup  sym_LINE = swap sym_LINE_PLUS_POINT = or dup flag_line ! 	  
-	abs u>string count strcat >grfile
+	0 linetype !
+	pl1 PlotInfo->Symbol @
+        CASE
+          sym_LINE            OF 1 linetype ! ENDOF
+          sym_LINE_PLUS_POINT OF 1 linetype ! ENDOF
+          sym_DASHED          OF 1 linetype ! ENDOF
+          sym_HISTOGRAM       OF 2 linetype ! ENDOF
+          sym_STICK           OF 1 linetype ! ENDOF
+        ENDCASE
 
-	flag_line @ IF
+	set_specifier 9 s" line type " strcat	  
+	linetype @ u>string count strcat >grfile
+
+	linetype @ IF
 	  set_specifier 9 s" linestyle " strcat
 	  pl1 PlotInfo->Symbol @
           sym_DASHED = IF 3 ELSE 1 THEN u>string count strcat >grfile
@@ -184,6 +229,7 @@ Public:
 	  set_specifier 9 s" line color " strcat
 	  pl1 PlotInfo->Color @ 2+ u>string count strcat >grfile
 	THEN
+
       ELSE
         set_specifier 9 s" hidden true" strcat >grfile
         set_specifier 9 s" type xy"     strcat >grfile
@@ -453,6 +499,8 @@ variable hdr_line
     THEN
 ;
 
+variable xyp_symbol
+
 \ Map grace plot attributes for current grace set to xyplot plot symbol and
 \ plot type. Return true for success OR false with no attributes if grace
 \ set is hidden
@@ -463,28 +511,32 @@ variable hdr_line
 
     \ grace plotting symbol/line type --> xyplot symbol
 
+    sym_LINE xyp_symbol !  \ defaults to line
     grace_pattrs{{ grace_set @ ATTR_SYMBOL }} @ IF
       grace_pattrs{{ grace_set @ ATTR_LINETYPE }} @ IF
-        sym_LINE_PLUS_POINT
+        sym_LINE_PLUS_POINT xyp_symbol !
       ELSE
         grace_pattrs{{ grace_set @ ATTR_SYMBOLSIZE }} @ 11 < IF 
-          sym_POINT 
+          sym_POINT xyp_symbol !
         ELSE 
-          sym_BIG_POINT 
+          sym_BIG_POINT xyp_symbol !
         THEN
       THEN
     ELSE
+      grace_pattrs{{ grace_set @ ATTR_LINETYPE }} @
+      CASE
+        1 OF sym_LINE       xyp_symbol ! ENDOF
+        2 OF sym_HISTOGRAM  xyp_symbol ! ENDOF
+        3 OF sym_HISTOGRAM  xyp_symbol ! ENDOF
+      ENDCASE
+
       grace_pattrs{{ grace_set @ ATTR_LINESTYLE }} @
       CASE
-        0 of sym_LINE   endof
-        1 of sym_LINE   endof
-        2 of sym_LINE   endof
-        3 of sym_DASHED endof
-        4 of sym_LINE   endof
-        5 of sym_LINE   endof
-        6 of sym_LINE   endof
+        3 of sym_DASHED xyp_symbol ! endof
       ENDCASE
     THEN
+
+    xyp_symbol @
 
     \ grace symbol/line color
 
@@ -508,7 +560,8 @@ variable hdr_line
       ( pl1 PlotInfo->Color  ! ) swap
       pl1 PlotInfo->Symbol !
       pl1 make_plot
-      \ Workaround for mismatch of color maps between xyplot and Grace
+      \ Color maps used by xyplot and Grace are different, so we
+      \ look up by color name.
       get_grace_color strpck set_plot_color
     THEN
 ;

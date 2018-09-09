@@ -8,24 +8,24 @@
 //
 
 #ifdef COPYRIGHT
-char* copyright=COPYRIGHT;
+const char* copyright=COPYRIGHT;
 #else
-char* copyright="1999--2018"
+const char* copyright="1999--2018"
 #endif
 
 #ifdef VERSION
-char* ver=VERSION;
+const char* ver=VERSION;
 #else
-char* ver="?";
+const char* ver="?";
 #endif
 
 #ifdef KFORTH_VER
-char* kfver=KFORTH_VER;
+const char* kfver=KFORTH_VER;
 #else
-char* kfver="?";
+const char* kfver="?";
 #endif
 
-char* build=BUILD_DATE;
+const char* build=BUILD_DATE;
 
 #include "consts.h"
 #include <math.h>
@@ -70,35 +70,35 @@ extern volatile int verify_answer;
 
 // Global data
 
-char* SymbolNames[7] =
+const char* SymbolNames[7] =
 {
   "LINE", "DASHED", "POINT", "BIG_POINT", 
   "LINE_PLUS_POINT", "STICK", "HISTOGRAM"};
 
 // Global menu data
 
-char* FileOptions[16] = 
+const char* FileOptions[16] = 
   {"New", "Open", "Save", "Save Options", 
    "Print", "Exit", "", "",
    "", "", "", "",
    "", "", "", ""};
 Widget FileWidgets[16];
 
-char* EditOptions[16] = 
+const char* EditOptions[16] = 
   {"Header", "Delete", "Duplicate", "",
     "", "", "", "",
     "", "", "", "",
     "", "", "", ""};
 Widget EditWidgets[16];
 
-char* PlotOptions[16] = 
+const char* PlotOptions[16] = 
   { ">View", "Extrema", "Pick", "Drop", 
     "Grid", "Color", "Symbol", "",
     "", "", "", "",
     "", "", "", "" };
 Widget PlotWidgets[16];
 
-char* MathOptions[16] = 
+const char* MathOptions[16] = 
   { 
     "Expression", "", "", "", 
     "", "", "", "",
@@ -106,7 +106,7 @@ char* MathOptions[16] =
     "", "", "", ""};
 Widget MathWidgets[16];
 
-char* HelpOptions[16] = 
+const char* HelpOptions[16] = 
   {"About", "", "", "",
    "", "", "", "",
    "", "", "", "",
@@ -174,7 +174,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   ac++;
   XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM); 
   ac++;
-  m_nMenuBar = XmCreateMenuBar(m_nForm, "Menu Bar", al, ac);
+  m_nMenuBar = XmCreateMenuBar(m_nForm, (char*) "Menu Bar", al, ac);
   XtManageChild(m_nMenuBar);
 
   // Create the Forth shell dialog
@@ -191,7 +191,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   XtSetArg(al[ac], XmNheight, 100);
   ac++;
 
-  m_nForthShell = XmCreateScrolledText(m_nForm, "Forth Shell",
+  m_nForthShell = XmCreateScrolledText(m_nForm, (char*) "Forth Shell",
     al, ac);
   XtVaSetValues(m_nForthShell, XtVaTypedArg, XmNbackground, XmRString, 
   		"White", 6, NULL);
@@ -202,7 +202,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   ac = 0;
   XtSetArg(al[ac], XmNlabelString,
-    XmStringCreate(" ", XmSTRING_DEFAULT_CHARSET));
+    XmStringCreate((char*) " ", XmSTRING_DEFAULT_CHARSET));
   ac++;
   XtSetArg(al[ac], XmNalignment, XmALIGNMENT_BEGINNING);
   ac++;
@@ -223,7 +223,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   ac = 0;
   XtSetArg(al[ac], XmNlabelString,
- 	   	 XmStringCreate(" ",XmSTRING_DEFAULT_CHARSET)); 
+ 	   	 XmStringCreate((char*) " ",XmSTRING_DEFAULT_CHARSET)); 
   ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);
   ac++;
@@ -273,11 +273,11 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
       MathWidgets[j] = 0;
       HelpWidgets[j] = 0;
     }
-  m_nFileMenu = MakeMenu (m_nMenuBar, "File", FileOptions, FileWidgets, 6);
-  m_nEditMenu = MakeMenu (m_nMenuBar, "Edit", EditOptions, EditWidgets, 3);
-  m_nPlotMenu = MakeMenu (m_nMenuBar, "Plot", PlotOptions, PlotWidgets, 7);
-  m_nMathMenu = MakeMenu (m_nMenuBar, "Math", MathOptions, MathWidgets, 1);
-  m_nHelpMenu = MakeMenu (m_nMenuBar, "Help", HelpOptions, HelpWidgets, 1);
+  m_nFileMenu = MakeMenu (m_nMenuBar, (char*) "File", (char**) FileOptions, FileWidgets, 6);
+  m_nEditMenu = MakeMenu (m_nMenuBar, (char*) "Edit", (char**) EditOptions, EditWidgets, 3);
+  m_nPlotMenu = MakeMenu (m_nMenuBar, (char*) "Plot", (char**) PlotOptions, PlotWidgets, 7);
+  m_nMathMenu = MakeMenu (m_nMenuBar, (char*) "Math", (char**) MathOptions, MathWidgets, 1);
+  m_nHelpMenu = MakeMenu (m_nMenuBar, (char*) "Help", (char**) HelpOptions, HelpWidgets, 1);
 
   // Make the submenus
 
@@ -289,7 +289,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   Widget temp;
   ac = 0;
   m_nFileOpenDialog = XmCreateFileSelectionDialog(TopLevel,
-     "Open File", al, ac);
+     (char*) "Open File", al, ac);
   temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_FILTER_TEXT);
   XtVaSetValues(temp, XtVaTypedArg, XmNbackground, XmRString, 
   		"White", 6, NULL);
@@ -303,7 +303,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   ac = 0;
   m_nFileSaveDialog = XmCreateFileSelectionDialog(TopLevel,
-     "Save File", al, ac);
+     (char*) "Save File", al, ac);
   temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_FILTER_TEXT);
   XtVaSetValues(temp, XtVaTypedArg, XmNbackground, XmRString, 
   		"White", 6, NULL);
@@ -316,7 +316,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   // Create a dual purpose About/Message box
 
-  m_nAboutBox = XmCreateInformationDialog(TopLevel, "About XYPLOT",
+  m_nAboutBox = XmCreateInformationDialog(TopLevel, (char*) "About XYPLOT",
     NULL, 0);
   // XtVaSetValues(m_nAboutBox, XtVaTypedArg, XmNbackground, XmRString, 
   //		"LightGrey", 10, NULL);
@@ -328,9 +328,9 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   // Create a general purpose radio box
 
   m_nRadioBox = XmVaCreateSimpleRadioBox (TopLevel, "radio_box", 0,
-					  RadioToggledCB,
-					  XmVaRADIOBUTTON, XmStringCreateLocalized("one"), NULL, NULL, NULL,
-					  NULL);
+		RadioToggledCB, XmVaRADIOBUTTON,
+		XmStringCreateLocalized("one"),
+		NULL, NULL, NULL, NULL);
   // XtManageChild(m_nRadioBox);
 
   // Create the input dialog
@@ -413,7 +413,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   temp = XmSelectionBoxGetChild(m_nSymbolDialog, XmDIALOG_LIST);
   for (int i = 0; i < 7; i++)
     {
-      XmListAddItem(temp, XmStringCreate(SymbolNames[i], 
+      XmListAddItem(temp, XmStringCreate((char*) SymbolNames[i], 
 	    XmSTRING_DEFAULT_CHARSET), 0);      
     }
 
@@ -431,7 +431,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   temp = XmSelectionBoxGetChild(m_nColorDialog, XmDIALOG_LIST);
   for (int i = 0; i < MAX_COLORS; i++)
     {
-      XmListAddItem(temp, XmStringCreate(color_list[i], 
+      XmListAddItem(temp, XmStringCreate((char*) color_list[i], 
 	    XmSTRING_DEFAULT_CHARSET), 0);      
     }
 
@@ -547,7 +547,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   // Setup the plot colors
 
-  m_pDc->SetColors(color_list, MAX_COLORS);
+  m_pDc->SetColors((char**) color_list, MAX_COLORS);
   SetBackgroundColor("DarkGrey");
   SetForegroundColor("black");
 
@@ -580,7 +580,7 @@ void CPlotWindow::OnPrint ()
 {
   CpsDC printDC (612, 792);
   printDC.OpenDisplay (PRINT_TEMP_FILE);
-  printDC.SetColors (color_list, MAX_COLORS);
+  printDC.SetColors ((char**) color_list, MAX_COLORS);
   printDC.SetForeground (printDC.GetColor("black"));
 
   CRect r = printDC.GetClientRect();
@@ -862,7 +862,7 @@ void CPlotWindow::MessageBox (char* s)
 // Display a message
   
   Arg a;
-  XtSetArg(a, XmNmessageString, XmStringCreateLtoR(s, "Courier12pt"));
+  XtSetArg(a, XmNmessageString, XmStringCreateLtoR(s, (char*)"Courier12pt"));
   XtSetValues (m_nAboutBox, &a, 1);
   XtManageChild(m_nAboutBox);
 

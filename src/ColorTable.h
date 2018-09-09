@@ -16,7 +16,7 @@
 // RGB values
 
 
-char* color_list[] = 
+const char* color_list[] = 
   {"blue", "red", "forestgreen", "turquoise",
    "magenta", "sienna", "gold", "black", 
    "orange", "seagreen", "darkslategray", "coral",

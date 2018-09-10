@@ -1,11 +1,13 @@
 // vm32-fast.s
 //
-// The kForth 32-bit Virtual Machine (fast version)
+// The assembler portion of the kForth 32-bit Virtual Machine
+// (fast version)
 //
-// Copyright (c) 1998--2018 Krishna Myneni, <krishna.myneni@ccreweb.org>
+// Copyright (c) 1998--2018 Krishna Myneni,
+//   <krishna.myneni@ccreweb.org>
 //
-// This software is provided under the terms of the 
-// GNU Affero General Public License (AGPL), v3.0 or later.
+// This software is provided under the terms of the GNU 
+// Affero General Public License (AGPL), v3.0 or later.
 //
 // Usage from C++
 //

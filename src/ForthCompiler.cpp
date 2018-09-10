@@ -1,13 +1,19 @@
 // ForthCompiler.cpp
 //
-// Forth compiler to generate Forth Byte Code (FBC) from 
-// expressions or programs.
+// A compiler to generate kForth Byte Code (FBC) from expressions
+//   or programs
 //
-// Copyright (c) 1998--2018 Krishna Myneni and David P. Wallace 
+// Copyright (c) 1998--2018 Krishna Myneni, 
 // <krishna.myneni@ccreweb.org>
 //
-// This software is provided under the terms of the 
-// GNU Affero General Public License (AGPL), v3.0 or later.
+// Contributors:
+//
+//   David P. Wallace
+//   Brad Knotwell
+//   David N. Williams
+//
+// This software is provided under the terms of the GNU
+// Affero General Public License (AGPL), v 3.0 or later.
 //
 #include <iostream>
 #include <fstream>
@@ -403,7 +409,7 @@ int ForthCompiler (vector<byte>* pOpCodes, int* pLc)
     } // end while (TRUE)
 
 endcompile:
-    
+  
   if ((ecode != E_C_NOERROR) && (ecode != E_C_ENDOFSTREAM))
     {
       // A compiler or vm error occurred; reset to interpreter mode and

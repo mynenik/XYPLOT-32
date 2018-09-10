@@ -1,11 +1,11 @@
 // ForthVM.h
 //
-// Copyright (c) 1996--2018 Krishna Myneni
-// <krishna.myneni@ccreweb.org>
+// Copyright (c) 1996--2018, Krishna Myneni
+//   <krishna.myneni@ccreweb.org>
 //
-// This software is provided under the terms of the
-// GNU Affero General Public License (AGPL), v3.0 or later.
-// 
+// This software is provided under the terms of the GNU
+// Affero General Public License (AGPL), v3.0 or later.
+//
 #ifndef __FORTHVM_H__
 #define __FORTHVM_H__
 

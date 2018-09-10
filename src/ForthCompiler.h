@@ -1,10 +1,10 @@
 // ForthCompiler.h
 //
-// Copyright (c) 1998--2018 Krishna Myneni
-// <krishna.myneni@ccreweb.org>
+// Copyright (c) 1998--2018 Krishna Myneni,
+//   <krishna.myneni@ccreweb.org>
 //
-// This software is provided under the terms of the 
-// GNU Affero General Public License (AGPL), v3.0 or later.
+// This software is provided under the terms of the GNU
+// Affero General Public License (AGPL), v3.0 or later.
 //
 
 #ifndef __FORTHCOMPILER_H__

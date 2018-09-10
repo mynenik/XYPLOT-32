@@ -1,12 +1,12 @@
 // fbc.h
 //
-//  Forth Byte Codes (FBC)
+//  Forth Byte Codes (FBC) for kForth
 //
-//  Copyright (c) 1996--2018 Krishna Myneni
+//  Copyright (c) 1996--2018 Krishna Myneni,
 //    <krishna.myneni@ccreweb.org>
 //
-//  This software is provided under the terms of the
-//  GNU Affero General Public License (AGPL), v3.0 or later.
+//  This software is provided under the terms of the GNU
+//  Affero General Public License (AGPL), v3.0 or later.
 //
 
 #ifndef __FORTHBYTECODES_H__

@@ -1515,7 +1515,6 @@ void CPlotWindow::OnAbout()
   strcat (s, ")  Build: "); strcat (s, build); strcat(s, "\n"); 
   strcat (s, "\nCopyright (c) "); strcat (s, copyright);
   strcat (s, " Krishna Myneni and John Kielkopf\n");
-  strcat (s, "Creative Consulting for Research and Education\n");
   strcat (s, "e-mail: krishna.myneni@ccreweb.org\n\n");
   strcat (s, "Provided under the GNU General Public License\n\n");
   MessageBox(s);

@@ -1,14 +1,13 @@
 // ForthVM.cpp
 //
-// C++ portion of the kForth Virtual Machine to execute 
-// Forth byte code.
+// The C++ portion of the kForth Virtual Machine to 
+// execute Forth byte code.
 //
-// Copyright (c) 1996--2018 Krishna Myneni
-// <krishna.myneni@ccreweb.org>
+// Copyright (c) 1996--2018 Krishna Myneni,
+//   <krishna.myneni@ccreweb.org>
 //
-// This software is provided under the terms of the
-// GNU Affero General Public License (AGPL), v3.0 or later.
-//
+// This software is provided under the terms of the GNU
+// Affero General Public License, (AGPL), v3.0 or later.
 
 const char* dir_env_var=DIR_ENV_VAR;
 

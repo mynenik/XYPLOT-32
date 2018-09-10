@@ -1,12 +1,14 @@
 // vm32-common.s
 //
-// Common declarations and data for vm32.s and vm32-fast.s
+// Common declarations and data for kForth 32-bit Virtual Machine
 //
-// Copyright (c) 1998--2018 Krishna Myneni, <krishna.myneni@ccreweb.org>
+// Copyright (c) 1998--2018 Krishna Myneni,
+//   <krishna.myneni@ccreweb.org>
 //
-// This software is provided under the terms of the
-// GNU Affero General Public License (AGPL), v3.0 or later.
+// This software is provided under the terms of the GNU
+// Affero General Public License (AGPL), v3.0 or later.
 //
+
 .equ WSIZE,	4
 
 .equ OP_ADDR,	65

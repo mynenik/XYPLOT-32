@@ -3,11 +3,11 @@
 // Useful macros for kForth C and C++ source files, following
 // the convention established by DNW in vm-osxppc.s
 //
-// Copyright (c) 2009--2018 Krishna Myneni
-// <krishna.myneni@ccreweb.org>
+// Copyright (c) 2009--2018, Krishna Myneni
+//   <krishna.myneni@ccreweb.org>
 //
-// Provided under the terms of the GNU Affero General Public License 
-// (AGPL), v3.0 or later.
+// This software is provided under the terms of the GNU
+// Affero General Public License (AGPL), v3.0 or later.
 //
 
 #define INC_DSP   ++GlobalSp;

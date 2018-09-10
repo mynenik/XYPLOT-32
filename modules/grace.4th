@@ -148,16 +148,16 @@ Public:
 
 Private:
 
-create grace_set_label  12 allot
-create xyplot_set_label 14 allot
+create gr_set_label  12 allot
+create xy_set_label  14 allot
 
-s" @    s??    "   grace_set_label swap cmove 
-s" # @xyplot s?? " xyplot_set_label swap cmove
+s" @    s??    "   gr_set_label swap cmove 
+s" # @xyplot s?? " xy_set_label swap cmove
 
 Public:
 
-: $gr_set grace_set_label   9 ;
-: $xy_set xyplot_set_label 14 ;
+: $gr_set gr_set_label  9 ;
+: $xy_set xy_set_label 14 ;
 
 : make_set_labels ( u -- )
     dup 0 MAXSETS 1+ within IF
@@ -166,14 +166,38 @@ Public:
       drop s" ??"
     THEN 
     2dup
-    grace_set_label   6 + swap cmove
-    xyplot_set_label 11 + swap cmove
+    gr_set_label  6 + swap cmove
+    xy_set_label 11 + swap cmove
+;
+
+
+Public:
+
+\ map XYPLOT plot symbol to grace symbol flag
+: xysym_to_grsym ( nsymbol -- 0 | 1 )
+    dup  sym_POINT = 
+    over sym_LINE_PLUS_POINT = or
+    over sym_BIG_POINT = or
+    nip abs
+;
+
+\ map XYPLOT plot symbol to grace linetype
+: xysym_to_grltype ( nsymbol -- nlinetype )
+    CASE
+      sym_LINE            OF  1  ENDOF
+      sym_LINE_PLUS_POINT OF  1  ENDOF
+      sym_DASHED          OF  1  ENDOF
+      sym_HISTOGRAM       OF  2  ENDOF
+      sym_STICK           OF  1  ENDOF
+      \ other: linetype = 0
+      >r 0 r>
+    ENDCASE
 ;
 
 Private:
 
-variable  flag_symbol
-variable  linetype
+variable  gr_symbol
+variable  gr_linetype
 variable  hdr_line_count
 PlotInfo    pl1
 DatasetInfo ds1
@@ -225,17 +249,18 @@ Public:
           gr_fid @ close-file drop
           abort
         THEN
+
         $gr_set s" hidden false" strcat >grfile
         $gr_set s" type xy"      strcat >grfile
 
-	$gr_set s" symbol " strcat	  
-	pl1 PlotInfo->Symbol @ 
-        dup dup sym_POINT = swap 
-	sym_LINE_PLUS_POINT = or swap
-	sym_BIG_POINT = or dup flag_symbol ! 
-	abs u>string count strcat >grfile
+	pl1 PlotInfo->Symbol @ dup 
+	xysym_to_grsym   gr_symbol ! 
+        xysym_to_grltype gr_linetype !
 
-	flag_symbol @ IF
+	$gr_set s" symbol " strcat	  
+        gr_symbol @ u>string count strcat >grfile
+
+	gr_symbol @ IF
 	  $gr_set s" symbol size " strcat
 	  pl1 PlotInfo->Symbol @ sym_BIG_POINT = IF 
             s" 0.6" ELSE s" 0.2" THEN
@@ -248,20 +273,10 @@ Public:
 	  $gr_set s" symbol fill pattern 1" strcat >grfile
 	THEN
 
-	0 linetype !
-	pl1 PlotInfo->Symbol @
-        CASE
-          sym_LINE            OF 1 linetype ! ENDOF
-          sym_LINE_PLUS_POINT OF 1 linetype ! ENDOF
-          sym_DASHED          OF 1 linetype ! ENDOF
-          sym_HISTOGRAM       OF 2 linetype ! ENDOF
-          sym_STICK           OF 1 linetype ! ENDOF
-        ENDCASE
-
 	$gr_set s" line type " strcat	  
-	linetype @ u>string count strcat >grfile
+	gr_linetype @ u>string count strcat >grfile
 
-	linetype @ IF
+	gr_linetype @ IF
 	  $gr_set s" linestyle " strcat
 	  pl1 PlotInfo->Symbol @
           sym_DASHED = IF 3 ELSE 1 THEN u>string count strcat >grfile

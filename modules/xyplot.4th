@@ -2,33 +2,15 @@
 \
 \ Forth interface to xyplot
 \
-\ Copyright (c) 1999--2013 Krishna Myneni
-\ Creative Consulting for Research and Education
+\ Copyright (c) 1999--2018 Krishna Myneni
 \
-\ This software is provided under the terms of the GNU Lesser General
-\ Public License (LGPL)
+\ This software is provided under the terms of the 
+\ GNU Affero General Public License (AGPL), v3.0 or later.
 \
-\ Requires: xyplot version >= 2.4.2
+\ Please report bugs to <krishna.myneni@ccreweb.org>
 \
-\ Revisions: 
-\   2005-11-24    modified make_ds to return set number of new set
-\   2006-01-15    added set_save_options
-\   2007-06-02    begin conversion of xyplot Forth modules to use FSL arrays
-\                   and matrices, instead of kForth matrix package; changed
-\                   name of constant SFSIZE to SFLOAT.
-\   2007-09-11    load template.4th
-\   2007-09-18    load determ.4th; do not autoload lufact.4th and dets.4th
-\   2007-09-28    added useful constants for generating dataset type numbers
-\                   and constants for plot symbol types.
-\   2009-10-24    revised data structures; shortcuts ->name, etc. no longer
-\                   needed, and hence removed  km
-\   2009-10-29    updated paths for FSL modules; load fsl/complex.4th, 
-\                   fsl/extras/four1.4th, and utils.4th.
-\   2009-10-30    paths to derivative.4th and polyfit.4th are now fsl/extras
-\                   since we incorporated the kForth 1.5.x set of FSL modules.
-\   2011-02-12    added drop_plot  km
-\   2012-05-25    include modules.fs to support new module interface
-\   2013-09-20    include module xysort.4th 
+\ Requires: xyplot version >= 2.4.6
+\
 \
 \ XYPLOT defines Forth constants which contain pointers to
 \ C++ functions that interface with the Forth environment.
@@ -202,6 +184,8 @@ prec_DOUBLE  8 LSHIFT  data_REAL  OR  constant  REAL_DOUBLE
 include ans-words.4th
 include modules.fs
 include struct.4th
+include struct-ext.4th
+
 [UNDEFINED] ptr [IF] : ptr  CREATE 1 CELLS ?allot ! DOES> a@ ; [THEN]
 
 \ Save Options structure

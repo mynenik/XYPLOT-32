@@ -35,6 +35,13 @@ fvariable ymax
 : rep(comma,space) ( a u -- a u | replace every comma with a space in string)
 	2dup 0 ?do dup c@ [char] , = if bl over c! then 1+ loop drop ;
 
+\ Number <=> string conversions, enforcing conversion in base 10
+\ (uses words from strings.4th ).
+: u>$ ( u1 -- a u2 ) u>string count  ;
+: $>s ( a u -- n )   strpck string>s ;
+: f>$ ( r -- a u )   f>string count  ;
+: $>f ( a u -- r )   strpck string>f ;
+
 : parse_csv ( a u -- r1 ... rn n )
     rep(comma,space) parse_args ;
 
@@ -48,7 +55,8 @@ create grfile_buf 256 allot
 
 : <grfile ( -- a u b | read string from grace file )
     grfile_buf 256 erase
-    grfile_buf 256 gr_fid @ read-line drop grfile_buf -rot
+    grfile_buf 256 gr_fid @ read-line drop
+    grfile_buf -rot
     1 grace_line_count +! ;
 
 
@@ -115,10 +123,10 @@ Public:
 
 : write_grace_window ( -- )
     get_window_limits ymax f! xmax f! ymin f! xmin f!
-    s" @    world xmin " xmin f@ 6 f>string count  strcat >grfile
-    s" @    world xmax " xmax f@ 6 f>string count  strcat >grfile
-    s" @    world ymin " ymin f@ 6 f>string count  strcat >grfile
-    s" @    world ymax " ymax f@ 6 f>string count  strcat >grfile
+    s" @    world xmin " xmin f@ 6 f>$  strcat >grfile
+    s" @    world xmax " xmax f@ 6 f>$  strcat >grfile
+    s" @    world ymin " ymin f@ 6 f>$  strcat >grfile
+    s" @    world ymax " ymax f@ 6 f>$  strcat >grfile
 ;
 
 \ XYPLOT exported Grace files will contain a single graph, G0.
@@ -134,13 +142,13 @@ Public:
     s" @    xaxis tick on" >grfile 
     s" @    xaxis tick major " 
     xmax f@ xmin f@ f- 10e f/ 
-    6 f>string count strcat >grfile
+    6 f>$ strcat >grfile
     s" @    xaxis ticklabel on" >grfile
     s" @    yaxis on"      >grfile
     s" @    yaxis tick on" >grfile
     s" @    yaxis tick major " 
     ymax f@ ymin f@ f- 10e f/ 
-    6 f>string count strcat >grfile
+    6 f>$ strcat >grfile
     s" @    yaxis ticklabel on" >grfile
 
     s" @    frame type 0"  >grfile
@@ -194,6 +202,37 @@ Public:
     ENDCASE
 ;
 
+\ Write the Grace set's symbol properties
+: write_symbol_info ( nsymbol ncolor -- )
+    2+  \ offset xyplot plot color to map into colormap index
+    $gr_set s" symbol size " strcat
+    2over drop sym_BIG_POINT = IF 
+      s" 0.6" ELSE s" 0.2" THEN  strcat >grfile
+
+    $gr_set s" symbol color " strcat 
+    2over nip u>$ strcat >grfile
+    $gr_set s" symbol fill color " strcat
+    2over nip u>$ strcat >grfile
+
+    $gr_set s" symbol pattern 1"      strcat >grfile
+    $gr_set s" symbol fill pattern 1" strcat >grfile
+    2drop
+;
+
+\ Write the Grace set's line properties
+: write_line_info ( nsymbol ncolor -- )
+    2+
+    $gr_set s" linestyle " strcat
+    2over drop sym_DASHED = IF 3 ELSE 1 THEN
+    u>$ strcat >grfile
+
+    $gr_set s" linewidth 1.0" strcat >grfile
+
+    $gr_set s" line color " strcat
+    2over nip u>$ strcat >grfile
+    2drop
+;
+
 Private:
 
 variable  gr_symbol
@@ -203,6 +242,7 @@ PlotInfo    pl1
 DatasetInfo ds1
 
 Public:
+
 
 \ Write info about all xyplot data sets and their corresponding plot
 \ attributes. A data set without a corresponding plot will have its
@@ -257,32 +297,20 @@ Public:
 	xysym_to_grsym   gr_symbol ! 
         xysym_to_grltype gr_linetype !
 
-	$gr_set s" symbol " strcat	  
-        gr_symbol @ u>string count strcat >grfile
+        $gr_set s" symbol " strcat	  
+        gr_symbol @ u>$ strcat >grfile
 
-	gr_symbol @ IF
-	  $gr_set s" symbol size " strcat
-	  pl1 PlotInfo->Symbol @ sym_BIG_POINT = IF 
-            s" 0.6" ELSE s" 0.2" THEN
-          strcat >grfile
-	  $gr_set s" symbol color " strcat 
-	  pl1 PlotInfo->Color @ 2+ u>string count strcat >grfile
-	  $gr_set s" symbol fill color " strcat
-	  pl1 PlotInfo->Color @ 2+ u>string count strcat >grfile
-	  $gr_set s" symbol pattern 1"      strcat >grfile
-	  $gr_set s" symbol fill pattern 1" strcat >grfile
-	THEN
+        gr_symbol @ IF
+          pl1 PlotInfo->Symbol @  pl1 PlotInfo->Color @  
+          write_symbol_info
+        THEN
 
 	$gr_set s" line type " strcat	  
-	gr_linetype @ u>string count strcat >grfile
+	gr_linetype @ u>$ strcat >grfile
 
 	gr_linetype @ IF
-	  $gr_set s" linestyle " strcat
-	  pl1 PlotInfo->Symbol @
-          sym_DASHED = IF 3 ELSE 1 THEN u>string count strcat >grfile
-	  $gr_set s" linewidth 1.0" strcat >grfile
-	  $gr_set s" line color "   strcat
-	  pl1 PlotInfo->Color @ 2+ u>string count strcat >grfile
+          pl1 PlotInfo->Symbol @  pl1 PlotInfo->Color @  
+          write_line_info
 	THEN
 
       ELSE
@@ -299,12 +327,12 @@ Public:
 : write_datasets_xydata ( -- )
     MAXSETS 0 DO
       I ds1 get_ds 0< IF leave THEN
-      s" @target G0.S" I u>string count strcat >grfile
+      s" @target G0.S" I u>$ strcat >grfile
       s" @type xy" >grfile
       ds1 DatasetInfo->Npts @ 0 ?DO
 	I ds1 @xy 2>r 
-	8 f>string count s"  " strcat 2r>
-	8 f>string count strcat >grfile
+	8 f>$ s"  " strcat 2r>
+	8 f>$ strcat >grfile
       LOOP
       s" &" >grfile
     LOOP
@@ -400,7 +428,7 @@ Public:
 
 \ Parse a set number from original line in file
 : parse_set_number ( a1 u1 a2 u2 -- a1 u1 a2 u2 n )
-    2over [char] s scan 1 /string drop 2 strpck string>s ;
+    2over [char] s scan 1 /string drop 2 $>s ;
 
 \ Parse and store a set name
 : parse_grace_name ( a1 u1 a2 u2 -- a1 u1 )
@@ -423,7 +451,7 @@ Public:
                   THEN ; 
 
 : parse_color_name ( a u -- | parse and store color name )
-    -trailing 10 /string parse_token strpck string>s >r
+    -trailing 10 /string parse_token $>s >r
     s" ), " search IF
        4 /string 1- 31 min  \ a2 u2  ( color name substring )
        r@ MAXPLOTS < IF
@@ -457,13 +485,13 @@ Public:
     parse_set_number grace_set !
     -trailing
     2dup s" line type" search IF
-      10 /string strpck string>s 
+      10 /string $>s 
       grace_pattrs{{ grace_set @ ATTR_LINETYPE }} !
       2drop EXIT
     ELSE 2drop THEN
 
     2dup s" line linestyle" search IF
-      15 /string strpck string>s
+      15 /string $>s
       grace_pattrs{{ grace_set @ ATTR_LINESTYLE }} !
       2drop EXIT
     ELSE 2drop THEN
@@ -477,7 +505,7 @@ Public:
     ELSE 2drop THEN
     
     2dup s" line color" search IF
-      11 /string strpck string>s 
+      11 /string $>s 
       grace_pattrs{{ grace_set @ ATTR_LINECOLOR }} !
       2drop EXIT
     ELSE 2drop THEN
@@ -489,7 +517,7 @@ Public:
     parse_set_number grace_set !
     -trailing
     2dup s" symbol color" search IF
-      13 /string strpck string>s 
+      13 /string $>s 
       grace_pattrs{{ grace_set @ ATTR_SYMBOLCOLOR }} ! 
       2drop EXIT
     ELSE 2drop THEN
@@ -516,8 +544,8 @@ variable hdr_set
 variable hdr_line
 
 : parse_grace_hdr_line ( a u -- | parse line of xyplot header data in grace file)
-    9 /string over 2 strpck string>s  hdr_set !
-    4 /string over 3 strpck string>s  hdr_line !    
+    9 /string over 2 $>s  hdr_set !
+    4 /string over 3 $>s  hdr_line !    
     4 /string
     grace_headers hdr_set @ MAXHDRSIZE * +
     dup strlen dup IF + 10 over c! 1+ ELSE + THEN swap cmove
@@ -670,7 +698,7 @@ Public:
       2dup s"  line "       search IF parse_line_attrs   ELSE 2drop THEN
       2dup s"  symbol "     search IF parse_symbol_attrs ELSE 2drop THEN
       2dup s" @target G0.S" search IF
-        12 /string strpck string>s
+        12 /string $>s
         read_grace_set IF
           ." read_grace_set error " cr
           gr_fid f@ close-file drop 

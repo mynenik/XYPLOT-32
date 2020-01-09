@@ -1,6 +1,6 @@
 # Make file for XYPLOT-32
 #
-# Copyright (c) 1998--2018 Krishna Myneni, <krishna.myneni@ccreweb.org>
+# Copyright (c) 1998--2020 Krishna Myneni, <krishna.myneni@ccreweb.org>
 #
 # Provided under the terms of the GNU Affero General Public License
 # (AGPL), v3.0 or later.
@@ -17,9 +17,9 @@
 #   1. If a debug version is being built, always invoke "make clean" 
 #      before "make debug".
 #
-COPYRIGHT=1999--2018
-VERSION=2.4.8
-KFORTH_VER=1.6.1
+COPYRIGHT=1999--2020
+VERSION=2.4.9
+KFORTH_VER=1.6.4
 MODULE_DIR_VAR=XYPLOT_DIR
 BUILD_DATE=`date +%F`
 DEBUG = 

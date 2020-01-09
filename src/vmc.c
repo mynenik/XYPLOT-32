@@ -573,8 +573,10 @@ return False.
 
 int isBaseDigit (int c)
 {
-   return ( (isdigit(c) && ((c - 48) < Base)) || 
-	    (isalpha(c) && (Base > 10) && ((c - 55) < Base)) );
+   int u = toupper(c);
+
+   return ( (isdigit(u) && ((u - 48) < Base)) || 
+	    (isalpha(u) && (Base > 10) && ((u - 55) < Base)) );
 }
 /*---------------------------------------------------------*/
 
@@ -855,6 +857,7 @@ int C_tofloat ()
   double f;
   unsigned nc, u;
   int b;
+
   DROP
   nc = TOS;
   DROP

@@ -180,11 +180,15 @@ prec_DOUBLE  8 LSHIFT  data_REAL  OR  constant  REAL_DOUBLE
 
 1 SFLOATS constant SFLOAT	\ size in bytes of single precision float
 
-
+\ kForth libraries, utilities, and modules support
 include ans-words.4th
+include strings.4th
+include files.4th
+include utils.4th
 include modules.fs
 include struct.4th
 include struct-ext.4th
+include signal.4th
 
 [UNDEFINED] ptr [IF] : ptr  CREATE 1 CELLS ?allot ! DOES> a@ ; [THEN]
 
@@ -204,8 +208,6 @@ end-struct SaveOptions%
 
 
 \ Dataset Information Structure
-
-
 struct
   cell%  field  DataSetInfo->Name    \ pointer to name string
   cell%  field  DataSetInfo->Header  \ pointer to header string
@@ -215,12 +217,12 @@ struct
   cell%  field  DataSetInfo->Data    \ pointer to data
 end-struct DatasetInfo%
 
-
+\ Plot Information Structure
 struct
-  cell%  field  PlotInfo->Set
-  cell%  field  PlotInfo->Type
-  cell%  field  PlotInfo->Symbol
-  cell%  field  PlotInfo->Color
+  cell%  field  PlotInfo->Set     \ data set number
+  cell%  field  PlotInfo->Type    \
+  cell%  field  PlotInfo->Symbol  \ plot symbol
+  cell%  field  PlotInfo->Color   \ plot color
 end-struct PlotInfo%
 
 
@@ -262,23 +264,20 @@ include fsl/fsl-util
 include fsl/dynmem
 include fsl/complex
 include fsl/horner
-\ include fsl/lufact
-\ include fsl/dets
+include fsl/lufact
+include fsl/dets
+include fsl/gaussj
 include fsl/extras/determ
+include fsl/extras/curvefit
 include fsl/extras/four1
 include fsl/extras/derivative
 include fsl/extras/polyfit
     
-\ kForth modules (ver >= 1.3.2)
-include strings
-include files
-include signal
-
 \ XYPLOT modules (ver >= 2.4.x)
-include utils
 include xutils
 include template
 include xypolyfit
+include xyexpfit
 include arithmetic
 include abs
 include xyhistogram

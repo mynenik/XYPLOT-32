@@ -1100,7 +1100,7 @@ void InitForthInterface ()
 
 int LoadForthFile(char* fname)
 {
-  char s[256], out_s[256];
+  char s[256], out_s[1024];
   int nError, lnum;
 
   strcpy (s, "include ");
@@ -1111,7 +1111,7 @@ int LoadForthFile(char* fname)
 
   if (nError)
     {
-        ForthMessages.getline(out_s, 255, 0);
+        ForthMessages.getline(out_s, 1023, 0);
         pMainWnd->MessageBox (out_s);
     }
 

@@ -117,7 +117,7 @@ fvariable delta
 	THEN	  
 ;
 
-
+DEFER functn
 
 \ non-analytical derivative routine
 

@@ -295,6 +295,7 @@ include yn_vs_ym
 include xysort
 \ include pnm
 include grace
+include xyswap
 
 \ You can put some initialization stuff here, for example
 \  to set the background and foreground colors.

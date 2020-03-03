@@ -59,8 +59,8 @@ PlotInfo pl3
 0 value ridx
 0 ptr   ar_operator 
 
-: do_arithmetic ( addr -- flag | loop over index range n1 to n2 and apply operator )
-    to ar_operator                      \ store execution address of operator
+: do_arithmetic ( xt -- flag | loop over index range n1 to n2 and apply operator )
+    to ar_operator
     0 to ridx
     index_range
     2dup <>

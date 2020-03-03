@@ -1,4 +1,4 @@
-\ swap-xy.4th
+\ xyswap.4th
 \
 \ Swap the x and y values of the active dataset
 \

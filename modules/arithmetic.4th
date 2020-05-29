@@ -16,7 +16,8 @@
 \       2007-09-28  auto generate plot of result KM
 \       2009-10-28  revised data structure members  km
 \       2012-06-26  convert to unnamed module  km
-\
+\ 	2020-05-29  implement linear interpolation when abscissas not equal
+\ 	            in overlap region between two datasets  km
 \ Requires:
 \
 \	xyplot.4th
@@ -55,6 +56,51 @@ PlotInfo pl3
     pl3 make_plot
 ;
 
+: ?interpolate ( rx1 idx -- flag | return TRUE if interpolation is needed )
+    ds2 @xy fdrop f<> ;
+
+Private:
+
+fvariable xs
+fvariable x1
+fvariable x2
+fvariable y1
+fvariable y2
+
+Public:
+
+fvariable slope
+variable ordering2  \ true indicates ds2 is in ascending order; false otherwise
+true ordering2 !
+
+: interpolate_y2 ( fx1 idx -- fy2i | linear interpolation )
+    >r xs f!
+    r@ ds2 @xy y1 f! x1 f!
+
+    r@ 0= IF
+      r@ 1+
+    ELSE
+      r@ ds2 DatasetInfo->Npts @ 1- = IF
+        r@ 1-
+      ELSE
+        r@
+        ordering2 @ IF
+          x1 f@ xs f@ f< IF  1+  ELSE  1-  THEN
+        ELSE
+          x1 f@ xs f@ f< IF  1-  ELSE  1+  THEN
+        THEN
+      THEN
+    THEN
+    ds2 @xy y2 f! x2 f!
+    r> drop
+    x1 f@ x2 f@ f> IF
+      x1 f@ x2 f@  x1 f! x2 f!
+      y1 f@ y2 f@  y1 f! y2 f!
+    THEN
+    y2 f@ y1 f@ f- x2 f@ x1 f@ f- f/ slope f!
+    y2 f@ x2 f@ xs f@ f- slope f@ f* f-
+;
+
 
 0 value ridx
 0 ptr   ar_operator 
@@ -65,14 +111,21 @@ PlotInfo pl3
     index_range
     2dup <>
     IF
+	0 ds2 @xy fdrop  1 ds2 @xy fdrop f< ordering2 !
 	swap
 	2dup - to Npts
 	& result{{ Npts 2 }}malloc      \ allocate the result matrix
 	DO
 	    I ds1 @xy
-	    fover ds2 findx		\ find nearest point in ds2
-	    ds2 @xy
-	    fswap fdrop
+	    fover 
+	    fdup ds2 findx    \ find index of nearest point in ds2
+	    dup >r
+	    ?interpolate 0= IF
+	      r> ds2 @xy
+	      fswap fdrop
+	    ELSE
+	      fover r> interpolate_y2
+	    THEN
 	    ar_operator execute
 	    result{{ ridx 1 }} F!  result{{ ridx 0 }} F!
 	    ridx 1+ to ridx

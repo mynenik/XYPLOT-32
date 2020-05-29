@@ -37,7 +37,7 @@ INCLUDEDIRS = /usr/X11R6/include/
 # Lesstif libraries. Edit this line if your libraries are in
 # a different directory.
 
-LIBDIRS = /usr/lib
+LIBDIRS = /usr/lib:/usr/lib32
 
 # The macro LIBS lists the libraries needed
 

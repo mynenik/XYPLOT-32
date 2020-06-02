@@ -9,7 +9,7 @@
 \
 \	http://plasma-gate.weizmann.ac.il/Grace/
 \
-\ This file is Copyright (c) 2003--2018 Krishna Myneni
+\ This file is Copyright (c) 2003--2020 Krishna Myneni
 \ Provided under the terms of the GNU General Public License
 \
 \ Please report bugs to  <krishna.myneni@ccreweb.org>
@@ -734,7 +734,7 @@ Public:
 	IF
 	  count 2dup ." Importing Grace file, " type cr 
 	  R/O open-file 0< IF drop
-	    ." Unable to open output file!" 
+	    ." Unable to open input file!" 
 	  ELSE
 	    gr_fid ! read_grace_file
 	  THEN

@@ -10,9 +10,11 @@ Windows MFC compatibility definitions
 
 #define CDC CDeviceContext
 #define BOOL bool
-#define COLORREF int
+#define COLORREF unsigned int
 #define BYTE unsigned char
 #define CRgn void
+
+#define RGB(r, g, b) ( ((b)<<16) | ((g)<<8) | (r) )
 
 #define TRUE -1
 #define FALSE 0

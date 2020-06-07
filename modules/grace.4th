@@ -10,17 +10,16 @@
 \	http://plasma-gate.weizmann.ac.il/Grace/
 \
 \ This file is Copyright (c) 2003--2020 Krishna Myneni
-\ Provided under the terms of the GNU General Public License
+\ Provided under the GNU Affero General Public License
 \
 \ Please report bugs to  <krishna.myneni@ccreweb.org>
 \
-
 Begin-Module
 
-\ Public:
+Public:
 
-   20  constant  MAXSETS
-   20  constant  MAXPLOTS
+   32  constant  MAXSETS
+   32  constant  MAXPLOTS
 65536  constant  MAXGRACEPTS
 16384  constant  MAXHDRSIZE
 
@@ -101,27 +100,111 @@ Public:
     nplots_for_set @
 ;
 
+\ Color mapping for Grace file output
+
+16 constant MAX_XYCOLORS        \ must be at least 16
+16 constant MAX_COLORNAME_LEN
+
+: RGB>COLORREF ( ur ug ub -- ucolorref | pack RGB values into colorref value)
+    16 lshift >r 8 lshift or r> or ;
+
+: COLORREF>RGB ( ucolorref -- ur ug ub | unpack RGB color value)
+    dup 16 rshift 255 and >r
+    dup  8 rshift 255 and >r
+    255 and r> r> ;
+
+MAX_XYCOLORS INTEGER ARRAY xy_rgb{
+MAX_XYCOLORS MAX_COLORNAME_LEN ARRAY xy_colors{
+
+: default_xy_colormap ( -- )
+    s" white"      255 255 255
+    s" black"        0   0   0
+    s" blue"         0   0 255  
+    s" red"        255   0   0 
+    s" green"        0 128   0  
+    s" turquoise"   64 224 208  
+    s" magenta"    255   0 255 
+    s" sienna"     160  82  45 
+    s" gold"       255 215   0 
+    s" purple"     128   0 128
+    s" orange"     255 165   0 
+    s" seagreen"    46 139  87
+    s" slategray"  112 128 144
+    s" coral"      255 127  80
+    s" aquamarine" 127 255 212
+    s" steelblue"   70 130 180
+    0 MAX_XY_COLORS 1-  DO 
+      RGB>COLORREF xy_rgb{ I } !  
+      xy_colors{ I } swap cmove 
+    -1 +LOOP
+;
+
+\ Setup Grace output color map using XYPLOT colors
+: setup-output-colors ( -- )
+    \ White and black should always be in output color map for Grace.
+    s" white"  255 255 255 RGB>COLORREF
+    s" black"    0   0   0 RGB>COLORREF 
+    xy_rgb{ 1 } ! xy_colors{ 1 } swap cmove
+    xy_rgb{ 0 } ! xy_colors{ 0 } swap cmove
+
+    \ Get XYPLOT's current color map
+    xy_rgb{ 2 } xy_colors{ 2 } MAX_COLORNAME_LEN MAX_XYCOLORS 2- get_color_map
+    MAX_XYCOLORS 2- < IF 
+      default_xy_colormap  \ Use a default color map on error for GET_COLOR_MAP
+    THEN ;
+
+setup-output-colors
+
+variable rgb1
+variable rgb2
+
+: color-distance ( ucolorref1 ucolorref2 -- rdist )
+    rgb2 ! rgb1 !
+    rgb1 @ COLORREF>RGB 2drop
+    rgb2 @ COLORREF>RGB 2drop
+    - dup *
+    rgb1 @ COLORREF>RGB drop nip
+    rgb2 @ COLORREF>RGB drop nip
+    - dup * +
+    rgb1 @ COLORREF>RGB nip nip
+    rgb2 @ COLORREF>RGB nip nip
+    - dup * +
+    s>f fsqrt
+;
+
+variable idx_nearest
+fvariable distance
+
+\ Return nearest index of rgbcolor in the xyplot colormap
+: nearest_xyplot_color ( ucolorref -- idx )
+    255 dup * 3 * s>f fsqrt distance f!
+    0 idx_nearest !
+    MAX_XYCOLORS 0 DO
+      dup xy_rgb{ I } @ color-distance
+      fdup distance f@ f< IF distance f! I idx_nearest ! ELSE  fdrop  THEN
+    LOOP
+    drop
+    idx_nearest @ ;
+
 : write_grace_pageinfo ( -- )
     s" @page size 792, 612"      >grfile
     s" @background color 0"      >grfile
     s" @page background fill on" >grfile
 ;
    
-: write_grace_colormap ( -- )
-    s" @map color 0 to (255, 255, 255), 'white'" 	rep(',")  >grfile
-    s" @map color 1 to (0, 0, 0), 'black'"       	rep(',")  >grfile
-    s" @map color 2 to (0, 0, 255), 'blue'"      	rep(',")  >grfile
-    s" @map color 3 to (255, 0, 0), 'red'"	     	rep(',")  >grfile
-    s" @map color 4 to (34, 139, 34), 'forestgreen'"    rep(',")  >grfile
-    s" @map color 5 to (64, 224, 208), 'turquoise'"     rep(',")  >grfile
-    s" @map color 6 to (255, 0, 255), 'magenta'"   	rep(',")  >grfile
-    s" @map color 7 to (160, 82, 45), 'sienna'"    	rep(',")  >grfile
-    s" @map color 8 to (255, 215, 0), 'gold'"	        rep(',")  >grfile
-    s" @map color 9 to (255, 165,0), 'orange'"  	rep(',")  >grfile
-    s" @map color 10 to (0, 0, 0), 'black'"  	        rep(',")  >grfile
-;
+: write_xyplot_colormap ( -- )
+    MAX_XYCOLORS 0 DO
+      s" @map color " I u>$ strcat s"  to (" strcat
+      xy_rgb{ I } @ COLORREF>RGB >r >r
+      u>$ strcat s" ," strcat
+      r> u>$ strcat s" ," strcat
+      r> u>$ strcat s" ), '" strcat
+      xy_colors{ I } dup strlen strcat
+      s" '" strcat rep(',") >grfile
+    LOOP ;
 
-: write_grace_window ( -- )
+." Reached @grace.4th 1" cr
+: write_xyplot_window ( -- )
     get_window_limits ymax f! xmax f! ymin f! xmin f!
     s" @    world xmin " xmin f@ 6 f>$  strcat >grfile
     s" @    world xmax " xmax f@ 6 f>$  strcat >grfile
@@ -130,14 +213,14 @@ Public:
 ;
 
 \ XYPLOT exported Grace files will contain a single graph, G0.
-: write_grace_graph ( -- )
+: write_xyplot_graph ( -- )
     s" @g0 on"           >grfile
     s" @g0 type XY"      >grfile
     s" @with g0"         >grfile
     s" @g0 hidden false" >grfile
 ;
 
-: write_grace_axes ( -- )
+: write_xyplot_axes ( -- )
     s" @    xaxis on"      >grfile
     s" @    xaxis tick on" >grfile 
     s" @    xaxis tick major " 
@@ -203,8 +286,9 @@ Public:
 ;
 
 \ Write the Grace set's symbol properties
-: write_symbol_info ( nsymbol ncolor -- )
-    2+  \ offset xyplot plot color to map into colormap index
+\ ucolor is an rgb value
+: write_symbol_info ( nsymbol ucolor -- )
+    nearest_xyplot_color
     $gr_set s" symbol size " strcat
     2over drop sym_BIG_POINT = IF 
       s" 0.6" ELSE s" 0.2" THEN  strcat >grfile
@@ -220,8 +304,8 @@ Public:
 ;
 
 \ Write the Grace set's line properties
-: write_line_info ( nsymbol ncolor -- )
-    2+
+: write_line_info ( nsymbol ucolor -- )
+    nearest_xyplot_color
     $gr_set s" linestyle " strcat
     2over drop sym_DASHED = IF 3 ELSE 1 THEN
     u>$ strcat >grfile
@@ -344,10 +428,10 @@ Public:
     s" @version 50114"     >grfile
 
     write_grace_pageinfo
-    write_grace_colormap
-    write_grace_graph
-    write_grace_window
-    write_grace_axes
+    write_xyplot_colormap
+    write_xyplot_graph
+    write_xyplot_window
+    write_xyplot_axes
     write_datasets_info
     write_datasets_xydata
 ;
@@ -747,6 +831,4 @@ MN_FILE  c" Export Grace File"   c" export_grace"  add_menu_item
 MN_FILE  c" Import Grace File"   c" import_grace"  add_menu_item
 
 End-Module
-
-	
 

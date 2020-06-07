@@ -61,6 +61,10 @@ void StatusButtonEH (Widget, XtPointer, XEvent*, Boolean*);
 
 extern int* GlobalSp;
 extern byte* GlobalTp;
+#define MAX_COLORS 32
+extern COLORREF colors_rgb_table[];
+extern char* color_names[];
+extern "C" char* strupr(char*);
 
 Widget TopLevel;
 
@@ -80,6 +84,7 @@ XmString old_filter;
 // Template array for Forth interface functions
 
 IfcFuncTemplate IfcFuncList[] = {
+	{ (const void*) get_color_map,     "FN_GET_COLOR_MAP"    },       
 	{ (const void*) get_active_set,    "FN_GET_ACTIVE_SET"   },
 	{ (const void*) get_operand_set,   "FN_GET_OPERAND_SET"  },
 	{ (const void*) get_active_plot,   "FN_GET_ACTIVE_PLOT"  },
@@ -940,6 +945,22 @@ char* DisplayFormat (float x1, float x2)
 }
 //--------------------------------------------------------------
 
+COLORREF LookupColor (char* color_name)
+{
+    // Return the COLORREF (rgb color value) associated with
+    //   a color name if found, else return rgb value for black.
+
+    strupr(color_name);
+
+    for (int i = 0; i < MAX_COLORS; i++)
+      {
+        if (strcmp(color_name, strupr(color_names[i])) == 0)
+            return colors_rgb_table[i];
+      }
+      return RGB(0,0,0);
+}
+//--------------------------------------------------------------
+
 void LoadInitializationFile ()
 {
 // Load the Forth file xyplot.4th, residing in the
@@ -1126,6 +1147,42 @@ int LoadForthFile(char* fname)
 //  Forth environment only.
 //
 //----------------------------------------------------------------
+
+int get_color_map ()
+{
+   // Fill in the xyplot color rgb values and names in the
+   // data arrays
+   // stack: ( acolorref acolornames max-name-len max-colors -- ncolors )
+   ++GlobalSp; ++GlobalTp;
+   int maxcolors = *GlobalSp;
+   if (maxcolors <= 0) return 0;
+   if (maxcolors > MAX_COLORS) maxcolors = MAX_COLORS;
+   ++GlobalSp; ++GlobalTp;
+   int max_name_len = *GlobalSp;
+   ++GlobalSp; ++GlobalTp;
+   if (*GlobalTp != OP_ADDR) return( -1 ); // invalid array
+   char* pcolornames = (char*)(*GlobalSp);
+   ++GlobalSp; ++GlobalTp;
+   if (*GlobalTp != OP_ADDR) return( -1 ); // invalid array
+   COLORREF* colorrefs = (COLORREF*)(*GlobalSp);
+   
+   *GlobalTp-- = OP_IVAL;
+   int i, n;
+   char *p = pcolornames;
+   for (i = 0; i < maxcolors; i++) {
+     *colorrefs = colors_rgb_table[i];
+     ++colorrefs;
+     char* name = color_names[i];
+     n = strlen(name);
+     if (n >= max_name_len) n = max_name_len-1;
+     strncpy(p, name, n);
+     *(p + n) = (char) 0;
+     p += max_name_len;
+   }
+   *GlobalSp-- = maxcolors;
+   return 0;
+}
+// --------------------------------------------------------------
 
 int get_active_set ()
 {
@@ -1326,7 +1383,7 @@ int get_plot ()
 	      *pl_info++ = nSet;  // dataset index number
 	      *pl_info++ = 0;     // set zero for the plot type
 	      *pl_info++ = p->GetSymbol();  // plot symbol
-	      *pl_info = p->GetColor();   // plot color
+	      *pl_info = colors_rgb_table[p->GetColor()];   // plot color
 	      *GlobalSp = 0;
 	    }
 	  else
@@ -1415,7 +1472,7 @@ int set_plot_color ()
     {
       char* color_name = *((char**)GlobalSp);
       ++color_name;
-      unsigned c = pMainWnd->GetColor(color_name);
+      unsigned int c = pMainWnd->GetColor(color_name);
       pMainWnd->m_pDi->GetActivePlot()->SetColor(c);
       pMainWnd->Invalidate();
     }

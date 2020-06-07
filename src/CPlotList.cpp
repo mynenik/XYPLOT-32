@@ -115,7 +115,7 @@ COLORREF CPlotList::NextColor()
 // Return the first unused color in the color table
 
     PlotListNode* node = m_pHead;
-    COLORREF c = 0;
+    unsigned int c = 0;
 
     if (node)
     {

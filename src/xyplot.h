@@ -3,11 +3,11 @@ xyplot.h
 
   Header file for XYPLOT (C++/Linux/X Windows version)
 
-  Copyright (c) 1995--2018 Krishna Myneni 
+  Copyright (c) 1995--2020 Krishna Myneni 
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the 
-  GNU General Public License (GPL), v3.0 or later.
+  GNU Affero General Public License (GPL), v3.0 or later.
 
 */
 
@@ -39,6 +39,7 @@ struct IfcFuncTemplate
 // the C++ functions and the Forth environment. They
 // should not be called by C, C++, or assembler routines.
 //
+int get_color_map();
 int get_active_set();
 int get_operand_set();
 int get_active_plot();

@@ -53,7 +53,7 @@ using std::endl;
 extern void SortRect (CRect *);
 extern int NumberParse (float*, char*);
 extern int CompileAE (vector<byte>*, char* exp);
-extern "C" void strupr (char*);
+extern "C" char* strupr (char*);
 extern int AddToHeader (char*, char*, bool);
 extern int LoadForthFile (char*);
 
@@ -431,7 +431,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   temp = XmSelectionBoxGetChild(m_nColorDialog, XmDIALOG_LIST);
   for (int i = 0; i < MAX_COLORS; i++)
     {
-      XmListAddItem(temp, XmStringCreate((char*) color_list[i], 
+      XmListAddItem(temp, XmStringCreate((char*) color_names[i], 
 	    XmSTRING_DEFAULT_CHARSET), 0);      
     }
 
@@ -547,7 +547,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   // Setup the plot colors
 
-  m_pDc->SetColors((char**) color_list, MAX_COLORS);
+  m_pDc->SetColors((char**) color_names, MAX_COLORS);
   SetBackgroundColor("DarkGrey");
   SetForegroundColor("black");
 
@@ -580,7 +580,7 @@ void CPlotWindow::OnPrint ()
 {
   CpsDC printDC (612, 792);
   printDC.OpenDisplay (PRINT_TEMP_FILE);
-  printDC.SetColors ((char**) color_list, MAX_COLORS);
+  printDC.SetColors ((char**) color_names, MAX_COLORS);
   printDC.SetForeground (printDC.GetColor("black"));
 
   CRect r = printDC.GetClientRect();
@@ -1400,7 +1400,7 @@ void CPlotWindow::OnSetColor()
     {
       i = selections[0];
       char color_name [32];
-      strcpy (color_name, color_list[i-1]);
+      strcpy (color_name, color_names[i-1]);
       unsigned c = GetColor(color_name);
       CPlot* p = m_pDi->GetActivePlot();
       if (p) 

@@ -67,6 +67,10 @@ int CDatabase::IndexOf (CDataset* d)
 CDataset* CDatabase::FindInList (char* name)
 {
 // Return a pointer to the dataset with the specified name
+// WARNING: This function returns the first data set in the
+//          database with the matching name. If multiple data
+//          sets with the same name exist, only the first
+//          matching dataset is returned.
 
     int n = m_nSets.size();
 

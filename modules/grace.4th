@@ -133,7 +133,7 @@ MAX_XYCOLORS MAX_COLORNAME_LEN ARRAY xy_colors{
     s" coral"      255 127  80
     s" aquamarine" 127 255 212
     s" steelblue"   70 130 180
-    0 MAX_XY_COLORS 1-  DO 
+    0 MAX_XYCOLORS 1-  DO 
       RGB>COLORREF xy_rgb{ I } !  
       xy_colors{ I } swap cmove 
     -1 +LOOP

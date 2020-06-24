@@ -51,7 +51,7 @@ COLORREF colors_rgb_table[] = {
 
 const char* color_names[] = 
   {"blue", "red", "forestgreen", "turquoise",
-   "magenta", "sienna", "gold", "black", 
+   "magenta", "sienna", "gold", "purple", 
    "orange", "seagreen", "slategray", "coral",
    "black", "aquamarine", "steelblue", "orchid",
    "salmon", "midnightblue", "darkgreen", "cyan",

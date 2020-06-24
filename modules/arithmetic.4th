@@ -2,22 +2,11 @@
 \
 \ xyplot module for dataset arithmetic functions
 \
-\ (c) 1999--2012 Krishna Myneni
+\ (c) 1999--2020 Krishna Myneni
 \
 \ This software is released under the terms of the GNU
 \ Lesser General Public License (LGPL)
 \ 
-\ Revisions: 
-\	2000-01-18
-\	2000-06-21 updated for new features of kforth  KM
-\       2005-01-13  updated for new DatasetInfo data structure  KM
-\       2005-08-03  updated to use submenu in Math Menu  KM
-\       2007-06-02  now using FSL arrays and matrices; removed requirement for matrix.4th
-\       2007-09-28  auto generate plot of result KM
-\       2009-10-28  revised data structure members  km
-\       2012-06-26  convert to unnamed module  km
-\ 	2020-05-29  implement linear interpolation when abscissas not equal
-\ 	            in overlap region between two datasets  km
 \ Requires:
 \
 \	xyplot.4th
@@ -34,8 +23,13 @@ FLOAT DMATRIX result{{
 	
     \ Set up the info structure for a new dataset
 
-    1+          ds3  DatasetInfo->Name !
-    c"  " 1+    ds3  DatasetInfo->Header !
+    dup 1+      ds3  DatasetInfo->Name !
+    count s"  of " strcat
+    ds1 DatasetInfo->Name a@ dup strlen strcat
+    s"  and " strcat
+    ds2 DatasetInfo->Name a@ dup strlen strcat
+    strpck 1+   ds3 DatasetInfo->Header !
+
     REAL_DOUBLE ds3  DatasetInfo->Type !
     Npts        ds3  DatasetInfo->Npts !
     2           ds3  DatasetInfo->Size !

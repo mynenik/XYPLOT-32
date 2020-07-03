@@ -105,12 +105,12 @@ Public:
 ;
 
 \ Color mapping for Grace file output
-16 constant MAX_GRCOLORS
-MAX_GRCOLORS INTEGER ARRAY gr_rgb{
-MAX_GRCOLORS 32      ARRAY gr_colors{
-
 32 constant MAX_XYCOLORS        \ must be at least 16
+16 constant MAX_GRCOLORS
 16 constant MAX_COLORNAME_LEN
+
+MAX_GRCOLORS INTEGER            ARRAY gr_rgb{
+MAX_GRCOLORS MAX_COLORNAME_LEN  ARRAY gr_colors{
 
 : RGB>COLORREF ( ur ug ub -- ucolorref | pack RGB values into colorref value)
     16 lshift >r 8 lshift or r> or ;
@@ -151,7 +151,7 @@ MAX_XYCOLORS MAX_COLORNAME_LEN ARRAY xy_colors{
     s" brown"        165  42  42
     s" crimson"      220  20  60
     s" springgreen"    0 255 127
-    s" indianred"    205  92  92
+    s" chestnut"     205  92  92
     s" deepskyblue"    0 191 255
     s" lightgray"    211 211 211
     s" wheat"        245 222 179
@@ -186,15 +186,10 @@ MAX_XYCOLORS MAX_COLORNAME_LEN ARRAY xy_colors{
 ;
 
 
-\ Setup Grace output color map using XYPLOT colors
-: setup_grace_colormap ( -- )
-    gr_colors{ MAX_GRCOLORS 32 * erase
-
-    \ White and black should always be in output color map for Grace.
-    s" white"  255 255 255 RGB>COLORREF
-    s" black"    0   0   0 RGB>COLORREF 
-    gr_rgb{ 1 } ! gr_colors{ 1 } swap cmove
-    gr_rgb{ 0 } ! gr_colors{ 0 } swap cmove
+\ Setup XYPLOT and Grace output color maps
+: setup_colormaps ( -- )
+    gr_colors{ MAX_GRCOLORS MAX_COLORNAME_LEN * erase
+    default_gr_colormap
 
     \ Get XYPLOT's current color map
     xy_rgb{ xy_colors{ MAX_COLORNAME_LEN MAX_XYCOLORS get_color_map
@@ -212,7 +207,7 @@ MAX_XYCOLORS MAX_COLORNAME_LEN ARRAY xy_colors{
     LOOP
 ;
 
-setup_grace_colormap
+setup_colormaps
 
 variable rgb1
 variable rgb2
@@ -603,9 +598,9 @@ variable color_idx
       d>s >r d>s >r d>s r> r>  RGB>COLORREF
       gr_rgb{ color_idx @ MAX_GRCOLORS 1- min } ! \ store colorref
       2r> s" ), " search IF
-        4 /string 1- 31 min  \ a2 u2  ( color name substring )
+        4 /string 1- MAX_COLORNAME_LEN min  \ a2 u2  ( color name substring )
         gr_colors{ color_idx @ MAX_GRCOLORS 1- min } 
-        dup 32 erase swap cmove
+        dup MAX_COLORNAME_LEN erase swap cmove
       ELSE 2drop
       THEN
     ELSE 2drop

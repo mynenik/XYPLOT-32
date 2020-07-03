@@ -102,6 +102,8 @@ public:
 	void SetForegroundColor (char*);
 	int GetBackgroundColor () { return GetColor(m_szBackgroundColor); }
 	int GetForegroundColor () { return GetColor(m_szForegroundColor); }
+	int GetWindowText (char*, int);
+	void SetWindowText (char*);
 	CPlotMessage* GetPlotMessage();
         void OnPaint ();
 	void OnPrint ();

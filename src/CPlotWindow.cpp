@@ -10,7 +10,7 @@
 #ifdef COPYRIGHT
 const char* copyright=COPYRIGHT;
 #else
-const char* copyright="1999--2018"
+const char* copyright="1999--2020"
 #endif
 
 #ifdef VERSION
@@ -33,13 +33,7 @@ const char* build=BUILD_DATE;
 #include <sstream>
 #include <vector>
 #include <stdlib.h>
-using std::istream;
-using std::ostream;
-using std::ostringstream;
-using std::vector;
-using std::cin;
-using std::cout;
-using std::endl;
+using namespace std;
 #include "CPlotWindow.h"
 #include "ColorTable.h"
 #include "fbc.h"
@@ -1800,6 +1794,15 @@ bool CPlotWindow::SaveWorkspace (char* fname)
 }
 //-----------------------------------------------------------------
 
+int CPlotWindow::GetWindowText (char* buf, int nmax)
+{
+    return 0;
+}
+
+void CPlotWindow::SetWindowText (char* pStr)
+{
+
+}
 
 
 

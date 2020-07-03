@@ -44,6 +44,9 @@ fvariable ymax
 : parse_csv ( a u -- r1 ... rn n )
     rep(comma,space) parse_args ;
 
+: dos2unix-line ( a u -- a u2 )
+    2dup 1- + c@ 13 = IF 1- THEN ;
+
 variable gr_fid
 variable grace_line_count
 	  
@@ -54,8 +57,9 @@ create grfile_buf 256 allot
 
 : <grfile ( -- a u b | read string from grace file )
     grfile_buf 256 erase
-    grfile_buf 256 gr_fid @ read-line drop
-    grfile_buf -rot
+    grfile_buf 256 gr_fid @ read-line drop \ -- u b
+    >r grfile_buf swap dos2unix-line r>
+    \ grfile_buf -rot
     1 grace_line_count +! ;
 
 
@@ -101,8 +105,11 @@ Public:
 ;
 
 \ Color mapping for Grace file output
+16 constant MAX_GRCOLORS
+MAX_GRCOLORS INTEGER ARRAY gr_rgb{
+MAX_GRCOLORS 32      ARRAY gr_colors{
 
-16 constant MAX_XYCOLORS        \ must be at least 16
+32 constant MAX_XYCOLORS        \ must be at least 16
 16 constant MAX_COLORNAME_LEN
 
 : RGB>COLORREF ( ur ug ub -- ucolorref | pack RGB values into colorref value)
@@ -117,43 +124,95 @@ MAX_XYCOLORS INTEGER ARRAY xy_rgb{
 MAX_XYCOLORS MAX_COLORNAME_LEN ARRAY xy_colors{
 
 : default_xy_colormap ( -- )
-    s" white"      255 255 255
-    s" black"        0   0   0
-    s" blue"         0   0 255  
-    s" red"        255   0   0 
-    s" green"        0 128   0  
-    s" turquoise"   64 224 208  
-    s" magenta"    255   0 255 
-    s" sienna"     160  82  45 
-    s" gold"       255 215   0 
-    s" purple"     128   0 128
-    s" orange"     255 165   0 
-    s" seagreen"    46 139  87
-    s" slategray"  112 128 144
-    s" coral"      255 127  80
-    s" aquamarine" 127 255 212
-    s" steelblue"   70 130 180
+    s" blue"           0   0 255  
+    s" red"          255   0   0 
+    s" green"          0 128   0  
+    s" turquoise"     64 224 208  
+    s" magenta"      255   0 255 
+    s" sienna"       160  82  45 
+    s" gold"         255 215   0 
+    s" purple"       128   0 128
+    s" orange"       255 165   0 
+    s" seagreen"      46 139  87
+    s" slategray"    112 128 144
+    s" coral"        255 127  80
+    s" black"          0   0   0
+    s" aquamarine"   127 255 212
+    s" steelblue"     70 130 180
+    s" orchid"       218 112 214
+    s" salmon"       250 128 114
+    s" midnightblue"  25  25 112
+    s" darkgreen"      0 100   0
+    s" cyan"           0 255 255
+    s" slateblue"    106  90 205
+    s" limegreen"     50 205  50
+    s" yellow"       255 255   0
+    s" blueviolet"   138  43 226
+    s" brown"        165  42  42
+    s" crimson"      220  20  60
+    s" springgreen"    0 255 127
+    s" indianred"    205  92  92
+    s" deepskyblue"    0 191 255
+    s" lightgray"    211 211 211
+    s" wheat"        245 222 179
+    s" white"        255 255 255
     0 MAX_XYCOLORS 1-  DO 
       RGB>COLORREF xy_rgb{ I } !  
       xy_colors{ I } swap cmove 
     -1 +LOOP
 ;
 
+: default_gr_colormap ( -- )
+    s" white"        255 255 255
+    s" black"          0   0   0
+    s" red"          255   0   0
+    s" green"          0 255   0
+    s" blue"           0   0 255
+    s" yellow"       255 255   0
+    s" brown"        188 143 143
+    s" turquoise"     64 224 208  
+    s" magenta"      255   0 255 
+    s" sienna"       160  82  45 
+    s" gold"         255 215   0 
+    s" purple"       128   0 128
+    s" orange"       255 165   0 
+    s" seagreen"      46 139  87
+    s" slategray"    112 128 144
+    s" coral"        255 127  80
+    0 MAX_GRCOLORS 1-  DO 
+      RGB>COLORREF gr_rgb{ I } !  
+      gr_colors{ I } swap cmove 
+    -1 +LOOP
+;
+
+
 \ Setup Grace output color map using XYPLOT colors
-: setup-output-colors ( -- )
+: setup_grace_colormap ( -- )
+    gr_colors{ MAX_GRCOLORS 32 * erase
+
     \ White and black should always be in output color map for Grace.
     s" white"  255 255 255 RGB>COLORREF
     s" black"    0   0   0 RGB>COLORREF 
-    xy_rgb{ 1 } ! xy_colors{ 1 } swap cmove
-    xy_rgb{ 0 } ! xy_colors{ 0 } swap cmove
+    gr_rgb{ 1 } ! gr_colors{ 1 } swap cmove
+    gr_rgb{ 0 } ! gr_colors{ 0 } swap cmove
 
     \ Get XYPLOT's current color map
-    xy_rgb{ 2 } xy_colors{ 2 } MAX_COLORNAME_LEN MAX_XYCOLORS 2- get_color_map
-    MAX_XYCOLORS 2- < IF 
-      default_xy_colormap  \ Use a default color map on error for GET_COLOR_MAP
-    THEN ;
+    xy_rgb{ xy_colors{ MAX_COLORNAME_LEN MAX_XYCOLORS get_color_map
+    MAX_XYCOLORS < IF 
+      default_xy_colormap  \ Use a default color map on error
+    THEN 
 
-setup-output-colors
+    \ For each of the plots in the PlotList, look up the xyplot
+    \   COLORREF values and names, and place those in the grace
+    \   output colormap.
+    \ (For now, simply copy the first 14 colors into the grace output map)
+    MAX_GRCOLORS 2 DO
+      xy_rgb{ I 2- } @ gr_rgb{ I } !
+      xy_colors{ I 2- } gr_colors{ I } MAX_COLORNAME_LEN cmove
+    LOOP
+;
+
+setup_grace_colormap
 
 variable rgb1
 variable rgb2
@@ -192,18 +251,17 @@ fvariable distance
     s" @page background fill on" >grfile
 ;
    
-: write_xyplot_colormap ( -- )
-    MAX_XYCOLORS 0 DO
+: write_grace_colormap ( -- )
+    MAX_GRCOLORS 0 DO
       s" @map color " I u>$ strcat s"  to (" strcat
-      xy_rgb{ I } @ COLORREF>RGB >r >r
+      gr_rgb{ I } @ COLORREF>RGB >r >r
       u>$ strcat s" ," strcat
       r> u>$ strcat s" ," strcat
       r> u>$ strcat s" ), '" strcat
-      xy_colors{ I } dup strlen strcat
+      gr_colors{ I } dup strlen strcat
       s" '" strcat rep(',") >grfile
     LOOP ;
 
-." Reached @grace.4th 1" cr
 : write_xyplot_window ( -- )
     get_window_limits ymax f! xmax f! ymin f! xmin f!
     s" @    world xmin " xmin f@ 6 f>$  strcat >grfile
@@ -428,7 +486,7 @@ Public:
     s" @version 50114"     >grfile
 
     write_grace_pageinfo
-    write_xyplot_colormap
+    write_grace_colormap
     write_xyplot_graph
     write_xyplot_window
     write_xyplot_axes
@@ -477,7 +535,6 @@ MAXGRACEPTS 2            FLOAT   MATRIX  grace_xydata{{
 MAXPLOTS    NATTRIBUTES  INTEGER MATRIX  grace_pattrs{{   \ plot attributes
 
 create  grace_set_names  MAXSETS  80 * allot  \ buffer to store set names
-create  grace_color_map  MAXPLOTS 32 * allot  \ buffer to store color names
 create  grace_headers    MAXHDRSIZE MAXSETS * allot  \ buffer to store headers
 
 : set_default_world_coords ( -- )
@@ -534,22 +591,38 @@ Public:
                   ELSE  drop s" Grace Dataset"
                   THEN ; 
 
-: parse_color_name ( a u -- | parse and store color name )
-    -trailing 10 /string parse_token $>s >r
-    s" ), " search IF
-       4 /string 1- 31 min  \ a2 u2  ( color name substring )
-       r@ MAXPLOTS < IF
-         r> 32 * grace_color_map + 
-         dup 32 erase
-	 swap cmove
-       THEN
-    ELSE 2drop r> drop
+variable color_idx
+
+: parse_colormap_color ( a u -- | parse and store rgb value and color name )
+    -trailing 10 /string parse_token $>s color_idx !
+    s" (" search IF
+      1 /string bl skip
+      0 0 2swap >number  [char] , skip bl skip
+      0 0 2swap >number  [char] , skip bl skip
+      0 0 2swap >number  2>r
+      d>s >r d>s >r d>s r> r>  RGB>COLORREF
+      gr_rgb{ color_idx @ MAX_GRCOLORS 1- min } ! \ store colorref
+      2r> s" ), " search IF
+        4 /string 1- 31 min  \ a2 u2  ( color name substring )
+        gr_colors{ color_idx @ MAX_GRCOLORS 1- min } 
+        dup 32 erase swap cmove
+      ELSE 2drop
+      THEN
+    ELSE 2drop
     THEN
 ;
 
+\ For diagnostics
+: show_grace_colormap ( -- )
+    MAX_GRCOLORS 0 do
+      gr_rgb{ I } @ 8 .r 2 spaces
+      gr_colors{ I } dup strlen type cr
+    LOOP
+;
+
 : get_grace_color ( n -- a u | retrieve color name of color n from map)
-    dup MAXPLOTS < IF
-      32 * grace_color_map + dup strlen
+    dup MAX_GRCOLORS < IF
+      gr_colors{ swap } dup strlen
     ELSE
       drop s" black"  \ default color for unknown
     THEN ;
@@ -710,11 +783,11 @@ variable xyp_symbol
 
     map_grace_attr IF
       pl1 PlotInfo->Type   !
-      ( pl1 PlotInfo->Color  ! ) swap
+      \ gr_rgb{ swap } @ nearest_xyplot_color  \ index in xyp colormap
+      \ xy_rgb{ swap } @ pl1 PlotInfo->Color  !
+      swap
       pl1 PlotInfo->Symbol !
       pl1 make_plot
-      \ Color maps used by xyplot and Grace are different, so we
-      \ look up by color name.
       get_grace_color strpck set_plot_color
     THEN
 ;
@@ -775,7 +848,7 @@ Public:
     2dup ?grace-comment-line 0= IF
       2dup s" @default"     search IF 2drop 2drop EXIT   ELSE 2drop THEN
       2dup s" @    line "   search IF 2drop 2drop EXIT   ELSE 2drop THEN
-      2dup s" @map color"   search IF parse_color_name   ELSE 2drop THEN
+      2dup s" @map color"   search IF parse_colormap_color   ELSE 2drop THEN
       2dup s"   world"      search IF parse_world_coords ELSE 2drop THEN
       2dup s" hidden "      search IF parse_visibility   ELSE 2drop THEN
       2dup s" comment"      search IF parse_grace_name   ELSE 2drop THEN
@@ -812,11 +885,15 @@ Public:
       THEN
     AGAIN ;
 
+create grace_title 64 allot
 
 : import_grace ( -- | prompt user for filename and import grace file )
+	grace_title 64 erase
 	c" *.agr" file_open_dialog
 	IF
-	  count 2dup ." Importing Grace file, " type cr 
+	  count
+	  2dup 63 min grace_title swap cmove 
+          2dup ." Importing Grace file, " type cr 
 	  R/O open-file 0< IF drop
 	    ." Unable to open input file!" 
 	  ELSE

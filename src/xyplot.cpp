@@ -1,7 +1,7 @@
 /*
 XYPLOT.CPP
 
-  Copyright (c) 1995--2018 Krishna Myneni
+  Copyright (c) 1995--2020 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the
@@ -25,15 +25,7 @@ System: Linux/X Windows/Motif
 #include <sstream>
 #include <string>
 #include <vector>
-using std::istream;
-using std::ostream;
-using std::cin;
-using std::cout;
-using std::endl;
-using std::istringstream;
-using std::ostringstream;
-using std::stringstream;
-using std::vector;
+using namespace std;
 #include "fbc.h"
 #include "ForthCompiler.h"
 #include "ForthVM.h"
@@ -99,9 +91,12 @@ IfcFuncTemplate IfcFuncList[] = {
 	{ (const void*) make_plot,         "FN_MAKE_PLOT"        },
 	{ (const void*) set_plot_symbol,   "FN_SET_PLOT_SYMBOL"  },
 	{ (const void*) set_plot_color,    "FN_SET_PLOT_COLOR"   },
+	{ (const void*) set_plot_rgbcolor, "FN_SET_PLOT_RGBCOLOR"},
 	{ (const void*) draw_plot,         "FN_DRAW_PLOT"        },
 	{ (const void*) set_grid_tics,     "FN_SET_GRID_TICS"    },
 	{ (const void*) set_grid_lines,	   "FN_SET_GRID_LINES"   },
+	{ (const void*) get_window_title,  "FN_GET_WINDOW_TITLE" },
+	{ (const void*) set_window_title,  "FN_SET_WINDOW_TITLE" },
 	{ (const void*) clear_window,      "FN_CLEAR_WINDOW"     },
 	{ (const void*) draw_window,       "FN_DRAW_WINDOW"      },
 	{ (const void*) reset_window,      "FN_RESET_WINDOW"     },
@@ -116,6 +111,7 @@ IfcFuncTemplate IfcFuncList[] = {
 	{ (const void*) message_box,  	   "FN_MESSAGE_BOX"       },
 	{ (const void*) get_input,         "FN_GET_INPUT"         },
 	{ (const void*) file_open_dialog,  "FN_FILE_OPEN_DIALOG"  },
+	{ (const void*) file_save_dialog,  "FN_FILE_SAVE_DIALOG"  },
 	{ (const void*) set_save_options,  "FN_SET_SAVE_OPTIONS"  }
 };
 
@@ -1432,8 +1428,8 @@ int make_plot ()
 		  {
 		    Symbol nSym = (Symbol) *pl_info++;
 		    p->SetSymbol(nSym);
-		    int nColor = *pl_info;
-		    p->SetColor(nColor);
+		    COLORREF rgb = *pl_info;
+		    p->SetColor(rgb);
 		  }
 	      }
 	  }
@@ -1484,6 +1480,17 @@ int set_plot_color ()
 }
 //------------------------------------------------------------------
 
+int set_plot_rgbcolor ()
+{
+  // stack: ( COLORREF -- )
+  ++GlobalSp; ++GlobalTp;
+  COLORREF c = *((unsigned long *) GlobalSp);
+  pMainWnd->m_pDi->GetActivePlot()->SetColor(c);
+  pMainWnd->Invalidate();
+  return 0;
+}
+//------------------------------------------------------------------
+
 int draw_plot ()
 {
   ++GlobalSp; ++GlobalTp;
@@ -1526,6 +1533,46 @@ int set_grid_lines ()
 }
 
 //------------------------------------------------------------------
+
+int get_window_title ()
+{
+  // stack: ( abuf nmax -- abuf nret )
+  char* buf;
+  ++GlobalSp; ++GlobalTp;
+  int nmax = *((unsigned long *)GlobalSp);
+  ++GlobalSp; ++GlobalTp;
+  if (*GlobalTp == OP_ADDR) {
+    char* buf = *((char**)GlobalSp);
+    int nret = pMainWnd->GetWindowText(buf, nmax);
+    nret = min(nmax-1, nret);
+    buf[nret] = (char) 0;
+    --GlobalSp; --GlobalTp;
+    *GlobalSp-- = nret; --GlobalTp;
+  }
+  else {
+    --GlobalSp; --GlobalTp;
+    *GlobalSp-- = 0; --GlobalTp;
+    pMainWnd->MessageBox("get_window_title buffer address error!");
+  }
+  return 0;
+}
+
+int set_window_title ()
+{
+  // stack: ( c-addr u -- )
+  ++GlobalSp; ++GlobalTp;
+  int ulen = *GlobalSp;
+  ++GlobalSp; ++GlobalTp;
+  if (*GlobalTp == OP_ADDR) {
+    char* buf = *((char**)GlobalSp);
+    buf[ulen] = (char) 0;
+    pMainWnd->SetWindowText(buf);
+  }
+  else {
+    pMainWnd->MessageBox("set_window_title buffer address error!");
+  }
+  return 0;
+}
 
 int clear_window ()
 {
@@ -1885,6 +1932,15 @@ int file_open_dialog ()
     return 0;
 }
 //------------------------------------------------------------------
+
+int file_save_dialog ()
+{
+    // This is a stub to be filled in later.
+    // stack: ( ^filter -- ^filename flag )
+    *GlobalSp-- = 0; *GlobalTp-- = OP_IVAL;
+    return 0;
+}
+//----------------------------------------------------------------
 
 int set_save_options ()
 {

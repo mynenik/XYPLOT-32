@@ -42,7 +42,7 @@ COLORREF colors_rgb_table[] = {
     RGB(165,42,42),    // brown
     RGB(220,20,60),    // crimson
     RGB(0,255,127),    // spring green
-    RGB(205,92,92),    // indian red
+    RGB(205,92,92),    // chestnut
     RGB(0,191,255),    // deep sky blue
     RGB(211,211,211),  // light gray
     RGB(245,222,179),  // wheat
@@ -56,7 +56,7 @@ const char* color_names[] =
    "black", "aquamarine", "steelblue", "orchid",
    "salmon", "midnightblue", "darkgreen", "cyan",
    "slateblue", "limegreen", "yellow", "blueviolet",
-   "brown", "crimson", "springgreen", "indianred",
+   "brown", "crimson", "springgreen", "chestnut",
    "deepskyblue", "lightgray", "wheat", "white"};
 
 #endif

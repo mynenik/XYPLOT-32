@@ -9,24 +9,19 @@
 \
 \	http://plasma-gate.weizmann.ac.il/Grace/
 \
-\ This file is Copyright (c) 2003--2020 Krishna Myneni
-\ Provided under the GNU Affero General Public License
+\ This file is part of the XYPLOT-32 and XYPLOT-Win32 distributions:
 \
-\ Please report bugs to  <krishna.myneni@ccreweb.org>
+\       https://github.com/mynenik/
 \
+\ Copyright (c) 2003--2020 Krishna Myneni
+\ Provided under the GNU Affero General Public License, v 3.0 or later.
+\
+
 Begin-Module
 
 Public:
 
-   32  constant  MAXSETS
-   32  constant  MAXPLOTS
-65536  constant  MAXGRACEPTS
-16384  constant  MAXHDRSIZE
-
-fvariable xmin
-fvariable xmax
-fvariable ymin
-fvariable ymax
+\ Utility words
 
 : rep(',") ( a u -- a u | replace every single quote with double quote in string)
 	2dup 0 ?do dup c@ [char] ' = if [char] " over c! then 1+ loop drop ;
@@ -63,54 +58,7 @@ create grfile_buf 256 allot
     1 grace_line_count +! ;
 
 
-MAXPLOTS PlotInfo% %size ARRAY PlotList{
-variable nplots  \ number of plots in plot list (set by get_plot_list)
-
-MAXPLOTS INTEGER ARRAY PlotsForSet{
-variable nplots_for_set
-
-Public:
-
-\ Obtains an array of PlotInfo structures corresponding to
-\ the current XYPLOT plot list. The number of plots in the
-\ plot list is stored in NPLOTS; however, the user can
-\ also determine the last valid array element by checking
-\ the element's data set number to see if it is >= 0.
-
-: get_plot_list ( -- )
-    0 nplots !
-    \ Initialize PlotList{ array with invalid set number
-    MAXPLOTS 0 DO -1 PlotList{ I } PlotInfo->Set ! LOOP
-
-    MAXPLOTS 0 DO
-      I PlotList{ I } get_plot 0< IF leave THEN
-      1 nplots +!
-    LOOP
-;
-
-\ For data set n, make a list of the plot numbers for the set,
-\ and return the number of plots in the list. GET_PLOT_LIST
-\ must be called prior to using this.
-: plots_for_set ( n -- u )
-    MAXPLOTS 0 DO 0 PlotsForSet{ I } ! LOOP
-    0 nplots_for_set !
-    nplots @ 0 ?DO
-      dup PlotList{ I } PlotInfo->Set @ = IF
-	I PlotsForSet{ nplots_for_set @ } ! 
-        1 nplots_for_set +! 
-      THEN
-    LOOP
-    drop
-    nplots_for_set @
-;
-
-\ Color mapping for Grace file output
-16 constant MAX_GRCOLORS
-MAX_GRCOLORS INTEGER ARRAY gr_rgb{
-MAX_GRCOLORS 32      ARRAY gr_colors{
-
-32 constant MAX_XYCOLORS        \ must be at least 16
-16 constant MAX_COLORNAME_LEN
+\ Basic color handling
 
 : RGB>COLORREF ( ur ug ub -- ucolorref | pack RGB values into colorref value)
     16 lshift >r 8 lshift or r> or ;
@@ -120,8 +68,82 @@ MAX_GRCOLORS 32      ARRAY gr_colors{
     dup  8 rshift 255 and >r
     255 and r> r> ;
 
+variable rgb1
+variable rgb2
+
+: color-distance ( ucolorref1 ucolorref2 -- rdist )
+    rgb2 ! rgb1 !
+    rgb1 @ COLORREF>RGB 2drop
+    rgb2 @ COLORREF>RGB 2drop
+    - dup *
+    rgb1 @ COLORREF>RGB drop nip
+    rgb2 @ COLORREF>RGB drop nip
+    - dup * +
+    rgb1 @ COLORREF>RGB nip nip
+    rgb2 @ COLORREF>RGB nip nip
+    - dup * +
+    s>f fsqrt
+;
+
+\ Return true if a colorref value already exists in an array
+\ of colorref values, with maximum array length, umaxcolors.
+: color-in-array? ( ucoloref acolorref umaxcolors -- flag )
+    0 ?DO
+      2dup @ = IF
+        2drop true
+        unloop EXIT
+      THEN
+      cell+
+    LOOP
+    2drop false ;
+
+variable idx_nearest
+fvariable distance
+
+\ Find the nearest matching color to ucolorref in an array of
+\ colorrefs, acolorref, with maximum array length, umaxcolors;
+\ return index in array.
+: nearest-color ( ucolorref acolorref umaxcolors -- idx )
+     255 dup * 3 * s>f fsqrt distance f!
+     0 idx_nearest !
+     0 DO      \ -- ucolorref a
+       2dup @ color-distance
+       fdup distance f@ f<
+       IF distance f! I idx_nearest !
+       ELSE  fdrop
+       THEN
+       cell+
+     LOOP
+     2drop
+     idx_nearest @ ;
+
+
+\ Color handling for import and export from/to Grace files
+
+32 constant MAX_XYCOLORS        \ must be at least 16
+16 constant MAX_GRCOLORS
+16 constant MAX_COLORNAME_LEN
+
+MAX_GRCOLORS INTEGER            ARRAY gr_rgb{
+MAX_GRCOLORS MAX_COLORNAME_LEN  ARRAY gr_colors{
+
 MAX_XYCOLORS INTEGER ARRAY xy_rgb{
 MAX_XYCOLORS MAX_COLORNAME_LEN ARRAY xy_colors{
+
+\ For diagnostics
+: show_grace_colormap ( -- )
+    MAX_GRCOLORS 0 do
+      gr_rgb{ I } @ 8 .r 2 spaces
+      gr_colors{ I } dup strlen type cr
+    LOOP
+;
+
+: get_grace_color ( n -- a u | retrieve color name of color n from map)
+    dup MAX_GRCOLORS < IF
+      gr_colors{ swap } dup strlen
+    ELSE
+      drop s" black"  \ default color for unknown
+    THEN ;
 
 : default_xy_colormap ( -- )
     s" blue"           0   0 255  
@@ -151,7 +173,7 @@ MAX_XYCOLORS MAX_COLORNAME_LEN ARRAY xy_colors{
     s" brown"        165  42  42
     s" crimson"      220  20  60
     s" springgreen"    0 255 127
-    s" indianred"    205  92  92
+    s" chestnut"     205  92  92
     s" deepskyblue"    0 191 255
     s" lightgray"    211 211 211
     s" wheat"        245 222 179
@@ -185,65 +207,122 @@ MAX_XYCOLORS MAX_COLORNAME_LEN ARRAY xy_colors{
     -1 +LOOP
 ;
 
+: nearest_xyplot_color ( ucolorref -- idx )
+    xy_rgb{ MAX_XYCOLORS nearest-color ;
 
-\ Setup Grace output color map using XYPLOT colors
-: setup_grace_colormap ( -- )
-    gr_colors{ MAX_GRCOLORS 32 * erase
+: nearest_grace_color ( ucolorref -- idx )
+    gr_rgb{ MAX_GRCOLORS nearest-color ;
 
-    \ White and black should always be in output color map for Grace.
-    s" white"  255 255 255 RGB>COLORREF
-    s" black"    0   0   0 RGB>COLORREF 
-    gr_rgb{ 1 } ! gr_colors{ 1 } swap cmove
-    gr_rgb{ 0 } ! gr_colors{ 0 } swap cmove
 
-    \ Get XYPLOT's current color map
+\ Common definitions for import and export
+
+fvariable xmin
+fvariable xmax
+fvariable ymin
+fvariable ymax
+
+   32  constant  MAXSETS
+   32  constant  MAXPLOTS
+65536  constant  MAXGRACEPTS
+16384  constant  MAXHDRSIZE
+
+
+MAXPLOTS PlotInfo% %size ARRAY PlotList{
+
+MAXPLOTS INTEGER ARRAY PlotsForSet{
+variable nplots_for_set
+
+\ Fill out an array of PlotInfo structures for each plot,
+\ and return the number of plots in the xyplot plot list.
+: get_plot_list ( -- u )
+    \ Initialize PlotList{ array with invalid set number
+    MAXPLOTS 0 DO -1 PlotList{ I } PlotInfo->Set ! LOOP
+    0
+    MAXPLOTS 0 DO
+      I PlotList{ I } get_plot 0< IF leave THEN
+      1+
+    LOOP ;
+
+\ For data set n, with a plot list containing nplots, make a list
+\ of the plot numbers for set n, and return the number of plots of
+\ set n in the list. GET_PLOT_LIST must be called prior to using 
+\ PLOTS_FOR_SET.
+
+: plots_for_set ( n nplots -- u )
+    MAXPLOTS 0 DO 0 PlotsForSet{ I } ! LOOP
+    0 nplots_for_set !
+    0 ?DO
+      dup PlotList{ I } PlotInfo->Set @ = IF
+	I PlotsForSet{ nplots_for_set @ } ! 
+        1 nplots_for_set +! 
+      THEN
+    LOOP
+    drop
+    nplots_for_set @
+;
+
+\ Get current XYPLOT color map or the default one.
+: setup_xyplot_colormap ( -- )
     xy_rgb{ xy_colors{ MAX_COLORNAME_LEN MAX_XYCOLORS get_color_map
     MAX_XYCOLORS < IF 
       default_xy_colormap  \ Use a default color map on error
-    THEN 
+    THEN ;
 
-    \ For each of the plots in the PlotList, look up the xyplot
-    \   COLORREF values and names, and place those in the grace
-    \   output colormap.
-    \ (For now, simply copy the first 14 colors into the grace output map)
-    MAX_GRCOLORS 2 DO
-      xy_rgb{ I 2- } @ gr_rgb{ I } !
-      xy_colors{ I 2- } gr_colors{ I } MAX_COLORNAME_LEN cmove
+MAXPLOTS INTEGER ARRAY plot_list_colors{
+
+\ Retrieve the colors of the plots in XYPLOT's plot list, into
+\ the array plot_list_colors[ and return the number of plots.
+: get_plot_list_colors ( -- u )
+    get_plot_list
+    dup 0 DO
+      PlotList{ I } PlotInfo->Color @
+      plot_list_colors{ I } !
+    LOOP ;
+ 
+
+\ =================================================
+\ Export XYPLOT environment to Grace file
+\ =================================================
+
+\ Setup output Grace color map -- only needed for export.
+variable gr_idx
+variable nplots
+: setup_grace_colormap ( -- )
+    gr_colors{ MAX_GRCOLORS MAX_COLORNAME_LEN * erase
+    default_gr_colormap
+    setup_xyplot_colormap
+
+    \ Obtain the current XYPLOT plot list. For each plot in the
+    \ plot list, retrieve its rgb color, and find its index in
+    \ the xyplot color map. Copy the color map entry into the
+    \ grace color map, if it does not already exist in the map.
+    MAX_GRCOLORS 1- gr_idx !
+    get_plot_list_colors dup nplots !
+    0 ?DO
+      plot_list_colors{ I } @ nearest_xyplot_color \ -- n
+      xy_rgb{ over } @ 
+      gr_rgb{ MAX_GRCOLORS color-in-array? IF
+        \ Color exists in grace color map; no need to copy it
+        drop
+      ELSE
+        \ Find an index in the grace color map, below or equal to the
+        \ current index, which does not contain any plot list colors.
+        BEGIN
+          gr_rgb{ gr_idx @ } @ 
+          plot_list_colors{ nplots @ color-in-array?
+          gr_idx @ 1 > and
+        WHILE
+          -1 gr_idx +!
+        REPEAT
+        gr_idx @ 1 = IF drop leave THEN  \ no more space in grace color map
+        xy_rgb{ over } @ gr_rgb{ gr_idx @ } !
+        xy_colors{ over } gr_colors{ gr_idx @ } 
+        MAX_COLORNAME_LEN cmove
+        drop
+        -1 gr_idx +!
+      THEN
     LOOP
 ;
-
-setup_grace_colormap
-
-variable rgb1
-variable rgb2
-
-: color-distance ( ucolorref1 ucolorref2 -- rdist )
-    rgb2 ! rgb1 !
-    rgb1 @ COLORREF>RGB 2drop
-    rgb2 @ COLORREF>RGB 2drop
-    - dup *
-    rgb1 @ COLORREF>RGB drop nip
-    rgb2 @ COLORREF>RGB drop nip
-    - dup * +
-    rgb1 @ COLORREF>RGB nip nip
-    rgb2 @ COLORREF>RGB nip nip
-    - dup * +
-    s>f fsqrt
-;
-
-variable idx_nearest
-fvariable distance
-
-\ Return nearest index of rgbcolor in the xyplot colormap
-: nearest_xyplot_color ( ucolorref -- idx )
-    255 dup * 3 * s>f fsqrt distance f!
-    0 idx_nearest !
-    MAX_XYCOLORS 0 DO
-      dup xy_rgb{ I } @ color-distance
-      fdup distance f@ f< IF distance f! I idx_nearest ! ELSE  fdrop  THEN
-    LOOP
-    drop
-    idx_nearest @ ;
 
 : write_grace_pageinfo ( -- )
     s" @page size 792, 612"      >grfile
@@ -344,9 +423,9 @@ Public:
 ;
 
 \ Write the Grace set's symbol properties
-\ ucolor is an rgb value
-: write_symbol_info ( nsymbol ucolor -- )
-    nearest_xyplot_color
+
+: write_symbol_info ( nsymbol ucolorref -- )
+    nearest_grace_color
     $gr_set s" symbol size " strcat
     2over drop sym_BIG_POINT = IF 
       s" 0.6" ELSE s" 0.2" THEN  strcat >grfile
@@ -362,8 +441,8 @@ Public:
 ;
 
 \ Write the Grace set's line properties
-: write_line_info ( nsymbol ucolor -- )
-    nearest_xyplot_color
+: write_line_info ( nsymbol ucolorref -- )
+    nearest_grace_color
     $gr_set s" linestyle " strcat
     2over drop sym_DASHED = IF 3 ELSE 1 THEN
     u>$ strcat >grfile
@@ -392,8 +471,10 @@ Public:
 \ In xyplot, there may be multiple plots associated with a data set.
 \ However, Grace permits only one plot for a set, so we simply write
 \ the plot attributes for the first plot of the set.
+variable nplots
+
 : write_datasets_info ( -- )
-    get_plot_list
+    get_plot_list nplots !
 
     MAXSETS 0 DO
       I ds1 get_ds 0< IF leave THEN  \ dataset exists in xyplot?
@@ -425,7 +506,7 @@ Public:
       THEN
 
       \ Write dataset plot info
-      I plots_for_set 0> IF
+      I nplots @ plots_for_set 0> IF
         PlotsForSet{ 0 } @ pl1 get_plot 0< IF
           ." Error obtaining plot information for set " I . cr
           gr_fid @ close-file drop
@@ -481,6 +562,8 @@ Public:
 ;
 
 : write_grace_file ( -- )
+    setup_grace_colormap
+
     s" # Grace project file (xyplot generated)" >grfile
     s" # " tdstring strcat >grfile
     s" @version 50114"     >grfile
@@ -511,7 +594,6 @@ Public:
 \ =================================================
 \   Import graph from Grace agr file to xyplot
 \ =================================================
-
 
 Private:
 
@@ -603,29 +685,14 @@ variable color_idx
       d>s >r d>s >r d>s r> r>  RGB>COLORREF
       gr_rgb{ color_idx @ MAX_GRCOLORS 1- min } ! \ store colorref
       2r> s" ), " search IF
-        4 /string 1- 31 min  \ a2 u2  ( color name substring )
+        4 /string 1- MAX_COLORNAME_LEN min  \ a2 u2  ( color name substring )
         gr_colors{ color_idx @ MAX_GRCOLORS 1- min } 
-        dup 32 erase swap cmove
+        dup MAX_COLORNAME_LEN erase swap cmove
       ELSE 2drop
       THEN
     ELSE 2drop
     THEN
 ;
-
-\ For diagnostics
-: show_grace_colormap ( -- )
-    MAX_GRCOLORS 0 do
-      gr_rgb{ I } @ 8 .r 2 spaces
-      gr_colors{ I } dup strlen type cr
-    LOOP
-;
-
-: get_grace_color ( n -- a u | retrieve color name of color n from map)
-    dup MAX_GRCOLORS < IF
-      gr_colors{ swap } dup strlen
-    ELSE
-      drop s" black"  \ default color for unknown
-    THEN ;
 
 \ Parse grace set's hidden attribute: true = not visible
 : parse_visibility ( a1 u1 a2 u2 -- a1 u1 )
@@ -867,6 +934,7 @@ Public:
 ;
 
 : read_grace_file ( -- | assumes file has already been opened)
+    setup_xyplot_colormap
     0 grace_line_count !
     0 grace_set !
     grace_pattrs{{   MAXPLOTS NATTRIBUTES * cells erase

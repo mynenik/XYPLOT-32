@@ -1,10 +1,10 @@
 // CPlotWindow.cpp
 //
-// Copyright 1996--2018 Krishna Myneni 
+// Copyright 1996--2020 Krishna Myneni 
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
-// GNU General Public License (GPL), v3.0 or later.
+// GNU Affero General Public License (AGPL), v3.0 or later.
 //
 
 #ifdef COPYRIGHT
@@ -1173,7 +1173,7 @@ void CPlotWindow::OnExpression(char* exp)
 // prefix.push_back(OP_DOTS);
 	  prefix.push_back(OP_RET);
 
-	  SetForthInputStream (cin);
+	  // SetForthInputStream (cin);
 	  SetForthOutputStream (*pSS);
 	  ecode = ForthVM (&prefix, &StackPtr, &TypePtr);
 	  if (ecode)
@@ -1195,7 +1195,8 @@ void CPlotWindow::OnExpression(char* exp)
 
 		  d->SetExtrema();
 		  sprintf (emsg, "%s\n", exp);
-		  if (AddToHeader (emsg, d->m_szHeader, True))
+		  // if (AddToHeader (emsg, d->m_szHeader, True))
+		  if (!d->AppendToHeader(emsg))
 		    MessageBox ("Header not updated.\nLength exceeded.");
 		  
 		  m_pDi->ResetExtrema();
@@ -1682,6 +1683,7 @@ bool CPlotWindow::SaveFile (char* fname)
 	    {
 	      sprintf (s, "Source file is %s\n", d->m_szName);
 	      AddToHeader (s, d->m_szHeader, True);
+	      // d->PrependToHeader(s);
 
 	      if ((lim[0] > 0) || (lim[1] < (d->NumberOfPoints()-1)))
 		{

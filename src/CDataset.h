@@ -2,11 +2,11 @@
 //
 // Abstract base class CDataset
 //
-// Copyright (c) 1995--2018 Krishna Myneni
+// Copyright (c) 1995--2020 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
-// GNU General Public License (GPL), v3.0 or later.
+// GNU Affero General Public License (GPL), v3.0 or later.
 //
 
 #ifndef __CDATASET_H__
@@ -39,7 +39,8 @@ public:
 	void CopyData (float*, int, int);
 	void CopyFromXY (float*, float*, int);
 	void CopyFromXY (float*, float*, int, int);
-	void CopyToBuffer (float* a);
+	void CopyToBuffer (float*);
+	bool AppendToHeader (char*);
 	vector<float>::iterator Find(float);
 	int IsOverlapping (float, float);
 	vector<vector<float>::iterator> Limits (float, float, int&);

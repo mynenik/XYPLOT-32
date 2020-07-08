@@ -290,6 +290,19 @@ void CDataset::CopyToBuffer (float* a)
 
 //---------------------------------------------------------------
 
+bool CDataset::AppendToHeader (char* szNewText)
+{
+    // Note: If a new line needs to be appended, it must be included
+    // at the end szNewText.
+    int len1 = strlen(m_szHeader);
+    int len2 = strlen(szNewText);
+    char* p = NULL;
+    if ((len1+len2) < HEADER_LENGTH) {
+      p = strcat(m_szHeader, szNewText);
+    }
+    return (p != NULL);
+}
+//---------------------------------------------------------------
 
 CReal::CReal(int ndim, int npts, char* name, char* hdr)
 	: CDataset(ndim, npts, name, hdr)

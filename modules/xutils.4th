@@ -10,19 +10,7 @@
 \ Revisions:
 \   2009-10-28  km  revised data structure members; moved TDSTRING
 \                   from grace.4th to this module.
-\
-
-: tdstring ( -- a u | return a date and time string )
-	time&date
-	s"  "
-	rot 0 <# [char] - hold # # # # #> strcat
-	rot 0 <# [char] - hold # # #>     strcat
-	rot 0 <# bl hold # # #>           strcat
-	rot 0 <# [char] : hold # # #>     strcat
-	rot 0 <# [char] : hold # # #>     strcat
-	rot 0 <# # # #>                   strcat 
-;
-
+\   2020-07-09  km  moved TDSTRING to utils.4th
 
 DatasetInfo ds1
 DatasetInfo ds2

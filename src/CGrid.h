@@ -2,11 +2,11 @@
 //
 // class CGrid
 //
-// Copyright 1996--2018 Krishna Myneni
+// Copyright 1996--2020 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
-// GNU General Public License (GPL), v3.0 or later.
+// GNU Affero General Public License (GPL), v3.0 or later.
 //
 
 #ifndef __CGRID_H__
@@ -23,15 +23,14 @@ static int nYt [MAX_TICS];
 class CGridFrame : public CPlotObject
 {
 public:
-  CGridFrame (int xtics, int ytics);
   void Draw (CDC*);
 };
 
 class CGridLines : public CPlotObject
 {
 public:
-  static bool m_bHorizontal;
-  static bool m_bVertical;
+  bool m_bHorizontal;
+  bool m_bVertical;
   void Draw (CDC*);
 };
 
@@ -39,6 +38,8 @@ public:
 class CAxes : public CPlotObject
 {
 public:
+  bool m_bXaxis;
+  bool m_bYaxis;
   void Draw (CDC*);
 };
 
@@ -50,12 +51,15 @@ public:
   CAxes* m_pAxes;
   int m_nFontPointSize;
   char* m_szFontName;
-CGrid ();
+
+  CGrid ();
   ~CGrid ();
   void SetTics (int, int);
   void GetTics (int*, int*);
   void SetLines (bool, bool);
-  void SetAxes (bool);
+  void GetLines (bool*, bool*);
+  void SetAxes (bool, bool);
+  void GetAxes (bool*, bool*);
 
   virtual void Labels (CDC*) = 0;
   virtual void Draw (CDC*) = 0;

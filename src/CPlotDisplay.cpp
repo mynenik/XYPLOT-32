@@ -1,10 +1,10 @@
 // CPlotDisplay.cpp
 //
-// Copyright 1996--2018 Krishna Myneni 
+// Copyright 1996--2020 Krishna Myneni 
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
-// GNU General Public License (GPL), v3.0 or later.
+// GNU Affero General Public License (AGPL), v 3.0 or later.
 //
 
 #include "CPlotDisplay.h"
@@ -17,25 +17,20 @@ CPlotDisplay::CPlotDisplay()
 {
     m_fAspect = 1.;
     m_pPlotList = new CPlotList();
-	vector<float> x(4);
-	x[0] = -1.;
-	x[1] = 1.;
-	x[2] = -1.;
-	x[3] = 1.;
+    vector<float> x(4);
+    x[0] = -1.;
+    x[1] = 1.;
+    x[2] = -1.;
+    x[3] = 1.;
 
-    m_pGrid = NULL;
     CreateView (CARTESIAN, x);
 }
 //---------------------------------------------------------------
 
 CPlotDisplay::~CPlotDisplay()
 {
-    delete m_pGrid;
-
-    m_qCT.erase(m_qCT.begin(), m_qCT.end());
-
+    m_qPV.erase(m_qPV.begin(), m_qPV.end());
     delete m_pPlotList;
-
 }
 //---------------------------------------------------------------
 
@@ -43,7 +38,7 @@ void CPlotDisplay::SetExtrema(vector<float> x)
 {
 // Set extrema for the current view
 
-    (**m_pCt).SetLogical(x);
+    (*m_qiView)->SetExtrema(x);
     strcpy (m_szXform, DisplayFormat(x[0],x[1]));
     strcpy (m_szYform, DisplayFormat(x[2],x[3]));
 }
@@ -51,37 +46,9 @@ void CPlotDisplay::SetExtrema(vector<float> x)
 
 void CPlotDisplay::CreateView(COORDINATE_SYSTEM cdns, vector<float> x)
 {
-
-  CTransform* pCt;
-
-  switch (cdns)
-    {
-    case CARTESIAN:
-      pCt = new C2D_Transform();
-      m_qCT.push_back(pCt);
-      delete m_pGrid;
-      m_pGrid = new CCartesianGrid();
-      break;
-    case CARTESIAN_INVERTED:
-      pCt = new C2Di_Transform();
-      m_qCT.push_back(pCt);
-      delete m_pGrid;
-      m_pGrid = new CCartesianGrid();
-      break;
-    case POLAR:
-      pCt = new C2D_PolarTransform();
-      m_qCT.push_back(pCt);
-      delete m_pGrid;
-      m_pGrid = new CPolarGrid();
-      break;
-    default:
-      ;
-    }
-
-  m_pGrid->SetTransform (pCt);
-  m_pCt = m_qCT.end() - 1;
-  SetExtrema (x);
-
+    CPlotView* pv = new CPlotView(cdns, x);
+    m_qPV.push_back(pv);
+    m_qiView = m_qPV.end() - 1;
 }
 //---------------------------------------------------------------
 /*
@@ -127,8 +94,7 @@ void CPlotDisplay::SetPlotRect (CRect wRect, CDC* pDC)
 	    }
         }
 
-    (**m_pCt).SetPhysical (wRect);
-    m_pGrid->SetTransform (*m_pCt);
+    (*m_qiView)->m_pCt->SetPhysical (wRect);
 }
 //---------------------------------------------------------------
 
@@ -136,9 +102,8 @@ float CPlotDisplay::GetAspect()
 {
 // Return aspect ratio of current display
 
-    CRect wRect = (**m_pCt).GetPhysical();
+    CRect wRect = (*m_qiView)->m_pCt->GetPhysical();
     return (((float) wRect.Width())/wRect.Height());
-
 }
 //---------------------------------------------------------------
 
@@ -166,9 +131,7 @@ CPlot* CPlotDisplay::MakePlot (CWorkspace41* ws, CDataset* ds, int n)
 {
 // Create corresponding plot for plot n in a 4.1 workspace
 
-    CPlot* p = NULL;
-
-    p = new CXyPlot (ds);
+    CPlot* p = new CXyPlot (ds);
     switch (ws->pv[n].sym)
     {
         case 'p':
@@ -187,10 +150,7 @@ CPlot* CPlotDisplay::MakePlot (CWorkspace41* ws, CDataset* ds, int n)
           ;
     }
 
-    // Add to plot list
-
     m_pPlotList->AddPlot (p);
-
     return p;
 }
 //---------------------------------------------------------------
@@ -220,7 +180,6 @@ void CPlotDisplay::DeletePlot ()
 // Delete the active plot in the plot list
 
     CPlot* p = m_pPlotList->Active();
-
     m_pPlotList->RemovePlot(p);
     delete p;
 }
@@ -235,7 +194,6 @@ void CPlotDisplay::DeletePlotsOf (CDataset* d)
     while (p = m_pPlotList->PlotOf(d))
     {
         m_pPlotList->RemovePlot(p);
-
         delete p;
     }
 }
@@ -243,12 +201,12 @@ void CPlotDisplay::DeletePlotsOf (CDataset* d)
 
 void CPlotDisplay::Draw(CDC *pDC)
 {
+  CPlotView* pView = *m_qiView;
+  pView->m_pGrid->SetColor(pDC->GetColor("black"));  // set color of grid
+  pView->m_pGrid->Draw(pDC);
+  pView->m_pGrid->Labels(pDC);
 
-  m_pGrid->SetColor(pDC->GetColor("black"));  // set color of grid
-  m_pGrid->Draw(pDC);
-  m_pGrid->Labels(pDC);
-
-  CRect rect = (**m_pCt).GetPhysical();
+  CRect rect = pView->m_pCt->GetPhysical();
   pDC->SetClipRect(rect);  // enable clipping for plot area
   m_pPlotList->Draw(pDC);
   pDC->SetClipRect (pDC->GetClientRect()); // disable clipping
@@ -261,33 +219,41 @@ void CPlotDisplay::ResetExtrema()
 //   which there are plots
 
   vector<float> x = m_pPlotList->GetExtrema();
-  (**m_qCT.begin()).SetLogical(x);
+  (*m_qPV.begin())->SetExtrema(x);
   strcpy (m_szXform, DisplayFormat(x[0],x[1]));
   strcpy (m_szYform, DisplayFormat(x[2],x[3]));
 }
 //---------------------------------------------------------------
 
+void CPlotDisplay::ApplyCurrentView()
+{
+   CTransform* pT = (*m_qiView)->m_pCt;
+   if (pT) (*m_qiView)->m_pGrid->SetTransform(pT);
+}
+
 void CPlotDisplay::GoBack()
 {
-// Back up to the previous coordinate transformation in
-//   a circular fashion
+// Back up to the previous view in a circular fashion
 
-    if (m_pCt > m_qCT.begin())
-        --m_pCt;
+    if (m_qiView > m_qPV.begin())
+        --m_qiView;
     else
-        m_pCt = m_qCT.end() - 1;
+        m_qiView = m_qPV.end() - 1;
+
+    ApplyCurrentView();
 }
 //---------------------------------------------------------------
 
 void CPlotDisplay::GoForward()
 {
-// Move to the next coordinate transformation in the queue,
-//   in a circular fashion
+// Move to the next view in the queue, in a circular fashion
 
-    if (m_pCt < (m_qCT.end() - 1))
-        ++m_pCt;
+    if (m_qiView < (m_qPV.end() - 1))
+        ++m_qiView;
     else
-        m_pCt = m_qCT.begin();
+        m_qiView = m_qPV.begin();
+
+    ApplyCurrentView();
 }
 //---------------------------------------------------------------
 
@@ -296,10 +262,11 @@ void CPlotDisplay::DeleteView ()
 // Delete the current transformation and go to previous one,
 //   unless it is the first transformation.
 
-    if (m_pCt > m_qCT.begin())
+    if (m_qiView > m_qPV.begin())
     {
-        --m_pCt;
-        m_qCT.erase (m_pCt + 1, m_pCt + 2);
+        --m_qiView;
+        m_qPV.erase (m_qiView + 1, m_qiView + 2);
+	ApplyCurrentView();
     }
 }
 //---------------------------------------------------------------
@@ -329,6 +296,4 @@ int CPlotDisplay::Write (ofstream& ofile)
 
   return 0;
 }
-
-
 

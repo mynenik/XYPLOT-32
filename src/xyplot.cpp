@@ -93,6 +93,7 @@ IfcFuncTemplate IfcFuncList[] = {
 	{ (const void*) set_plot_color,    "FN_SET_PLOT_COLOR"   },
 	{ (const void*) set_plot_rgbcolor, "FN_SET_PLOT_RGBCOLOR"},
 	{ (const void*) draw_plot,         "FN_DRAW_PLOT"        },
+	{ (const void*) get_grid,          "FN_GET_GRID"         },
 	{ (const void*) set_grid_tics,     "FN_SET_GRID_TICS"    },
 	{ (const void*) set_grid_lines,	   "FN_SET_GRID_LINES"   },
 	{ (const void*) get_window_title,  "FN_GET_WINDOW_TITLE" },
@@ -585,6 +586,7 @@ void PlotMenuCB (Widget w, void* client_d, void* call_d)
   XmSelectionBoxCallbackStruct *selection;
   XmToggleButtonCallbackStruct* sel3;
   bool bx, by, bg;
+  CPlotView* pView;
 
   int i = (int) client_data;
   switch(i)
@@ -636,9 +638,10 @@ void PlotMenuCB (Widget w, void* client_d, void* call_d)
     case PL_GRID_LINES:
       bx = XmToggleButtonGetState(pMainWnd->m_nXGridLines);
       by = XmToggleButtonGetState(pMainWnd->m_nYGridLines);
-      bg = XmToggleButtonGetState(pMainWnd->m_nGridAxes); 
-      pMainWnd->m_pDi->m_pGrid->SetLines(bx, by);
-      pMainWnd->m_pDi->m_pGrid->SetAxes(bg);
+      bg = XmToggleButtonGetState(pMainWnd->m_nGridAxes);
+      pView = pMainWnd->m_pDi->GetCurrentView(); 
+      pView->m_pGrid->SetLines(bx, by);
+      pView->m_pGrid->SetAxes(bg, bg);
       pMainWnd->Invalidate();
       break;
     default:
@@ -1511,13 +1514,31 @@ int draw_plot ()
 }
 //------------------------------------------------------------------
 
+int get_grid ()
+{
+   // stack: ( -- nXtics nYtics bXGridLines bYGridLines bXaxis bYaxis )
+   int nx, ny;
+   bool bXlines, bYlines, bXaxis, bYaxis;
+   CPlotView* pView = pMainWnd->m_pDi->GetCurrentView();
+   pView->m_pGrid->GetTics(&nx, &ny);
+   *GlobalSp-- = nx; *GlobalTp-- = OP_IVAL;
+   *GlobalSp-- = ny; *GlobalTp-- = OP_IVAL;
+   pView->m_pGrid->GetLines(&bYlines, &bXlines);
+   *GlobalSp-- = bXlines; *GlobalTp-- = OP_IVAL;
+   *GlobalSp-- = bYlines; *GlobalTp-- = OP_IVAL;
+   pView->m_pGrid->GetAxes(&bXaxis, &bYaxis);
+   *GlobalSp-- = (int) bXaxis; *GlobalTp-- = OP_IVAL;
+   *GlobalSp-- = (int) bYaxis; *GlobalTp-- = OP_IVAL;
+   return 0;
+}
+
 int set_grid_tics ()
 {
   ++GlobalSp; ++GlobalTp;
   int ny = *GlobalSp++; ++GlobalTp;
   int nx = *GlobalSp;
-
-  pMainWnd->m_pDi->m_pGrid->SetTics(nx, ny);
+  CPlotView* pView = pMainWnd->m_pDi->GetCurrentView();
+  pView->m_pGrid->SetTics(nx, ny);
   pMainWnd->Invalidate();
   return 0;
 }
@@ -1527,7 +1548,8 @@ int set_grid_lines ()
   ++GlobalSp; ++GlobalTp;
   bool by = *GlobalSp++; ++GlobalTp;
   bool bx = *GlobalSp;
-  pMainWnd->m_pDi->m_pGrid->SetLines(bx, by);
+  CPlotView* pView = pMainWnd->m_pDi->GetCurrentView();
+  pView->m_pGrid->SetLines(bx, by);
   pMainWnd->Invalidate();
   return 0;
 }

@@ -18,7 +18,7 @@
 #      before "make debug".
 #
 COPYRIGHT=1999--2020
-VERSION=2.4.9-2
+VERSION=2.5.0
 KFORTH_VER=1.6.4-2
 MODULE_DIR_VAR=XYPLOT_DIR
 BUILD_DATE=`date +%F`
@@ -62,7 +62,7 @@ CPPFLAGS = -c -m32
 CFLAGS = -c -m32
 
 OBJS = xyplot.o CDataset.o CDatabase.o CDeviceContext.o CGrid.o\
-  CPlotDisplay.o CPlotList.o CPlotObject.o CPlotWindow.o\
+  CPlotView.o CPlotDisplay.o CPlotList.o CPlotObject.o CPlotWindow.o\
   CPolarGrid.o CTransform.o CWorkspace41.o CXyFile.o CXyPlot.o\
   CxDC.o CpsDC.o AlgebraCompiler.o ForthCompiler.o ForthVM.o vm32.o\
   vmc.o
@@ -95,7 +95,11 @@ CDeviceContext.o: CDeviceContext.cpp CDeviceContext.h CPoint.h CRect.h CPlotMess
 CGrid.o: CGrid.cpp CGrid.h CPlotObject.h CPoint.h CRect.h CDeviceContext.h CxDC.h
 	${CPP} ${CPPFLAGS} -I${INCLUDEDIRS} ${DEBUG} CGrid.cpp
 
-CPlotDisplay.o: CPlotDisplay.cpp CPlotDisplay.h CPlotList.h CPolarGrid.h\
+CPlotView.o: CPlotView.cpp CPlotView.h CTransform.h CGrid.h
+	${CPP} ${CPPFLAGS} -I${INCLUDEDIRS} ${DEBUG} CPlotView.cpp
+
+CPlotDisplay.o: CPlotDisplay.cpp CPlotDisplay.h CPlotList.h \
+	CTransform.h CGrid.h CPolarGrid.h CPlotView.h \
 	CXyPlot.h CWorkspace41.h CPoint.h CRect.h CDeviceContext.h CxDC.h
 	${CPP} ${CPPFLAGS} -I${INCLUDEDIRS} ${DEBUG} CPlotDisplay.cpp
 

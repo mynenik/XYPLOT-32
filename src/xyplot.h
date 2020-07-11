@@ -28,6 +28,7 @@ vector<char*> GetStartupFileList (int, char**);
 void InitForthInterface();
 int LoadForthFile(char*);
 int ExecuteForthExpression (char*, ostringstream*, int*);
+COLORREF LookupColor(char*);
 
 struct IfcFuncTemplate
 {
@@ -56,6 +57,7 @@ int set_plot_symbol();
 int set_plot_color();
 int set_plot_rgbcolor();
 int draw_plot();
+int get_grid();
 int set_grid_tics();
 int set_grid_lines();
 int get_window_title();

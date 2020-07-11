@@ -738,7 +738,8 @@ void CPlotWindow::SetForegroundColor (char* color_name)
 
   if (m_pDi) 
     {
-      CGrid* pGrid = m_pDi->m_pGrid;
+      CPlotView* pView = m_pDi->GetCurrentView();
+      CGrid* pGrid = pView->m_pGrid;
       if (pGrid) pGrid->SetColor(fg);
     }
   Invalidate();
@@ -1230,15 +1231,27 @@ void CPlotWindow::OnSmooth()
 void CPlotWindow::OnGrid()
 {
   // Allow user to setup grid style
-  XmToggleButtonSetState(m_nXGridLines, CGridLines::m_bVertical, False);
-  XmToggleButtonSetState(m_nYGridLines, CGridLines::m_bHorizontal, False);
+  CPlotView* pView = m_pDi->GetCurrentView();
+  CGrid* pGrid = pView->m_pGrid;
+  int nx, ny;
+  bool bVer, bHor, bXaxis, bYaxis;
+  pGrid->GetTics(&nx, &ny);
+  pGrid->GetLines(&bVer, &bHor);
+  pGrid->GetAxes(&bXaxis, &bYaxis); 
+  XmToggleButtonSetState(m_nXGridLines, bVer, False);
+  XmToggleButtonSetState(m_nYGridLines, bHor, False);
   XtManageChild (m_nGridDialog);
 }
 
 void CPlotWindow::OnGridToggle()
 {
-  (m_pDi->m_pGrid->m_pLines) ? m_pDi->m_pGrid->SetLines(false,false) :
-    m_pDi->m_pGrid->SetLines(true, true);
+  CPlotView* pView = m_pDi->GetCurrentView();
+  bool bHor, bVer;
+  pView->m_pGrid->GetLines(&bHor, &bVer);
+  if (bHor && bVer)
+    pView->m_pGrid->SetLines(false, false);
+  else
+    pView->m_pGrid->SetLines(true, true);
 
   Invalidate();
 }

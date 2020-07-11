@@ -1,10 +1,10 @@
 // CGrid.cpp
 //
-// Copyright 1995--2018 Krishna Myneni
+// Copyright 1995--2020 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
-// GNU General Public License (GPL), v3.0 or later.
+// GNU Affero General Public License (AGPL), v 3.0 or later.
 //
 
 #include "CGrid.h"
@@ -13,17 +13,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-bool CGridLines::m_bHorizontal = true;
-bool CGridLines::m_bVertical = true;
-
 extern char* LabelFormat (float, float, char);
 
-
-CGridFrame::CGridFrame (int nXt, int nYt)
-{
-    if (nXt >= 0) nXtics = nXt;
-    if (nYt >= 0) nYtics = nYt;
-}
 //---------------------------------------------------------------
 
 void CGridFrame::Draw (CDC* pDc)
@@ -103,7 +94,7 @@ void CGridLines::Draw (CDC* pDc)
   ix2 = rect.BottomRight().x;
   iy2 = rect.BottomRight().y;
 
-  if (CGridLines::m_bVertical)
+  if (m_bVertical)
     {
       if (nXtics > 0)
 	{
@@ -117,7 +108,7 @@ void CGridLines::Draw (CDC* pDc)
     }
 
 
-  if (CGridLines::m_bHorizontal)
+  if (m_bHorizontal)
     {
       if (nYtics > 0)
 	{
@@ -141,16 +132,18 @@ void CAxes::Draw (CDC* pDc)
   x = m_pT->GetLogical();
   p = m_pT->Physical(ax);
 
-  if ((x[0] < ax[0]) && (x[1] > ax[0]))
-    {
+  if (m_bYaxis) {
+    if ((x[0] < ax[0]) && (x[1] > ax[0])) {
       pDc->MoveTo(p.x, r.TopLeft().y);
       pDc->LineTo(p.x, r.BottomRight().y);
     }
-  if ((x[2] < ax[1]) && (x[3] > ax[1]))
-    {
+  }
+  if (m_bXaxis) {
+    if ((x[2] < ax[1]) && (x[3] > ax[1])) {
       pDc->MoveTo(r.TopLeft().x, p.y);
       pDc->LineTo(r.BottomRight().x, p.y);
     }
+  }
 }
 
 //---------------------------------------------------------------
@@ -162,15 +155,13 @@ CGrid::CGrid()
   m_szFontName = new char[32];
   strcpy (m_szFontName, "Courier New");
 
-  m_pFrame = NULL;
-  m_pLines = NULL;
-  m_pAxes = NULL;
-
-  m_pFrame = new CGridFrame (10, 10);
+  m_pFrame = new CGridFrame ();
   m_pFrame->SetAttributes (PS_SOLID, 1, m_nColor);
-
-  SetLines(CGridLines::m_bHorizontal, CGridLines::m_bVertical);
-  SetAxes(True);
+  m_pLines = new CGridLines();
+  m_pAxes = new CAxes();
+  SetTics(10, 10);
+  SetLines(false, false);
+  SetAxes(true, true);
 }
 //---------------------------------------------------------------
 CGrid::~CGrid()
@@ -184,16 +175,8 @@ CGrid::~CGrid()
 
 void CGrid::SetTics (int xtics, int ytics)
 {
-  delete m_pFrame;
-
-  if ((xtics > 0) && (ytics > 0))
-    {
-      m_pFrame = new CGridFrame(xtics, ytics);
-    }
-  else
-    {
-      m_pFrame = NULL;
-    }
+    nXtics = xtics;
+    nYtics = ytics;
 }
 
 void CGrid::GetTics (int* pXtics, int* pYtics)
@@ -202,36 +185,37 @@ void CGrid::GetTics (int* pXtics, int* pYtics)
     *pYtics = nYtics;
 }
 
-void CGrid::SetLines (bool bx, bool by)
+void CGrid::SetLines (bool bVer, bool bHor)
 {
-  delete m_pLines;
-  CGridLines::m_bVertical = bx;
-  CGridLines::m_bHorizontal = by;
+  if (m_pLines) {
+    m_pLines->m_bVertical = bVer;
+    m_pLines->m_bHorizontal = bHor;
+  }
+}
 
-  if (bx || by)
-    {
-      m_pLines = new CGridLines ();
-      m_pLines->SetAttributes (PS_DOT, 1, m_nColor);
-    }
-  else
-    {
-      m_pLines = NULL;
+void CGrid::GetLines (bool* pHor, bool* pVer)
+{
+    if ( m_pLines) {
+      *pVer = m_pLines->m_bVertical;
+      *pHor = m_pLines->m_bHorizontal;
     }
 }
 
-void CGrid::SetAxes (bool b)
+void CGrid::SetAxes (bool bx, bool by)
 {
-  delete m_pAxes;
-
-  if (b)
-    {
-      m_pAxes = new CAxes ();
+  if (m_pAxes) {
       m_pAxes->SetAttributes (PS_SOLID, 1, m_nColor);
-    }
-  else
-    {
-      m_pAxes = NULL;
-    }
+      m_pAxes->m_bXaxis = bx;
+      m_pAxes->m_bYaxis = by;
+  }
+}
+
+void CGrid::GetAxes (bool* pX, bool* pY)
+{
+  if (m_pAxes) {
+    *pX = m_pAxes->m_bXaxis;
+    *pY = m_pAxes->m_bYaxis;
+  }
 }
 //---------------------------------------------------------------
 
@@ -240,15 +224,12 @@ void CCartesianGrid::Draw(CDC* pDc)
   pDc->SetForeground(m_nColor);
 
   // Draw the frame and tics
-
   if (m_pFrame) m_pFrame->Draw(pDc);
 
   // Draw the grid lines
-
   if (m_pLines) m_pLines->Draw(pDc);
 
   // Draw the axes
-
   if (m_pAxes) m_pAxes->Draw(pDc);
 
 }

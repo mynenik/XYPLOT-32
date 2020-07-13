@@ -221,6 +221,14 @@ fvariable xmax
 fvariable ymin
 fvariable ymax
 
+variable nXtics
+variable nYtics
+variable bXlines
+variable bYlines
+variable bXaxis
+variable bYaxis
+
+
    32  constant  MAXSETS
    32  constant  MAXPLOTS
 65536  constant  MAXGRACEPTS
@@ -357,32 +365,23 @@ variable nplots
     s" @g0 hidden false" >grfile
 ;
 
-variable nXtics
-variable nYtics
-variable bVlines
-variable bHlines
-variable bXaxis
-variable bYaxis
-
 : write_xyplot_axes ( -- )
-    get_grid bYaxis ! bXaxis ! bHlines ! bVlines ! nYtics ! nXtics !
+    get_grid bYaxis ! bXaxis ! bYlines ! bXlines ! nYtics ! nXtics !
     s" @    xaxis on"      >grfile
     s" @    xaxis tick on" >grfile 
     s" @    xaxis tick major " 
-    xmax f@ xmin f@ f- nXtics @ s>f ( 10e) f/ 2e f* 
+    xmax f@ xmin f@ f- nXtics @ s>f f/ 2e f* 
     6 f>$ strcat >grfile
-    bVlines @ IF
-      s" @    xaxis tick major grid on"  >grfile
-    THEN
+    s" @    xaxis tick major grid "
+    bXlines @ IF  s" on"  ELSE  s" off"  THEN strcat >grfile
     s" @    xaxis ticklabel on" >grfile
     s" @    yaxis on"      >grfile
     s" @    yaxis tick on" >grfile
     s" @    yaxis tick major " 
-    ymax f@ ymin f@ f- nYtics @ s>f ( 10e) f/ 2e f* 
+    ymax f@ ymin f@ f- nYtics @ s>f f/ 2e f* 
     6 f>$ strcat >grfile
-    bHlines @ IF
-      s" @    yaxis tick major grid on"  >grfile
-    THEN
+    s" @    yaxis tick major grid " 
+    bYlines @ IF  s" on"  ELSE  s" off"  THEN strcat >grfile
     s" @    yaxis ticklabel on" >grfile
     s" @    frame type 0"  >grfile
 ;
@@ -662,6 +661,52 @@ Public:
     ymax f! xmax f! ymin f! xmin f!
 ;
 
+fvariable tic_major_interval
+variable  tic_major_grid
+
+: parse_axis_grid ( a u -- | parse major tic interval, grid properties )
+    s" tick major" search IF
+       11 /string bl skip
+       over c@ isdigit IF
+         $>f tic_major_interval f!
+       ELSE
+         s" grid" search IF
+           5 /string
+           s" on" search IF
+             2drop true tic_major_grid !
+           ELSE
+             s" off" search IF
+               2drop false tic_major_grid !
+             ELSE  2drop
+             THEN
+           THEN
+         ELSE  2drop
+         THEN
+       THEN
+    ELSE  2drop
+    THEN ;
+
+: parse_axis_props ( a u -- | parse x or y axis properties )
+    s" xaxis" search IF
+      6 /string parse_axis_grid
+      tic_major_interval f@ fdup 0e f= IF
+        fdrop 10 nXtics !
+      ELSE
+        2e f/ xmax f@ xmin f@ f- fswap f/ fround>s nXtics !
+      THEN
+      tic_major_grid @ bXlines !
+    ELSE
+      \ y axis properties
+      6 /string parse_axis_grid
+      tic_major_interval f@ fdup 0e f= IF
+        fdrop 10 nYtics !
+      ELSE
+        2e f/ ymax f@ ymin f@ f- fswap f/ fround>s nYtics !
+      THEN
+      tic_major_grid @ bYlines !
+    THEN
+;
+
 \ Parse a set number from original line in file
 : parse_set_number ( a1 u1 a2 u2 -- a1 u1 a2 u2 n )
     2over [char] s scan 1 /string drop 2 $>s ;
@@ -930,6 +975,8 @@ Public:
       2dup s" @    line "   search IF 2drop 2drop EXIT   ELSE 2drop THEN
       2dup s" @map color"   search IF parse_colormap_color   ELSE 2drop THEN
       2dup s"   world"      search IF parse_world_coords ELSE 2drop THEN
+      2dup s" @    xaxis"   search IF parse_axis_props   ELSE 2drop THEN
+      2dup s" @    yaxis"   search IF parse_axis_props   ELSE 2drop THEN
       2dup s" hidden "      search IF parse_visibility   ELSE 2drop THEN
       2dup s" comment"      search IF parse_grace_name   ELSE 2drop THEN
       2dup s"  line "       search IF parse_line_attrs   ELSE 2drop THEN
@@ -954,15 +1001,21 @@ Public:
     grace_set_names  MAXSETS 80 * erase
     grace_headers    MAXSETS MAXHDRSIZE * erase
     set_default_world_coords
-
+    0 nXtics  !  0 nYtics  !
+    0 bXlines !  0 bYlines !
     BEGIN
       <grfile IF  \ -- a u
         parse_grace_line
       ELSE
         2drop
+        gr_fid @ close-file drop
         reset_window
         xmin f@ ymin f@ xmax f@ ymax f@ set_window_limits
-        gr_fid @ close-file drop EXIT
+        nXtics @ 0= IF 10 nXtics ! THEN
+        nYtics @ 0= IF 10 nYtics ! THEN
+        nXtics @ nYtics @ set_grid_tics
+        bXlines @ bYlines @ set_grid_lines 
+        EXIT
       THEN
     AGAIN ;
 

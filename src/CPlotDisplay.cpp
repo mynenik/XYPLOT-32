@@ -22,7 +22,6 @@ CPlotDisplay::CPlotDisplay()
     x[1] = 1.;
     x[2] = -1.;
     x[3] = 1.;
-
     CreateView (CARTESIAN, x);
 }
 //---------------------------------------------------------------
@@ -48,6 +47,14 @@ void CPlotDisplay::CreateView(COORDINATE_SYSTEM cdns, vector<float> x)
 {
     CPlotView* pv = new CPlotView(cdns, x);
     m_qPV.push_back(pv);
+    if (m_qiView > m_qPV.begin()) {
+      // new plot view inherits some properties from previous view
+      bool bXlines, bYlines, bXaxes, bYaxes;
+      (*m_qiView)->m_pGrid->GetLines(&bXlines, &bYlines);
+      (*m_qiView)->m_pGrid->GetAxes(&bXaxes, &bYaxes);
+      pv->m_pGrid->SetLines(bXlines, bYlines);
+      pv->m_pGrid->SetAxes(bXaxes, bYaxes);
+    }    
     m_qiView = m_qPV.end() - 1;
 }
 //---------------------------------------------------------------

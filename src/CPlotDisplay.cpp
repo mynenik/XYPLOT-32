@@ -47,7 +47,7 @@ void CPlotDisplay::CreateView(COORDINATE_SYSTEM cdns, vector<float> x)
 {
     CPlotView* pv = new CPlotView(cdns, x);
     m_qPV.push_back(pv);
-    if (m_qiView > m_qPV.begin()) {
+    if (m_qiView >= m_qPV.begin()) {
       // new plot view inherits some properties from previous view
       bool bXlines, bYlines, bXaxes, bYaxes;
       (*m_qiView)->m_pGrid->GetLines(&bXlines, &bYlines);

@@ -85,9 +85,12 @@ public:
 	Widget m_nHeaderMessage;
 	Widget m_nPickDialog;
 	Widget m_nGridDialog;
-	Widget m_nXGridLines;
-	Widget m_nYGridLines;
-	Widget m_nGridAxes;
+	Widget m_nGridXaxis;
+	Widget m_nGridYaxis;
+	Widget m_nGridXlines;
+	Widget m_nGridYlines;
+	Widget m_nGridXtics;
+	Widget m_nGridYtics;
 	Widget m_nSymbolDialog;
 	Widget m_nColorDialog;
 	Widget m_nVerifyDialog;

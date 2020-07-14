@@ -523,17 +523,26 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   // Create the Grid dialog
  
   m_nGridDialog = XmCreateFormDialog(TopLevel, "Grid Options", NULL, 0);
-  rowcol = XtVaCreateManagedWidget ("rowcolumn", xmRowColumnWidgetClass, m_nGridDialog, NULL);
-
-  m_nXGridLines = XmCreateToggleButton(rowcol, "Draw X grid lines", NULL, 0);
-  XtVaSetValues (m_nXGridLines, XmNset, True, NULL);
-  m_nYGridLines = XmCreateToggleButton(rowcol, "Draw Y grid lines", NULL, 0);
-  XtVaSetValues (m_nYGridLines, XmNset, True, NULL);
-  m_nGridAxes = XmCreateToggleButton(rowcol, "Draw Axes", NULL, 0);
-  XtVaSetValues (m_nGridAxes, XmNset, True, NULL);
-  XtManageChild(m_nXGridLines);
-  XtManageChild(m_nYGridLines);
-  XtManageChild(m_nGridAxes);
+  rowcol = XtVaCreateManagedWidget ("rowcolumn", xmRowColumnWidgetClass, m_nGridDialog,
+		 XmNnumColumns, 2, NULL);
+  m_nGridXaxis = XmCreateToggleButton(rowcol, "X Axis", NULL, 0);
+  XtVaSetValues (m_nGridXaxis, XmNset, True, NULL);
+  m_nGridYaxis = XmCreateToggleButton(rowcol, "Y Axis", NULL, 0);
+  XtVaSetValues (m_nGridYaxis, XmNset, True, NULL);
+  m_nGridYlines = XmCreateToggleButton(rowcol, "Hor grid lines", NULL, 0);
+  XtVaSetValues (m_nGridYlines, XmNset, True, NULL);
+  m_nGridXlines = XmCreateToggleButton(rowcol, "Ver grid lines", NULL, 0);
+  XtVaSetValues (m_nGridXlines, XmNset, True, NULL);
+  m_nGridXtics = XmCreateTextField(rowcol, "# X tics", NULL, 0);
+  XtVaSetValues (m_nGridXtics, XmNeditable, True, XmNmaxLength, 4, XmNvalue, "10", NULL );
+  m_nGridYtics = XmCreateTextField(rowcol, "# Y tics", NULL, 0);
+  XtVaSetValues (m_nGridYtics, XmNeditable, True, XmNmaxLength, 4, XmNvalue, "10", NULL );
+  XtManageChild(m_nGridXlines);
+  XtManageChild(m_nGridYlines);
+  XtManageChild(m_nGridXaxis);
+  XtManageChild(m_nGridYaxis);
+  XtManageChild(m_nGridXtics);
+  XtManageChild(m_nGridYtics);
 
   // Create the Verify dialog
   m_nVerifyDialog = XmCreateQuestionDialog (TopLevel, "Verify", NULL, 0);
@@ -1233,13 +1242,20 @@ void CPlotWindow::OnGrid()
   // Allow user to setup grid style
   CPlotView* pView = m_pDi->GetCurrentView();
   CGrid* pGrid = pView->m_pGrid;
-  int nx, ny;
+  int nX, nY;
   bool bVer, bHor, bXaxis, bYaxis;
-  pGrid->GetTics(&nx, &ny);
+  pGrid->GetTics(&nX, &nY);
   pGrid->GetLines(&bVer, &bHor);
   pGrid->GetAxes(&bXaxis, &bYaxis); 
-  XmToggleButtonSetState(m_nXGridLines, bVer, False);
-  XmToggleButtonSetState(m_nYGridLines, bHor, False);
+  XmToggleButtonSetState(m_nGridXlines, bVer, False);
+  XmToggleButtonSetState(m_nGridYlines, bHor, False);
+  XmToggleButtonSetState(m_nGridXaxis, bXaxis, False);
+  XmToggleButtonSetState(m_nGridYaxis, bYaxis, False);
+  char sXtics[8], sYtics[8];
+  sprintf(sXtics, "%4d", nX);
+  sprintf(sYtics, "%4d", nY);
+  XtVaSetValues(m_nGridXtics, XmNvalue, sXtics, NULL );
+  XtVaSetValues(m_nGridYtics, XmNvalue, sYtics, NULL );
   XtManageChild (m_nGridDialog);
 }
 
@@ -1247,7 +1263,7 @@ void CPlotWindow::OnGridToggle()
 {
   CPlotView* pView = m_pDi->GetCurrentView();
   bool bHor, bVer;
-  pView->m_pGrid->GetLines(&bHor, &bVer);
+  pView->m_pGrid->GetLines(&bVer, &bHor);
   if (bHor && bVer)
     pView->m_pGrid->SetLines(false, false);
   else

@@ -1,11 +1,11 @@
 /*
 CPlotMessage.h
 
-  Copyright (c) 1990-2018 Krishna Myneni
+  Copyright (c) 1990-2020 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the 
-  GNU General Public License (GPL), v3.0 or later.
+  GNU Affero General Public License (GPL), v 3.0 or later.
 
 */
 
@@ -72,6 +72,8 @@ CPlotMessage.h
 #define PL_SET_SYMBOL   103
 #define PL_COLOR        104
 #define PL_SET_COLOR    105
+#define PL_GRID_AXES    106
+#define PL_GRID_TICS    107
 
 #define PL_DELETE	128
 #define PL_DUPLICATE	129

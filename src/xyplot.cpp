@@ -219,12 +219,18 @@ int main(int argc, char* argv[])
     PlotMenuCB, (void*) PL_DROP);
   XtAddCallback (PlotWidgets[ID_PLOT_GRID], XmNactivateCallback,
     PlotMenuCB, (void*) PL_GRID);
-  XtAddCallback (pMainWnd->m_nXGridLines, XmNvalueChangedCallback,
+  XtAddCallback (pMainWnd->m_nGridXlines, XmNvalueChangedCallback,
     PlotMenuCB, (void*) PL_GRID_LINES);
-  XtAddCallback (pMainWnd->m_nYGridLines, XmNvalueChangedCallback,
+  XtAddCallback (pMainWnd->m_nGridYlines, XmNvalueChangedCallback,
     PlotMenuCB, (void*) PL_GRID_LINES);
-  XtAddCallback (pMainWnd->m_nGridAxes, XmNvalueChangedCallback,
-    PlotMenuCB, (void*) PL_GRID_LINES);
+  XtAddCallback (pMainWnd->m_nGridXaxis, XmNvalueChangedCallback,
+    PlotMenuCB, (void*) PL_GRID_AXES);
+  XtAddCallback (pMainWnd->m_nGridYaxis, XmNvalueChangedCallback,
+    PlotMenuCB, (void*) PL_GRID_AXES);
+  XtAddCallback (pMainWnd->m_nGridXtics, XmNvalueChangedCallback,
+    PlotMenuCB, (void*) PL_GRID_TICS);
+  XtAddCallback (pMainWnd->m_nGridYtics, XmNvalueChangedCallback,
+    PlotMenuCB, (void*) PL_GRID_TICS);
   XtAddCallback (MathWidgets[ID_MATH_EXPRESSION], XmNactivateCallback,
     MathMenuCB, (void*) PL_EXPRESSION_INPUT);
   XtAddCallback (pMainWnd->m_nVerifyDialog, XmNokCallback, 
@@ -582,10 +588,11 @@ void PlotMenuCB (Widget w, void* client_d, void* call_d)
   caddr_t client_data = (caddr_t) client_d;
   XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
 
-  char *s;
+  char *s, *sXtics, *sYtics;
   XmSelectionBoxCallbackStruct *selection;
   XmToggleButtonCallbackStruct* sel3;
-  bool bx, by, bg;
+  int n, nXtics, nYtics;
+  bool bXlines, bYlines, bXaxis, bYaxis;
   CPlotView* pView;
 
   int i = (int) client_data;
@@ -636,12 +643,33 @@ void PlotMenuCB (Widget w, void* client_d, void* call_d)
       pMainWnd->OnGrid();
       break;
     case PL_GRID_LINES:
-      bx = XmToggleButtonGetState(pMainWnd->m_nXGridLines);
-      by = XmToggleButtonGetState(pMainWnd->m_nYGridLines);
-      bg = XmToggleButtonGetState(pMainWnd->m_nGridAxes);
+      bXlines = XmToggleButtonGetState(pMainWnd->m_nGridXlines);
+      bYlines = XmToggleButtonGetState(pMainWnd->m_nGridYlines);
       pView = pMainWnd->m_pDi->GetCurrentView(); 
-      pView->m_pGrid->SetLines(bx, by);
-      pView->m_pGrid->SetAxes(bg, bg);
+      pView->m_pGrid->SetLines(bXlines, bYlines);
+      pMainWnd->Invalidate();
+      break;
+    case PL_GRID_AXES:
+      bXaxis = XmToggleButtonGetState(pMainWnd->m_nGridXaxis);
+      bYaxis = XmToggleButtonGetState(pMainWnd->m_nGridYaxis);
+      pView = pMainWnd->m_pDi->GetCurrentView(); 
+      pView->m_pGrid->SetAxes(bXaxis, bYaxis);
+      pMainWnd->Invalidate();
+      break;
+    case PL_GRID_TICS:
+      sXtics = XmTextFieldGetString(pMainWnd->m_nGridXtics);
+      sYtics = XmTextFieldGetString(pMainWnd->m_nGridYtics);
+      pView = pMainWnd->m_pDi->GetCurrentView();
+      pView->m_pGrid->GetTics(&nXtics, &nYtics);
+      if (sXtics) {
+	n = atoi(sXtics);
+	if ((n > 0) && (n <= MAX_TICS)) nXtics = n;
+      }
+      if (sYtics) {
+	n = atoi(sYtics);
+	if ((n > 0) && (n <= MAX_TICS)) nYtics = n;
+      }
+      pView->m_pGrid->SetTics(nXtics, nYtics);
       pMainWnd->Invalidate();
       break;
     default:
@@ -1523,7 +1551,7 @@ int get_grid ()
    pView->m_pGrid->GetTics(&nx, &ny);
    *GlobalSp-- = nx; *GlobalTp-- = OP_IVAL;
    *GlobalSp-- = ny; *GlobalTp-- = OP_IVAL;
-   pView->m_pGrid->GetLines(&bYlines, &bXlines);
+   pView->m_pGrid->GetLines(&bXlines, &bYlines);
    *GlobalSp-- = bXlines; *GlobalTp-- = OP_IVAL;
    *GlobalSp-- = bYlines; *GlobalTp-- = OP_IVAL;
    pView->m_pGrid->GetAxes(&bXaxis, &bYaxis);

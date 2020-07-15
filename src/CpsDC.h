@@ -26,7 +26,8 @@ public:
 	void OpenDisplay (char*);
 	void CloseDisplay (void);
 	void ClearDisplay ();
-	void SetColors (char**, int);
+	void SetColors (const char* [], int);
+	void SetColors (COLORREF [], const char* [], int);
 	void SetForeground (unsigned);
 	void SetBackground (unsigned);
 	CRect GetClientRect ();

@@ -2,11 +2,11 @@
 //
 // Declar class CPlot
 //
-// Copyright 1995--2018 Krishna Myneni
+// Copyright 1995--2020 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
-// GNU General Public License (GPL), v3.0 or later.
+// GNU Affero General Public License (AGPL), v 3.0 or later.
 
 #ifndef __CPLOT_H__
 #define __CPLOT_H__
@@ -29,7 +29,7 @@ protected:
     CDataset* m_pSet;                   // ptr to data set
     Symbol m_nSymbol;                   // plotting symbol (e.g. line, point)
 public:
-	CPlot (CDataset*);
+    CPlot (CDataset*);
     CDataset* GetSet () {return m_pSet;}
     void SetSymbol (Symbol s) {m_nSymbol = s;}
     Symbol GetSymbol () {return m_nSymbol;}

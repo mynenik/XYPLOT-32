@@ -1,10 +1,10 @@
 // CPlotObject.cpp
 //
-// Copyright 1995--2018 Krishna Myneni
+// Copyright 1995--2020 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
-// GNU General Public License (GPL), v3.0 or later.
+// GNU Affero General Public License (AGPL), v 3.0 or later.
 
 #include "CPlotObject.h"
 
@@ -20,7 +20,7 @@ CPlotObject::CPlotObject()
 }
 //---------------------------------------------------------------
 
-void CPlotObject::SetAttributes (int PenStyle, int Width, COLORREF Color)
+void CPlotObject::SetAttributes (int PenStyle, int Width, unsigned Color)
 {
 	m_nStyle = PenStyle;
 	m_nWidth = Width;

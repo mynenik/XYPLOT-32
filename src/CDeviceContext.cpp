@@ -1,14 +1,15 @@
 /*
 CDeviceContext.cpp
 
-  Copyright (c) 1998--2018 Krishna Myneni
+  Copyright (c) 1998--2020 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the 
-  GNU General Public License (GPL), v3.0 or later.
+  GNU Affero General Public License (AGPL), v 3.0 or later.
 
 */
 #include <string.h>
+#include <math.h>
 #include "CDeviceContext.h"
 
 CDeviceContext::CDeviceContext (int dev_type, int xres, int yres)
@@ -19,8 +20,9 @@ CDeviceContext::CDeviceContext (int dev_type, int xres, int yres)
   m_bInverted = false;
   m_nColors = 0;
   m_nForeground = 0;
-  m_pColors = NULL;
-  m_pColorNames = NULL;
+  m_pRGB = NULL;         // array of packed RGB values
+  m_pColors = NULL;      // array of XColor pixel values
+  m_pColorNames = NULL;  // array of color names
 }
 //---------------------------------------------------------------
 
@@ -32,6 +34,7 @@ CDeviceContext::~CDeviceContext ()
     delete [] m_pColorNames[i];
 
   delete [] m_pColorNames;
+  delete [] m_pRGB;
 }
 //----------------------------------------------------------------
 
@@ -45,6 +48,37 @@ unsigned CDeviceContext::GetColor (char* name)
       if (strcmp(m_pColorNames[i], name) == 0) return i;
     }
   return (m_nColors + 1);  // return invalid color number if not found
+}
+//---------------------------------------------------------------
+
+unsigned CDeviceContext::GetColor (COLORREF cr)
+{
+  // Search the color table for color nearest the specified rgb color
+  // and return its color value; in this case an index into m_pColors
+
+  unsigned short int r1, g1, b1, r2, g2, b2;
+  r1 = cr & 0xff;
+  g1 = (cr >> 8) & 0xff;
+  b1 = (cr >> 16) & 0xff;
+  float dist = 255.*sqrt(3);
+  float new_dist;
+  COLORREF map_cr;
+  int imin = 0, u, v, w;
+
+  for (int i = 0; i < m_nColors; i++) {
+      map_cr = m_pRGB[i];
+      r2 = map_cr & 0xff;
+      g2 = (map_cr >> 8) & 0xff;
+      b2 = (map_cr >> 16) & 0xff;
+      u = r1-r2; v = g1-g2; w = b1-b2;
+      new_dist = (float) sqrt( (double) (u*u + v*v + w*w) );
+      if (new_dist < dist) {
+        dist = new_dist;
+        imin = i;
+      }
+    }
+  // Return closest matching rgb value.
+  return (imin);
 }
 //---------------------------------------------------------------
 

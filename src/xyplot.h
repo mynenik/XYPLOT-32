@@ -28,7 +28,6 @@ vector<char*> GetStartupFileList (int, char**);
 void InitForthInterface();
 int LoadForthFile(char*);
 int ExecuteForthExpression (char*, ostringstream*, int*);
-COLORREF LookupColor(char*);
 
 struct IfcFuncTemplate
 {

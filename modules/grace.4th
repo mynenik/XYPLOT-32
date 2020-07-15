@@ -536,7 +536,8 @@ variable nplots
         gr_symbol @ u>$ strcat >grfile
 
         gr_symbol @ IF
-          pl1 PlotInfo->Symbol @  pl1 PlotInfo->Color @  
+          pl1 PlotInfo->Symbol @  pl1 PlotInfo->Color @
+          xy_rgb{ swap } @  
           write_symbol_info
         THEN
 
@@ -544,7 +545,8 @@ variable nplots
 	gr_linetype @ u>$ strcat >grfile
 
 	gr_linetype @ IF
-          pl1 PlotInfo->Symbol @  pl1 PlotInfo->Color @  
+          pl1 PlotInfo->Symbol @  pl1 PlotInfo->Color @
+          xy_rgb{ swap } @  
           write_line_info
 	THEN
 
@@ -905,15 +907,12 @@ variable xyp_symbol
 
 : import_grace_plot ( n -- | make plot for xyplot set n)
     pl1 PlotInfo->Set !
-
     map_grace_attr IF
       pl1 PlotInfo->Type   !
-      \ gr_rgb{ swap } @ nearest_xyplot_color  \ index in xyp colormap
-      \ xy_rgb{ swap } @ pl1 PlotInfo->Color  !
-      swap
+      gr_rgb{ swap } @ nearest_xyplot_color  \ index in xyplot colormap
+      pl1 PlotInfo->Color !
       pl1 PlotInfo->Symbol !
       pl1 make_plot
-      get_grace_color strpck set_plot_color
     THEN
 ;
 

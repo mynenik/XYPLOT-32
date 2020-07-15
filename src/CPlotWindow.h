@@ -170,7 +170,8 @@ public:
 
         int GetInput (char*, char*);
         void SelectColumns (char*, int);
-	int GetColor (char* name) {return m_pDc->GetColor(name);}
+	unsigned GetColor (char* name) {return m_pDc->GetColor(name);}
+	unsigned GetColor (COLORREF cr) { return m_pDc->GetColor(cr); }
 	Symbol GetSymbol (char* name);
 	void Clear() {m_pDc->ClearDisplay();}
 	vector<int> ParseColumns (char*);

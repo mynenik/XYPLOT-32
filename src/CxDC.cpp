@@ -3,17 +3,18 @@ CxDC.cpp
 
   X Windows device context class
 
-  Copyright (c) 1997--2018 Krishna Myneni
+  Copyright (c) 1997--2020 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the 
-  GNU General Public License (GPL), v3.0 or later.
+  GNU Affero General Public License (AGPL), v 3.0 or later.
 
 */
 
 #include <string.h>
 #include "CxDC.h"
-
+#include <iostream>
+using namespace std;
 
 //---------------------------------------------------------------
 
@@ -105,9 +106,9 @@ void CxDC::OpenDisplay (Display* d, Window w)
   if (pFs)
     {
       XCharStruct bounds = pFs->max_bounds;
- m_nTm.tmWidth = bounds.width;
-  m_nTm.tmHeight = bounds.ascent + bounds.descent;
-  m_nTm.tmAveCharWidth = bounds.width;;
+      m_nTm.tmWidth = bounds.width;
+      m_nTm.tmHeight = bounds.ascent + bounds.descent;
+      m_nTm.tmAveCharWidth = bounds.width;;
 
   // printf ("bounds width = %d\n", bounds.width);
   // printf ("bounds ascent = %d, descent = %d\n", bounds.ascent, bounds.descent);
@@ -147,13 +148,13 @@ void CxDC::ClearDisplay ()
 }
 //---------------------------------------------------------------
 
-void CxDC::SetColors(char* color_list[], int nColors)
+void CxDC::SetColors(const char* color_list[], int nColors)
 {
   // Setup color table for the device context colormap
 
   int nc = (nColors < 33) ? nColors : 32;
   m_nColors = nc;
-  m_pColors = new int[nc];
+  m_pColors = new unsigned [nc];
   m_pColorNames = new char* [nc];
       
   XColor c;
@@ -175,6 +176,39 @@ void CxDC::SetColors(char* color_list[], int nColors)
 	}
       m_pColors[i] = c.pixel;
     } 
+}
+//--------------------------------------------------------------
+
+void CxDC::SetColors(COLORREF rgb_table[], const char* color_list[], int nColors)
+{
+  // Setup color table for the device context colormap
+
+  int nc = (nColors < 33) ? nColors : 32;
+  m_nColors = nc;
+  m_pColors = new unsigned [nc];
+  m_pColorNames = new char* [nc];
+  unsigned short int r, g, b;
+  COLORREF cr;
+  XColor c;
+
+  for (int i = 0; i < m_nColors; i++)
+    {
+      cr = rgb_table[i];
+      r = cr & 0xff;
+      g = (cr >> 8) & 0xff;
+      b = (cr >> 16) & 0xff;
+      c.red = (r << 8);
+      c.green = (g << 8);
+      c.blue = (b << 8);
+      if ( ! XAllocColor(m_pDisplay, m_nMap, &c) ) {
+          c.pixel = BlackPixel(m_pDisplay, m_nMode);
+	  // cout << "Failed to allocate color!" << endl;
+      }
+// cout << " r: " << c.red/256 << " g: " << c.green/256 << " b: " << c.blue/256 << endl;
+      m_pColors[i] = c.pixel;
+      m_pColorNames[i] = new char[16];
+      strcpy (m_pColorNames[i], color_list[i]);
+    }
 }
 //--------------------------------------------------------------
 

@@ -3,17 +3,15 @@ CpsDC.cpp
 
   The Postscript device context
 
-  Copyright (c) 1999--2018 Krishna Myneni
+  Copyright (c) 1999--2020 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the 
-  GNU General Public License (GPL), v3.0 or later.
+  GNU Affero General Public License (GPL), v 3.0 or later.
 
 */
 #include <string.h>
 #include "CpsDC.h"
-
-
 
 CpsDC::CpsDC (int xres, int yres)
   :  CDeviceContext (DEV_PS, xres, yres)
@@ -56,11 +54,11 @@ void CpsDC::ClearDisplay ()
 }
 //----------------------------------------------------------------
 
-void CpsDC::SetColors (char* color_list[], int nColors)
+void CpsDC::SetColors (const char* color_list[], int nColors)
 {
   int nc = (nColors <= MAX_PS_COLORS) ? nColors : MAX_PS_COLORS;
   m_nColors = nc;
-  m_pColors = new int[nc];
+  m_pColors = new unsigned [nc];
   m_pColorNames = new char* [nc];
 
   for (int i = 0; i < nc; i++)
@@ -69,7 +67,7 @@ void CpsDC::SetColors (char* color_list[], int nColors)
       float fGreen = 0.;
       float fBlue = 0.;
 
-      char* cname = color_list[i];
+      const char* cname = color_list[i];
 
       if (strcmp(cname, "red") == 0)
 	{
@@ -133,7 +131,36 @@ void CpsDC::SetColors (char* color_list[], int nColors)
     }
 }
 //----------------------------------------------------------------
-	
+
+void CpsDC::SetColors (COLORREF rgb_table[], const char* color_list[], int nColors)
+{
+  int nc = (nColors <= MAX_PS_COLORS) ? nColors : MAX_PS_COLORS;
+  m_nColors = nc;
+  m_pColors = new unsigned [nc];
+  m_pColorNames = new char* [nc];
+  float fRed, fGreen, fBlue;
+  COLORREF cr;
+  unsigned short int r, g, b;
+
+  for (int i = 0; i < nc; i++) {
+    cr = rgb_table[i];
+    r = cr & 0xff;
+    g = (cr >> 8) & 0xff;
+    b = (cr >> 16) & 0xff;
+    fRed = ((float) r)/255.;
+    fGreen = ((float) g)/255.;
+    fBlue = ((float) b)/255.;
+    m_fRGB [i][0] = fRed;
+    m_fRGB [i][1] = fGreen;
+    m_fRGB [i][2] = fBlue;
+
+    m_pColors[i] = i;
+    m_pColorNames[i] = new char[16];
+    strcpy( m_pColorNames[i], color_list[i]);
+  }
+}
+
+
 void CpsDC::SetForeground (unsigned c)
 {
   if ((c >= 0) && (c < m_nColors))

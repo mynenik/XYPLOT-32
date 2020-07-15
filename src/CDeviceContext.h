@@ -3,17 +3,18 @@ CDeviceContext.h
 
   The abstract base class for a graphics device context.
 
-  Copyright (c) 1997--2018 Krishna Myneni
+  Copyright (c) 1997--2020 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the
-  GNU General Public License (GPL), v3.0 or later.
+  GNU Affero General Public License (AGPL), v 3.0 or later.
 
 */
 
 #ifndef __CDEVICECONTEXT_H__
 #define __CDEVICECONTEXT_H__
 
+#include "wincompat.h"
 #include <fstream>
 #include "CRect.h"
 #include "CPlotMessage.h"
@@ -55,8 +56,12 @@ protected:
         int m_nMono;            // monochrome/color flag
         int m_nLastX;
         int m_nLastY;
+	// char* m_pColorNames[];   // color names
 	char** m_pColorNames;
-	int* m_pColors;
+	// COLORREF m_pRGB[];       // packed RGB values
+	COLORREF* m_pRGB;
+	// unsigned m_pColors[];    // XColor pixel values
+	unsigned* m_pColors;
 public:
 	bool m_bInverted;       // y coordinate inverted?
 
@@ -66,6 +71,7 @@ public:
 	void Rectangle (CRect rect);
 	void SetClientRect (CRect r) {m_nXres = r.Width(); m_nYres = r.Height();}
 	unsigned GetColor (char*);
+	unsigned GetColor (COLORREF);
 	unsigned GetForeground () {return m_nForeground;}
 
 	virtual CRect GetClientRect () = 0;
@@ -73,8 +79,8 @@ public:
 	virtual void OpenDisplay (char*) = 0;
 	virtual void CloseDisplay () = 0;
 	virtual void ClearDisplay () = 0;
-	virtual void SetColors (char**, int) = 0;
-
+	virtual void SetColors (const char* [], int) = 0;
+	virtual void SetColors (COLORREF [], const char* [], int ) = 0;
 	virtual void SetForeground (unsigned) = 0;
 	virtual void SetBackground (unsigned) = 0;
 	virtual void SetDrawingMode (int) = 0;

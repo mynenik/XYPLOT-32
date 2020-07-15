@@ -227,10 +227,6 @@ int main(int argc, char* argv[])
     PlotMenuCB, (void*) PL_GRID_AXES);
   XtAddCallback (pMainWnd->m_nGridYaxis, XmNvalueChangedCallback,
     PlotMenuCB, (void*) PL_GRID_AXES);
-  XtAddCallback (pMainWnd->m_nGridXtics, XmNvalueChangedCallback,
-    PlotMenuCB, (void*) PL_GRID_TICS);
-  XtAddCallback (pMainWnd->m_nGridYtics, XmNvalueChangedCallback,
-    PlotMenuCB, (void*) PL_GRID_TICS);
   XtAddCallback (MathWidgets[ID_MATH_EXPRESSION], XmNactivateCallback,
     MathMenuCB, (void*) PL_EXPRESSION_INPUT);
   XtAddCallback (pMainWnd->m_nVerifyDialog, XmNokCallback, 
@@ -656,7 +652,7 @@ void PlotMenuCB (Widget w, void* client_d, void* call_d)
       pView->m_pGrid->SetAxes(bXaxis, bYaxis);
       pMainWnd->Invalidate();
       break;
-    case PL_GRID_TICS:
+    case PL_SET_GRID_TICS:
       sXtics = XmTextFieldGetString(pMainWnd->m_nGridXtics);
       sYtics = XmTextFieldGetString(pMainWnd->m_nGridYtics);
       pView = pMainWnd->m_pDi->GetCurrentView();
@@ -969,22 +965,6 @@ char* DisplayFormat (float x1, float x2)
       sprintf (format, "%c%1d.%1df", '%', field_width, precision);
 
     return format;
-}
-//--------------------------------------------------------------
-
-COLORREF LookupColor (char* color_name)
-{
-    // Return the COLORREF (rgb color value) associated with
-    //   a color name if found, else return rgb value for black.
-
-    strupr(color_name);
-
-    for (int i = 0; i < MAX_COLORS; i++)
-      {
-        if (strcmp(color_name, strupr(color_names[i])) == 0)
-            return colors_rgb_table[i];
-      }
-      return RGB(0,0,0);
 }
 //--------------------------------------------------------------
 
@@ -1410,7 +1390,7 @@ int get_plot ()
 	      *pl_info++ = nSet;  // dataset index number
 	      *pl_info++ = 0;     // set zero for the plot type
 	      *pl_info++ = p->GetSymbol();  // plot symbol
-	      *pl_info = colors_rgb_table[p->GetColor()];   // plot color
+	      *pl_info = p->GetColor();     // plot color (index in color map)
 	      *GlobalSp = 0;
 	    }
 	  else
@@ -1459,8 +1439,8 @@ int make_plot ()
 		  {
 		    Symbol nSym = (Symbol) *pl_info++;
 		    p->SetSymbol(nSym);
-		    COLORREF rgb = *pl_info;
-		    p->SetColor(rgb);
+		    unsigned c = *pl_info;  // index into color map
+		    p->SetColor(c);
 		  }
 	      }
 	  }
@@ -1515,7 +1495,8 @@ int set_plot_rgbcolor ()
 {
   // stack: ( COLORREF -- )
   ++GlobalSp; ++GlobalTp;
-  COLORREF c = *((unsigned long *) GlobalSp);
+  COLORREF cr = *((unsigned long *) GlobalSp);
+  unsigned c = pMainWnd->GetColor(cr);
   pMainWnd->m_pDi->GetActivePlot()->SetColor(c);
   pMainWnd->Invalidate();
   return 0;

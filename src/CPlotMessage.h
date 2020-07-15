@@ -73,7 +73,7 @@ CPlotMessage.h
 #define PL_COLOR        104
 #define PL_SET_COLOR    105
 #define PL_GRID_AXES    106
-#define PL_GRID_TICS    107
+#define PL_SET_GRID_TICS 107
 
 #define PL_DELETE	128
 #define PL_DUPLICATE	129

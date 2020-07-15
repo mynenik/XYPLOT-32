@@ -41,7 +41,8 @@ public:
 	void OpenDisplay (Display*, Window w);
 	void CloseDisplay (void);
 	void ClearDisplay ();
-	void SetColors (char**, int);
+	void SetColors (const char* [], int);
+	void SetColors (COLORREF [], const char* [], int);
 	unsigned GetColor (char*);
 	void SetForeground (unsigned);
 	void SetBackground (unsigned);

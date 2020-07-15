@@ -2,11 +2,11 @@
 //
 // Header file for class CPlotObject
 //
-// Copyright (c) 1995-2018 Krishna Myneni
+// Copyright (c) 1995-2020 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
-// GNU General Public License (GPL), v3.0 or later.
+// GNU Affero General Public License (AGPL), v 3.0 or later.
 
 #ifndef __CPLOTOBJECT_H__
 #define __CPLOTOBJECT_H__
@@ -25,14 +25,14 @@ class CPlotObject
 protected:
 	int m_nStyle;
 	int m_nWidth;
-	COLORREF m_nColor;
+	unsigned m_nColor;
 	static CTransform* m_pT;      // transform shared by all plot objects
 public:
 	CPlotObject (void);
 	void SetTransform (CTransform* pCt) {m_pT = pCt;}
-	void SetAttributes (int, int, COLORREF);
-	void SetColor (COLORREF cr) { m_nColor = cr;}
-	COLORREF GetColor (void) {return m_nColor;}
+	void SetAttributes (int, int, unsigned);
+	void SetColor (unsigned cr) { m_nColor = cr;}
+	unsigned GetColor (void) {return m_nColor;}
 	int GetLineStyle () {return m_nStyle;}
 	int GetLineWidth () {return m_nWidth;}
 	virtual void Draw (CDeviceContext*) = 0;

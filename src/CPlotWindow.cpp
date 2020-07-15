@@ -412,6 +412,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
     }
 
   // Create the Color dialog
+
   ac = 0;
   m_nColorDialog = XmCreateSelectionDialog (TopLevel, "Colors",
     al, ac);
@@ -524,7 +525,8 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
  
   m_nGridDialog = XmCreateFormDialog(TopLevel, "Grid Options", NULL, 0);
   rowcol = XtVaCreateManagedWidget ("rowcolumn", xmRowColumnWidgetClass, m_nGridDialog,
-		 XmNnumColumns, 2, NULL);
+		 XmNnumColumns, 2,
+		 NULL);
   m_nGridXaxis = XmCreateToggleButton(rowcol, "X Axis", NULL, 0);
   XtVaSetValues (m_nGridXaxis, XmNset, True, NULL);
   m_nGridYaxis = XmCreateToggleButton(rowcol, "Y Axis", NULL, 0);
@@ -533,10 +535,17 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   XtVaSetValues (m_nGridYlines, XmNset, True, NULL);
   m_nGridXlines = XmCreateToggleButton(rowcol, "Ver grid lines", NULL, 0);
   XtVaSetValues (m_nGridXlines, XmNset, True, NULL);
-  m_nGridXtics = XmCreateTextField(rowcol, "# X tics", NULL, 0);
+  XtVaCreateManagedWidget ("# X Tics:", xmLabelWidgetClass, rowcol, NULL);
+  m_nGridXtics = XmCreateTextField(rowcol, "text1", NULL, 0);
   XtVaSetValues (m_nGridXtics, XmNeditable, True, XmNmaxLength, 4, XmNvalue, "10", NULL );
-  m_nGridYtics = XmCreateTextField(rowcol, "# Y tics", NULL, 0);
+  XtVaCreateManagedWidget ("# Y Tics:", xmLabelWidgetClass, rowcol, NULL);
+  m_nGridYtics = XmCreateTextField(rowcol, "text2", NULL, 0);
   XtVaSetValues (m_nGridYtics, XmNeditable, True, XmNmaxLength, 4, XmNvalue, "10", NULL );
+  one = XmStringCreateLocalized("Set Tics");
+  btn = XtVaCreateManagedWidget("button", xmPushButtonWidgetClass, rowcol, XmNlabelString, one, NULL);
+  XtAddCallback (btn, XmNactivateCallback, PlotMenuCB, (void*) PL_SET_GRID_TICS);
+  XmStringFree(one);
+
   XtManageChild(m_nGridXlines);
   XtManageChild(m_nGridYlines);
   XtManageChild(m_nGridXaxis);
@@ -550,10 +559,10 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   // Setup the plot colors
 
-  m_pDc->SetColors((char**) color_names, MAX_COLORS);
+//  m_pDc->SetColors((char**) color_names, MAX_COLORS);
+  m_pDc->SetColors(colors_rgb_table, color_names, MAX_COLORS);
   SetBackgroundColor("DarkGrey");
   SetForegroundColor("black");
-
   OnFileNew();
 }
 //---------------------------------------------------------------
@@ -583,7 +592,7 @@ void CPlotWindow::OnPrint ()
 {
   CpsDC printDC (612, 792);
   printDC.OpenDisplay (PRINT_TEMP_FILE);
-  printDC.SetColors ((char**) color_names, MAX_COLORS);
+  printDC.SetColors (color_names, MAX_COLORS);
   printDC.SetForeground (printDC.GetColor("black"));
 
   CRect r = printDC.GetClientRect();
@@ -1425,7 +1434,7 @@ void CPlotWindow::OnSetColor()
       i = selections[0];
       char color_name [32];
       strcpy (color_name, color_names[i-1]);
-      unsigned c = GetColor(color_name);
+      unsigned c = GetColor(color_name); // index into color map
       CPlot* p = m_pDi->GetActivePlot();
       if (p) 
 	{

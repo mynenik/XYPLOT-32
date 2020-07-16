@@ -344,11 +344,55 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
     XmDIALOG_HELP_BUTTON));
 
   // Create the header view/edit dialog
-  ac = 0;
   m_nHeaderDialog = XmCreateFormDialog(TopLevel, "Dataset Header", al, ac);
+  Widget label1 = XtVaCreateManagedWidget ("Dataset Name:", xmLabelWidgetClass, 
+		  m_nHeaderDialog,
+		  XmNtopAttachment, XmATTACH_FORM,
+		  NULL);
+  XtManageChild(label1);
+  m_nDatasetName = XmCreateTextField(m_nHeaderDialog, "text", NULL, 0);
+  XtVaSetValues (m_nDatasetName, XmNeditable, True, 
+		 XmNmaxLength, 256, 
+		 XmNvalue, "",
+		 XmNtopAttachment, XmATTACH_WIDGET,
+		 XmNleftAttachment, XmATTACH_FORM,
+		 XmNtopWidget, label1,
+		 XmNwidth, 400,
+		 XmNfontList, FontList,
+		 NULL );
+  XtManageChild(m_nDatasetName);
+  Widget label2 = XtVaCreateManagedWidget ("Dataset Header:", xmLabelWidgetClass,
+		  m_nHeaderDialog,
+		  XmNtopAttachment, XmATTACH_WIDGET,
+		  XmNtopWidget, m_nDatasetName,
+		  NULL );
+  XtManageChild(label2);
+  ac = 0;
+  XtSetArg(al[ac], XmNeditMode, XmMULTI_LINE_EDIT); 
+  ac++;
+  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET); 
+  ac++;
+  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM);
+  ac++;
+  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);
+  ac++;
+  XtSetArg(al[ac], XmNtopWidget, label2);
+  ac++;
+  XtSetArg(al[ac], XmNheight, 200);
+  ac++;
+  XtSetArg(al[ac], XmNwidth, 400);
+  ac++;
+  XtSetArg(al[ac], XmNfontList, FontList);
+  ac++;
+  m_nHeaderText = XmCreateScrolledText(m_nHeaderDialog, "header_text",
+    al, ac);
+  XtManageChild(m_nHeaderText);
+
 
   ac = 0;
-  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_FORM); 
+  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET); 
+  ac++;
+  XtSetArg(al[ac], XmNtopWidget, m_nHeaderText);
   ac++;
   XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM);
   ac++;
@@ -360,28 +404,6 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
     XmDIALOG_HELP_BUTTON));
   XtManageChild(m_nHeaderMessage);
 
-  ac = 0;
-  XtSetArg(al[ac], XmNeditMode, XmMULTI_LINE_EDIT); 
-  ac++;
-  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_FORM); 
-  ac++;
-  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM);
-  ac++;
-  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);
-  ac++;
-  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);
-  ac++;
-  XtSetArg(al[ac], XmNbottomWidget, m_nHeaderMessage);
-  ac++;
-  XtSetArg(al[ac], XmNheight, 200);
-  ac++;
-  XtSetArg(al[ac], XmNwidth, 400);
-  ac++;
-  XtSetArg(al[ac], XmNfontList, FontList);
-  ac++;
-  m_nHeaderText = XmCreateScrolledText(m_nHeaderDialog, "header_text",
-    al, ac);
-  XtManageChild(m_nHeaderText);
 
   // Create the Pick dialog
   ac = 0;
@@ -537,10 +559,18 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   XtVaSetValues (m_nGridXlines, XmNset, True, NULL);
   XtVaCreateManagedWidget ("# X Tics:", xmLabelWidgetClass, rowcol, NULL);
   m_nGridXtics = XmCreateTextField(rowcol, "text1", NULL, 0);
-  XtVaSetValues (m_nGridXtics, XmNeditable, True, XmNmaxLength, 4, XmNvalue, "10", NULL );
+  XtVaSetValues (m_nGridXtics, XmNeditable, True, 
+		  XmNmaxLength, 4, 
+		  XmNvalue, "10",
+		  XmNwidth, 100, 
+		  NULL );
   XtVaCreateManagedWidget ("# Y Tics:", xmLabelWidgetClass, rowcol, NULL);
   m_nGridYtics = XmCreateTextField(rowcol, "text2", NULL, 0);
-  XtVaSetValues (m_nGridYtics, XmNeditable, True, XmNmaxLength, 4, XmNvalue, "10", NULL );
+  XtVaSetValues (m_nGridYtics, XmNeditable, True, 
+		  XmNmaxLength, 4, 
+		  XmNvalue, "10", 
+		  XmNwidth, 100,
+		  NULL );
   one = XmStringCreateLocalized("Set Tics");
   btn = XtVaCreateManagedWidget("button", xmPushButtonWidgetClass, rowcol, XmNlabelString, one, NULL);
   XtAddCallback (btn, XmNactivateCallback, PlotMenuCB, (void*) PL_SET_GRID_TICS);
@@ -1486,14 +1516,9 @@ void CPlotWindow::OnHeader ()
   CDataset* d = m_pDi->GetActiveSet();
   if (d)
     {
-      char s[256];;
-      Arg al[5];
-      int ac = 0;
-      // strcpy (s, d->m_szName);
-      // XtSetArg(al[ac], XmNselectionLabelString, 
-      //	XmStringCreateLtoR(s, XmSTRING_DEFAULT_CHARSET));  
-      // ac++;
-
+      XmTextSetString(m_nDatasetName, d->m_szName);
+      XtVaSetValues(m_nDatasetName, XtVaTypedArg, XmNbackground,
+		    XmRString, "White", 6, NULL);
       XmTextSetString(m_nHeaderText, d->m_szHeader);      
       XtVaSetValues(m_nHeaderText, XtVaTypedArg, XmNbackground, XmRString, 
 		    "White", 6, NULL);
@@ -1512,6 +1537,17 @@ void CPlotWindow::OnSetHeader (char* s)
     }
 }
 //---------------------------------------------------------------
+
+void CPlotWindow::OnSetDatasetName (char* s)
+{
+  CDataset* d = m_pDi->GetActiveSet();
+  if (d)
+    {
+      strcpy (d->m_szName, s);
+    }
+}
+//---------------------------------------------------------------
+
 
 BOOL CPlotWindow::OnFileNew ()
 {

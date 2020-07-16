@@ -81,6 +81,7 @@ public:
 	Widget m_nRadioBox;
 	Widget m_nInputDialog;
 	Widget m_nHeaderDialog;
+	Widget m_nDatasetName;
 	Widget m_nHeaderText;
 	Widget m_nHeaderMessage;
 	Widget m_nPickDialog;
@@ -128,6 +129,7 @@ public:
         void OnCopyMetafile ();
         void OnHeader ();
 	void OnSetHeader (char*);
+	void OnSetDatasetName (char*);
         void OnDelete ();
         void OnDuplicate ();
         void OnView2DCartesian ();

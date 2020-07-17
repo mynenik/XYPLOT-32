@@ -307,7 +307,7 @@ variable nplots
     MAX_GRCOLORS 1- gr_idx !
     get_plot_list_colors dup nplots !
     0 ?DO
-      plot_list_colors{ I } @ nearest_xyplot_color \ -- n
+      plot_list_colors{ I } @  \ -- n ( index into xyplot color map )
       xy_rgb{ over } @ 
       gr_rgb{ MAX_GRCOLORS color-in-array? IF
         \ Color exists in grace color map; no need to copy it

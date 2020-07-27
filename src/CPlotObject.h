@@ -25,14 +25,14 @@ class CPlotObject
 protected:
 	int m_nStyle;
 	int m_nWidth;
-	unsigned m_nColor;
+	unsigned long m_nColor;
 	static CTransform* m_pT;      // transform shared by all plot objects
 public:
 	CPlotObject (void);
 	void SetTransform (CTransform* pCt) {m_pT = pCt;}
-	void SetAttributes (int, int, unsigned);
-	void SetColor (unsigned cr) { m_nColor = cr;}
-	unsigned GetColor (void) {return m_nColor;}
+	void SetAttributes (int, int, unsigned long);
+	void SetColor (unsigned long c) { m_nColor = c;}
+	unsigned long GetColor (void) {return m_nColor;}
 	int GetLineStyle () {return m_nStyle;}
 	int GetLineWidth () {return m_nWidth;}
 	virtual void Draw (CDeviceContext*) = 0;

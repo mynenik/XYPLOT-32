@@ -70,9 +70,9 @@ public:
 	int GetMode () {return m_nMode;}
 	void Rectangle (CRect rect);
 	void SetClientRect (CRect r) {m_nXres = r.Width(); m_nYres = r.Height();}
-	unsigned GetColor (char*);
-	unsigned GetColor (COLORREF);
-	unsigned GetForeground () {return m_nForeground;}
+	unsigned long GetColor (char*);
+	unsigned long GetColor (COLORREF);
+	unsigned long GetForeground () {return m_nForeground;}
 
 	virtual CRect GetClientRect () = 0;
 	virtual void SetClipRect (CRect) = 0;

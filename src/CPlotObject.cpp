@@ -20,7 +20,7 @@ CPlotObject::CPlotObject()
 }
 //---------------------------------------------------------------
 
-void CPlotObject::SetAttributes (int PenStyle, int Width, unsigned Color)
+void CPlotObject::SetAttributes (int PenStyle, int Width, unsigned long Color)
 {
 	m_nStyle = PenStyle;
 	m_nWidth = Width;

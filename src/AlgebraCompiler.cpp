@@ -1,22 +1,21 @@
 // AlgebraCompiler.cpp
 //
-// Copyright (c) 1998--2018 Krishna Myneni 
-// <krishna.myneni@ccreweb.org>
+// Copyright (c) 1998--2020 Krishna Myneni
 //
 // This software is provided under the terms of the
-// GNU General Public License (GPL), v3.0 or later.
+// GNU Affero General Public License (AGPL) v 3.0 or later.
 //
 #include <vector>
 #include <stack>
 #include <deque>
-using std::vector;
-using std::deque;
-using std::stack;
+using namespace std;
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 #include "fbc.h"
 #define byte unsigned char
+
+#define PREFIX_CODE_SIZE  18
 
 int CompileAE (vector<byte>*, char* exp);
 
@@ -40,12 +39,11 @@ int CompileAE (vector<byte>* pOpCodes, char* exp)
 //  0   no error.
 //
 
-    char* delim = " ,\t\n\r";
-    char* arm_op = "^*/+-";
+    const char* delim = " ,\t\n\r";
+    const char* arm_op = "^*/+-";
 
-    // stack< vector<byte> > hs;    // operator hold stack
-    stack<byte> hs;             // operator hold stack
-    deque<byte> op;             // sequence of operators in double ended queue
+    stack< byte > hs;    // operator hold stack
+    deque< byte > op;    // sequence of operators in double ended queue
 
     char exp_copy [256];
     char LabelName [256];
@@ -86,7 +84,7 @@ int CompileAE (vector<byte>* pOpCodes, char* exp)
             {
                 // Is it a sign operator or an arithmetic operator?
 
-                if (hs.empty() && (op.size() > 18))
+                if (hs.empty() && (op.size() > PREFIX_CODE_SIZE))
                 {
                     // It's an arithmetic operator; push onto hold stack
 
@@ -145,12 +143,7 @@ int CompileAE (vector<byte>* pOpCodes, char* exp)
                 else if (*cp == 'Y')   // fetch y
                 {
                     op.push_back(OP_RFETCH);
-                    op.push_back(OP_IVAL);
-                    ival = 4;
-                    bp = (byte*)&ival;
-                    for (i = 0; i < sizeof(int); i++)
-                        op.push_back(*(bp + i));
-                    op.push_back(OP_ADD);
+		    op.push_back(OP_CELLPLUS);
                     op.push_back(OP_SFFETCH);
                     if (! final_op) final_op = 2;
 
@@ -178,7 +171,7 @@ int CompileAE (vector<byte>* pOpCodes, char* exp)
             }
             else if (*cp == '=')
             {
-                while (op.size() > 18)
+                while (op.size() > PREFIX_CODE_SIZE)
                 {
                     op.pop_back();
                 }
@@ -251,12 +244,7 @@ endloop:
         }
         else if (final_op == 2)
         {
-            op.push_back(OP_IVAL);
-            ival = 4;
-            bp = (byte*) &ival;
-            for (i = 0; i < sizeof(int); i++)
-                op.push_back(*(bp + i));
-            op.push_back(OP_ADD);
+	    op.push_back(OP_CELLPLUS);
         }
         else
         {
@@ -277,14 +265,3 @@ endloop:
 
     return ecode;
 }
-
-
-
-
-
-
-
-
-
-
-

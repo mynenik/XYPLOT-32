@@ -1,10 +1,10 @@
 // CPlotList.h
 //
-// Copyright (c) 1996-2018 Krishna Myneni
+// Copyright (c) 1996-2020 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
-// GNU General Public License (GPL), v3.0 or later.
+// GNU Affero General Public License (AGPL), v 3.0 or later.
 //
 
 #ifndef __CPLOTLIST_H__
@@ -34,7 +34,7 @@ public:
     CPlot* PlotOf (CDataset*) ;
     CPlot* Selection (CPoint);
     int Nplots ();
-    COLORREF NextColor();
+    unsigned long NextColor();
     void AddPlot (CPlot*);
     void RemovePlot (CPlot*);
     BOOL SetActive(CPlot*);

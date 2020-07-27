@@ -1,10 +1,10 @@
 // CPlotList.cpp
 //
-// Copyright (c) 1996--2018 Krishna Myneni
+// Copyright (c) 1996--2020 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
-// GNU General Public License (GPL), v3.0 or later.
+// GNU Affero General Public License (AGPL), v 3.0 or later.
 //
 
 #include "CPlotList.h"
@@ -110,12 +110,12 @@ CPlot* CPlotList::PlotOf (CDataset* d)
 }
 //---------------------------------------------------------------
 
-COLORREF CPlotList::NextColor()
+unsigned long CPlotList::NextColor()
 {
-// Return the first unused color in the color table
+// Return the first unused color index in the color table
 
     PlotListNode* node = m_pHead;
-    unsigned int c = 0;
+    unsigned long c = 0;
 
     if (node)
     {
@@ -374,45 +374,37 @@ vector<float> CPlotList::GetExtrema()
 {
 // Return extrema vector for the datasets which are plotted
 
-	CDataset* d;
-	vector<float> e(4), ex(4);
+    CDataset* d;
+    vector<float> e(4), ex(4);
     int i;
 
     PlotListNode* node = m_pHead;
     CPlot* p;
 
-    if (node)
-    {
-	    p = node->Plot;
-	    d = p->GetSet();
-	    ex = d->GetExtrema();
+    if (node) {
+      p = node->Plot;
+      d = p->GetSet();
+      ex = d->GetExtrema();
 
-        node = node->Next;
+      node = node->Next;
 
-	    while (node)
-	    {
+      while (node) {
+	p = node->Plot;
+	d = p->GetSet();
+	e = d->GetExtrema();
+	if (e[0] < ex[0]) ex[0] = e[0];
+	if (e[1] > ex[1]) ex[1] = e[1];
+	if (e[2] < ex[2]) ex[2] = e[2];
+	if (e[3] > ex[3]) ex[3] = e[3];
 
-	        p = node->Plot;
-	        d = p->GetSet();
-		    e = d->GetExtrema();
-		    if (e[0] < ex[0]) ex[0] = e[0];
-		    if (e[1] > ex[1]) ex[1] = e[1];
-		    if (e[2] < ex[2]) ex[2] = e[2];
-		    if (e[3] > ex[3]) ex[3] = e[3];
-
-		    node = node->Next;
-	    }
-	}
-	else
-	{
-	    ex[0] = -1.;
-	    ex[1] = 1.;
-	    ex[2] = -1.;
-	    ex[3] = 1.;
-	}
-
+	node = node->Next;
+      }
+    }
+    else {
+      ex[0] = -1.;
+      ex[1] = 1.;
+      ex[2] = -1.;
+      ex[3] = 1.;
+    }
     return ex;
 }
-
-
-

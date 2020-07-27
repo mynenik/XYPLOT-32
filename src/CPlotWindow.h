@@ -3,11 +3,11 @@ CPlotWindow.h
 
   Header file for the CPlotWindow class
 
-  Copyright (c) 1996--2018 Krishna Myneni
+  Copyright (c) 1996--2020 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the 
-  GNU General Public License (GPL), v3.0 or later.
+  GNU Affero General Public License (AGPL), v 3.0 or later.
 */
 
 #ifndef __CPLOTWINDOW_H__
@@ -64,10 +64,6 @@ public:
 	Widget m_nViewMenu;
 	Widget m_nSymbolMenu;
 	Widget m_nMathMenu;
-	Widget m_nArithmeticMenu;
-	Widget m_nFitMenu;
-	Widget m_nFftMenu;
-	Widget m_nComplexMenu;
 	Widget m_nHelpMenu;
 	Widget m_nFileOpenDialog;
 	Widget m_nFileSaveDialog;
@@ -104,11 +100,14 @@ public:
 	CDeviceContext* GetDC () {return m_pDc;}
 	void SetBackgroundColor (char*);
 	void SetForegroundColor (char*);
-	int GetBackgroundColor () { return GetColor(m_szBackgroundColor); }
-	int GetForegroundColor () { return GetColor(m_szForegroundColor); }
+	unsigned long GetBackgroundColor () { return GetColor(m_szBackgroundColor); }
+	unsigned long GetForegroundColor () { return GetColor(m_szForegroundColor); }
+	unsigned long GetColor (char* szName) {return m_pDc->GetColor(szName);}
+	unsigned long GetColor (COLORREF cr) { return m_pDc->GetColor(cr); }
 	int GetWindowText (char*, int);
 	void SetWindowText (char*);
 	CPlotMessage* GetPlotMessage();
+
         void OnPaint ();
 	void OnPrint ();
         void OnMouseMove (unsigned int, CPoint);
@@ -172,8 +171,6 @@ public:
 
         int GetInput (char*, char*);
         void SelectColumns (char*, int);
-	unsigned GetColor (char* name) {return m_pDc->GetColor(name);}
-	unsigned GetColor (COLORREF cr) { return m_pDc->GetColor(cr); }
 	Symbol GetSymbol (char* name);
 	void Clear() {m_pDc->ClearDisplay();}
 	vector<int> ParseColumns (char*);

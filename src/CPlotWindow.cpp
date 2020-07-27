@@ -772,7 +772,7 @@ Widget CPlotWindow::MakeMenu (Widget wAttach, char* menu_name,
 
 void CPlotWindow::SetBackgroundColor (char* color_name)
 {
-  unsigned bkg = m_pDc->GetColor(color_name);
+  unsigned long bkg = GetColor(color_name);
   m_pDc->SetBackground(bkg);
   strcpy (m_szBackgroundColor, color_name);
   Invalidate();
@@ -780,7 +780,7 @@ void CPlotWindow::SetBackgroundColor (char* color_name)
 
 void CPlotWindow::SetForegroundColor (char* color_name)
 {
-  unsigned fg = m_pDc->GetColor(color_name);
+  unsigned long fg = GetColor(color_name);
   m_pDc->SetForeground(fg);
   strcpy (m_szForegroundColor, color_name);
 
@@ -1113,6 +1113,9 @@ void CPlotWindow::OnTemplate()
         x[1] = x[0];
         x[0] = temp;
     }
+
+    sprintf(s, "x1 = %f, x2 = %f, dx = %f", x[0], x[1], x[2]);
+    MessageBox(s);
 
     int npts;
 
@@ -1466,11 +1469,10 @@ void CPlotWindow::OnSetColor()
       strcpy (color_name, color_names[i-1]);
       unsigned c = GetColor(color_name); // index into color map
       CPlot* p = m_pDi->GetActivePlot();
-      if (p) 
-	{
-	  p->SetColor(c);
-	  Invalidate();
-	}
+      if (p) { 
+	p->SetColor(c);
+	Invalidate();
+      }
     }
   delete [] selections;  
 }

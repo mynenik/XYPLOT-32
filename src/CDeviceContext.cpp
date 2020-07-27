@@ -38,10 +38,10 @@ CDeviceContext::~CDeviceContext ()
 }
 //----------------------------------------------------------------
 
-unsigned CDeviceContext::GetColor (char* name)
+unsigned long CDeviceContext::GetColor (char* name)
 {
-  // Search the color table for specified color and return
-  //   its color value; in this case an index into m_pColors
+  // Search the color map for specified color name and return
+  //   its index in the map.
 
   for (int i = 0; i < m_nColors; i++)
     {
@@ -51,19 +51,19 @@ unsigned CDeviceContext::GetColor (char* name)
 }
 //---------------------------------------------------------------
 
-unsigned CDeviceContext::GetColor (COLORREF cr)
+unsigned long CDeviceContext::GetColor (COLORREF cr)
 {
-  // Search the color table for color nearest the specified rgb color
-  // and return its color value; in this case an index into m_pColors
+  // Search the color map for color rgb value nearest the specified 
+  // rgb value and and return its index in the map.
 
-  unsigned short int r1, g1, b1, r2, g2, b2;
+  unsigned short int r1, g1, b1, r2, g2, b2, u, v, w;
   r1 = cr & 0xff;
   g1 = (cr >> 8) & 0xff;
   b1 = (cr >> 16) & 0xff;
   float dist = 255.*sqrt(3);
   float new_dist;
   COLORREF map_cr;
-  int imin = 0, u, v, w;
+  unsigned long imin = 0;
 
   for (int i = 0; i < m_nColors; i++) {
       map_cr = m_pRGB[i];
@@ -77,7 +77,6 @@ unsigned CDeviceContext::GetColor (COLORREF cr)
         imin = i;
       }
     }
-  // Return closest matching rgb value.
   return (imin);
 }
 //---------------------------------------------------------------

@@ -2,7 +2,7 @@
 //
 // The assembler portion of kForth 32-bit Virtual Machine
 //
-// Copyright (c) 1998--2018 Krishna Myneni,
+// Copyright (c) 1998--2020 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU 
@@ -194,13 +194,11 @@
 	
 .macro LOGIC_DYADIC op
 	LDSP
-	movl $WSIZE, %ecx
-	addl %ecx, %ebx
+	movl $WSIZE, %eax
+	addl %eax, %ebx
 	STSP
 	movl (%ebx), %eax
-	addl %ecx, %ebx
-	\op (%ebx), %eax
-	movl %eax, (%ebx)
+	\op %eax, WSIZE(%ebx)
 	movl GlobalTp, %eax
 	incl %eax
 	movl %eax, GlobalTp
@@ -911,7 +909,7 @@ L_j:
         xor %eax, %eax
         NEXT
 
-L_loop:
+L_rtloop:
         movl GlobalRtp, %ebx
         incl %ebx
         movb (%ebx), %al
@@ -927,19 +925,18 @@ L_loop:
         movl (%ebx), %eax
         incl %eax
 	cmpl %ecx, %eax	
-        jz L_unloop
-loop1:	
+        jz L_rtunloop
         movl %eax, (%ebx)	# set loop counter to next value
 	movl %edx, %ebp		# set instruction ptr to start of loop
         xorl %eax, %eax
         NEXT
 
-L_unloop:
+L_rtunloop:
 	UNLOOP
 	xorl %eax, %eax
         NEXT
 
-L_plusloop:
+L_rtplusloop:
 	pushl %ebp
 	movl GlobalRtp, %ebx
         incl %ebx
@@ -1055,6 +1052,7 @@ L_ptr:
 	xorl %eax, %eax
 	NEXT
 
+L_2val:
 L_fval:
         movl %ebp, %ebx
         incl %ebx
@@ -1341,7 +1339,7 @@ L_tuck:
 
 L_pick:
 	LDSP
-	addl $WSIZE, %ebx
+	INC_DSP
 	movl %ebx, %edx
 	movl (%ebx), %eax
 	incl %eax
@@ -1491,10 +1489,13 @@ L_question:
 	call CPP_dot	
 	ret	
 
+L_ulfetch:
+L_slfetch:
 L_fetch:
 	FETCH $OP_IVAL
 	NEXT
 
+L_lstore:
 L_store:
         movl GlobalTp, %ebx
 	incl %ebx
@@ -1551,7 +1552,7 @@ L_cstore:
 	xor %eax, %eax
 	NEXT	
 
-L_wfetch:
+L_swfetch:
 	movl GlobalTp, %ecx
 	movb 1(%ecx), %al
 	cmpb $OP_ADDR, %al
@@ -1564,6 +1565,19 @@ L_wfetch:
 	LDSP
 	movl %eax, WSIZE(%ebx)
 	xor %eax, %eax
+        NEXT
+
+L_uwfetch:
+        movl GlobalTp, %ecx
+        movb 1(%ecx), %al
+        cmpb $OP_ADDR, %al
+        jnz E_not_addr
+        movb $OP_IVAL, 1(%ecx)
+        LDSP
+        movl WSIZE(%ebx), %ecx
+        movw (%ecx), %ax
+        movl %eax, WSIZE(%ebx)
+        xor %eax, %eax
         NEXT
 
 L_wstore:
@@ -1632,6 +1646,7 @@ L_sfstore:
 	xor %eax, %eax
         NEXT
 
+L_2fetch:
 L_dffetch:	
         movl GlobalTp, %ebx
 	incl %ebx
@@ -1657,6 +1672,7 @@ L_dffetch:
 	xor %eax, %eax
 	NEXT
 
+L_2store:
 L_dfstore:
         movl GlobalTp, %ebx
 	incl %ebx

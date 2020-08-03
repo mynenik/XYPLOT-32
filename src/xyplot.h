@@ -27,7 +27,7 @@ void LoadInitializationFile();
 vector<char*> GetStartupFileList (int, char**);
 void InitForthInterface();
 int LoadForthFile(char*);
-int ExecuteForthExpression (char*, ostringstream*, int*);
+int ExecuteForthExpression (char*, ostringstream*, long int*);
 
 struct IfcFuncTemplate
 {

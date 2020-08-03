@@ -291,6 +291,19 @@ int C_write ()
   return 0;
 }
 
+// FSYNC ( fd -- ior )
+// Flush all buffered data written to file to the storage device
+// Low-level interface for implementation of standard Forth
+// word, FLUSH-FILE (Forth 94/Forth 2012)
+int C_fsync ()
+{
+  int fd;
+  DROP
+  fd = TOS;
+  PUSH_IVAL( fsync(fd) )
+  return 0;
+}
+
 int C_ioctl ()
 {
   /* stack: ( fd request addr -- err | device control function ) */
@@ -517,9 +530,9 @@ int C_accept ()
 char* strupr (char* p)
 {
 /* convert string to upper case  */
-
+  char* p0 = p;
   while (*p) {*p = toupper(*p); ++p;}
-  return p;
+  return p0;
 }
 
 char* ExtractName (char* str, char* name)

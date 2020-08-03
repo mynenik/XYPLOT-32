@@ -721,7 +721,7 @@ void ForthCB (Widget wSrc, void* client_d,
 
   Widget w = pMainWnd->m_nForthShell;
   char s[256];
-  int nError, nLine, nPos, nLen;
+  int nError, nPos, nLen;
   *s = '\0';
 
   nPos = XmTextGetLastPosition(w);
@@ -764,6 +764,7 @@ void ForthCB (Widget wSrc, void* client_d,
     }
 
   char out_s[256];
+  long int nLine;
   stringstream ForthMessages;
   nError = ExecuteForthExpression (s, (ostringstream*) &ForthMessages, &nLine);
   ForthMessages.getline(out_s, 255, 0);
@@ -1054,12 +1055,12 @@ int AddToHeader (char* text, char* hdr, bool prefix)
 }
 //-------------------------------------------------------------
 
-int ExecuteForthExpression (char* s, ostringstream* pOutput, int* pLine)
+int ExecuteForthExpression (char* s, ostringstream* pOutput, long int* pLine)
 {
   // Return zero if no error; otherwise return the Forth error code.
 
   istringstream* pSS = new istringstream (s);
-  int *sp, nError;
+  long int *sp, nError;
   byte* tp;
   vector<byte> op;
 
@@ -1087,7 +1088,8 @@ void InitForthInterface ()
   char fs[256];
   const void* funcPtr;
   const char* constName;
-  int i, nError, lnum;
+  int i, nError;
+  long int lnum;
   size_t nIFCfuncs = sizeof(IfcFuncList) / sizeof(IfcFuncList[0]);
   char out_s[256];
   stringstream ForthMessages;
@@ -1130,7 +1132,8 @@ void InitForthInterface ()
 int LoadForthFile(char* fname)
 {
   char s[256], out_s[1024];
-  int nError, lnum;
+  int nError;
+  long int lnum;
 
   strcpy (s, "include ");
   strcat (s, fname);

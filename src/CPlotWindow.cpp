@@ -1181,7 +1181,8 @@ void CPlotWindow::OnExpression(char* exp)
 {
   char s[256], emsg[1024];
   *s = 0;
-  int i, *StackPtr;
+  int i;
+  long int *StackPtr;
   BYTE* TypePtr;
   ostringstream* pSS = NULL;
   

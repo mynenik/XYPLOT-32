@@ -1,6 +1,6 @@
 // ForthVM.h
 //
-// Copyright (c) 1996--2018, Krishna Myneni
+// Copyright (c) 1996--2020, Krishna Myneni
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -45,14 +45,14 @@ void RemoveLastWord ();
 vector<WordListEntry>::iterator LocateWord (char*);
 vector<WordListEntry>::iterator LocateCfa  (void*);
 void ClearControlStacks ();
-void OpsCopyInt (int, int);
-void OpsPushInt (int);
+void OpsCopyInt (long int, long int);
+void OpsPushInt (long int);
 void OpsPushDouble (double);
 int OpsCompileByte ();
 int OpsCompileInt ();
 int OpsCompileDouble ();
 void PrintVM_Error (int);
-int ForthVM (vector<byte>*, int**, byte**);
+int ForthVM (vector<byte>*, long int**, byte**);
 
 // The following C++ functions have C linkage
 
@@ -85,7 +85,9 @@ int CPP_dotr();
 int CPP_udot0();
 int CPP_udot();
 int CPP_udotr();
+int CPP_uddotr();
 int CPP_ddot();
+int CPP_ddotr();
 int CPP_fdot();
 int CPP_fsdot();
 int CPP_dots();
@@ -124,6 +126,9 @@ int CPP_tofile();
 int CPP_console();
 int CPP_do();
 int CPP_querydo();
+int CPP_loop();
+int CPP_plusloop();
+int CPP_unloop();
 int CPP_leave();
 int CPP_abortquote();
 int CPP_begin();

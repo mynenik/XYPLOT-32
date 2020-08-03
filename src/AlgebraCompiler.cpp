@@ -160,12 +160,14 @@ int CompileAE (vector<byte>* pOpCodes, char* exp)
 // endloop:
 
     if (! final_op) ecode = 3;   // error: output destination undetermined
-    // cout << "Held items: " << hs.size() << endl;
+
     if (hs.size()) {
       // Push remaining operators on hold stack
       operands_pending = PushOperators(&hs, &op, operands_pending);
       if (hs.size()) ecode = 4;  // error: unmatched operators
     }
+
+    if (operands_pending != 1) ecode = 4; // error: unmatched operands
 
     if (ecode == 0) {
       op.push_back(OP_POP);
@@ -185,7 +187,7 @@ int CompileAE (vector<byte>* pOpCodes, char* exp)
       op.push_back(OP_RFETCH);
       op.push_back(OP_ADD);   // advance data ptr by nbytes
       op.push_back(OP_POP);
-      op.push_back(OP_LOOP);
+      op.push_back(OP_RTLOOP);
       op.push_back(OP_2DROP); // clean up the stack
       op.push_back(OP_RET);
     }

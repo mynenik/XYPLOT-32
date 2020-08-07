@@ -59,7 +59,8 @@ public:
   void Draw (CDC*);
   vector<float> Logical (CPoint p) {return (*m_qiView)->m_pCt->Logical(p);}
   vector<float> Logical (CRect r) {return (*m_qiView)->m_pCt->Logical(r);}
-  void SetExtrema (vector<float> x);
+  void SetCoordinateDisplayFormat (vector<float> x);
+  void SetExtrema (vector<float> x) {(*m_qiView)->SetExtrema(x);}
   vector<float> GetExtrema () {return (*m_qiView)->GetExtrema();}
   void ResetExtrema();
   void Reset();

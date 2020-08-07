@@ -33,11 +33,8 @@ CPlotDisplay::~CPlotDisplay()
 }
 //---------------------------------------------------------------
 
-void CPlotDisplay::SetExtrema(vector<float> x)
+void CPlotDisplay::SetCoordinateDisplayFormat(vector<float> x)
 {
-// Set extrema for the current view
-
-    (*m_qiView)->SetExtrema(x);
     strcpy (m_szXform, DisplayFormat(x[0],x[1]));
     strcpy (m_szYform, DisplayFormat(x[2],x[3]));
 }
@@ -46,14 +43,17 @@ void CPlotDisplay::SetExtrema(vector<float> x)
 void CPlotDisplay::CreateView(COORDINATE_SYSTEM cdns, vector<float> x)
 {
     CPlotView* pv = new CPlotView(cdns, x);
-    m_qPV.push_back(pv);
-    if (m_qiView >= m_qPV.begin()) {
-      // new plot view inherits some properties from previous view
-      bool bXlines, bYlines, bXaxes, bYaxes;
-      (*m_qiView)->m_pGrid->GetLines(&bXlines, &bYlines);
-      (*m_qiView)->m_pGrid->GetAxes(&bXaxes, &bYaxes);
-      pv->m_pGrid->SetLines(bXlines, bYlines);
-      pv->m_pGrid->SetAxes(bXaxes, bYaxes);
+    if (pv) {
+      m_qPV.push_back(pv);
+      this->SetCoordinateDisplayFormat(x);
+      if (m_qiView >= m_qPV.begin()) {
+        // new plot view inherits some properties from previous view
+        bool bXlines, bYlines, bXaxes, bYaxes;
+        (*m_qiView)->m_pGrid->GetLines(&bXlines, &bYlines);
+        (*m_qiView)->m_pGrid->GetAxes(&bXaxes, &bYaxes);
+        pv->m_pGrid->SetLines(bXlines, bYlines);
+        pv->m_pGrid->SetAxes(bXaxes, bYaxes);
+      }
     }    
     m_qiView = m_qPV.end() - 1;
 }
@@ -227,15 +227,18 @@ void CPlotDisplay::ResetExtrema()
 
   vector<float> x = m_pPlotList->GetExtrema();
   (*m_qPV.begin())->SetExtrema(x);
-  strcpy (m_szXform, DisplayFormat(x[0],x[1]));
-  strcpy (m_szYform, DisplayFormat(x[2],x[3]));
+  this->SetCoordinateDisplayFormat(x);
 }
 //---------------------------------------------------------------
 
 void CPlotDisplay::ApplyCurrentView()
 {
    CTransform* pT = (*m_qiView)->m_pCt;
-   if (pT) (*m_qiView)->m_pGrid->SetTransform(pT);
+   if (pT) {
+     (*m_qiView)->m_pGrid->SetTransform(pT);
+     vector<float> x = this->GetExtrema();
+     this->SetCoordinateDisplayFormat(x);
+   }
 }
 
 void CPlotDisplay::GoBack()

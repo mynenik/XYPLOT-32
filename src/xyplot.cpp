@@ -123,198 +123,182 @@ CPlotWindow* pMainWnd;
 int main(int argc, char* argv[])
 {
 
-  TopLevel = XtInitialize(argv[0],"",NULL,0,&argc,argv);
-  XtRealizeWidget(TopLevel);
+    TopLevel = XtInitialize(argv[0],"",NULL,0,&argc,argv);
+    XtRealizeWidget(TopLevel);
   
-  // Create the main window
+    pMainWnd = new CPlotWindow(argc, argv);
+    OpenForth();       
+    InitForthInterface();
 
-  pMainWnd = new CPlotWindow(argc, argv);
+    // Load initialization file (xyplot.4th in XYPLOT_DIR)
+    LoadInitializationFile();
 
-  // Initialize the Forth environment
-
-  OpenForth();       
-  InitForthInterface();
-
-  // Load initialization file (xyplot.4th in user's .xyplot directory)
-
-  LoadInitializationFile();
-
-  // Load any files specified on the command line
-
-  vector<char*> FileList = GetStartupFileList(argc, argv);
-  if (FileList.size())
-    {
-        vector<char*>::iterator i;
-
-        for (i = FileList.begin(); i < FileList.end(); i++)
-        {
-            pMainWnd->LoadFile(*i);
-        }
+    // Load any file(s) specified on the command line
+    vector<char*> FileList = GetStartupFileList(argc, argv);
+    if (FileList.size()) {
+      vector<char*>::iterator i;
+      for (i = FileList.begin(); i < FileList.end(); i++) {
+        pMainWnd->LoadFile(*i);
+      }
     }
-  else
-    pMainWnd->WriteConsoleMessage ("Ready!");
+    else
+      pMainWnd->WriteConsoleMessage ("Ready!");
 
+    // Setup callbacks and event handlers
+    XtAddCallback (pMainWnd->m_nPlotWindow, XmNexposeCallback, 
+      ReDrawCB, (void*) PL_REDRAW);
+    XtAddCallback (pMainWnd->m_nPlotWindow, XmNresizeCallback,
+      ReDrawCB, (void*) PL_RESIZE);
+    XtAddEventHandler (pMainWnd->m_nPlotWindow, PointerMotionMask,
+      False, CoordinatesEH, NULL);
+    XtAddEventHandler (pMainWnd->m_nPlotWindow, ButtonPressMask,
+      False, ButtonEH, NULL);
+    XtAddEventHandler (pMainWnd->m_nPlotWindow, KeyPressMask,
+      False, KeysEH, NULL);
+    XtAddCallback (pMainWnd->m_nFileOpenDialog, XmNokCallback,
+      FileMenuCB, (void*) PL_FILE_OPEN);
+    XtAddCallback (pMainWnd->m_nFileOpenDialog, XmNcancelCallback,
+      FileMenuCB, (void*) PL_FILE_CANCEL);
+    XtAddCallback (pMainWnd->m_nFileSaveDialog, XmNokCallback,
+      FileMenuCB, (void*) PL_FILE_SAVE);
+    XtAddCallback (pMainWnd->m_nFileSaveDialog, XmNcancelCallback,
+      FileMenuCB, (void*) PL_SAVE_CANCEL);
+    XtAddEventHandler (pMainWnd->m_nStatusBar, ButtonPressMask,
+      False, StatusButtonEH, NULL);
+    XtAddCallback (HelpWidgets[ID_ABOUT], XmNactivateCallback,
+      AboutCB, NULL);
+    XtAddCallback (FileWidgets[ID_FILE_NEW],  XmNactivateCallback, 
+      FileMenuCB, (void*) PL_NEW);
+    XtAddCallback (FileWidgets[ID_FILE_OPEN], XmNactivateCallback,
+      FileMenuCB, (void*) PL_OPEN);
+    XtAddCallback (FileWidgets[ID_FILE_SAVE], XmNactivateCallback,
+      FileMenuCB, (void*) PL_SAVE);
+    XtAddCallback (FileWidgets[ID_SAVE_OPTIONS], XmNactivateCallback,
+      SaveOptionsCB, (void*) PL_SAVE_OPTIONS);
+    XtAddCallback (FileWidgets[ID_FILE_PRINT], XmNactivateCallback,
+      FileMenuCB, (void*) PL_PRINT);
+    XtAddCallback (FileWidgets[ID_APP_EXIT], XmNactivateCallback,
+      ExitCB, NULL);
+    XtAddCallback (EditWidgets[ID_EDIT_HDR], XmNactivateCallback,
+      EditMenuCB, (void*) PL_HEADER);
+    XtAddCallback (pMainWnd->m_nHeaderMessage, XmNokCallback,
+      EditMenuCB, (void*) PL_HEADER_OK);
+    XtAddCallback (pMainWnd->m_nHeaderMessage, XmNcancelCallback,
+      EditMenuCB, (void*) PL_HEADER_CANCEL);
+    XtAddCallback (EditWidgets[ID_EDIT_DEL], XmNactivateCallback,
+      EditMenuCB, (void*) PL_DELETE);
+    XtAddCallback (EditWidgets[ID_EDIT_DUP], XmNactivateCallback,
+      EditMenuCB, (void*) PL_DUPLICATE);
+    XtAddCallback (PlotWidgets[ID_PLOT_PICK], XmNactivateCallback,
+      PlotMenuCB, (void*) PL_PICK);
+    XtAddCallback (pMainWnd->m_nPickDialog, XmNokCallback,
+      PlotMenuCB, (void*) PL_PICK_DATA);
+    XtAddCallback (PlotWidgets[ID_PLOT_SYMBOL], XmNactivateCallback,
+      PlotMenuCB, (void*) PL_SYMBOL);
+    XtAddCallback (pMainWnd->m_nSymbolDialog, XmNapplyCallback,
+      PlotMenuCB, (void*) PL_SET_SYMBOL);
+    XtAddCallback (PlotWidgets[ID_PLOT_COLOR], XmNactivateCallback,
+      PlotMenuCB, (void*) PL_COLOR);
+    XtAddCallback (pMainWnd->m_nColorDialog, XmNapplyCallback,
+      PlotMenuCB, (void*) PL_SET_COLOR);
+    XtAddCallback (PlotWidgets[ID_PLOT_EXTREMA], XmNactivateCallback,
+      PlotMenuCB, (void*) PL_EXTREMA_INPUT);
+    XtAddCallback (PlotWidgets[ID_PLOT_DROP], XmNactivateCallback,
+      PlotMenuCB, (void*) PL_DROP);
+    XtAddCallback (PlotWidgets[ID_PLOT_GRID], XmNactivateCallback,
+      PlotMenuCB, (void*) PL_GRID);
+    XtAddCallback (pMainWnd->m_nGridXlines, XmNvalueChangedCallback,
+      PlotMenuCB, (void*) PL_GRID_LINES);
+    XtAddCallback (pMainWnd->m_nGridYlines, XmNvalueChangedCallback,
+      PlotMenuCB, (void*) PL_GRID_LINES);
+    XtAddCallback (pMainWnd->m_nGridXaxis, XmNvalueChangedCallback,
+      PlotMenuCB, (void*) PL_GRID_AXES);
+    XtAddCallback (pMainWnd->m_nGridYaxis, XmNvalueChangedCallback,
+      PlotMenuCB, (void*) PL_GRID_AXES);
+    XtAddCallback (MathWidgets[ID_MATH_EXPRESSION], XmNactivateCallback,
+      MathMenuCB, (void*) PL_EXPRESSION_INPUT);
+    XtAddCallback (pMainWnd->m_nVerifyDialog, XmNokCallback, 
+      VerifyCB, (void*) &verify_answer);
+    XtAddCallback (pMainWnd->m_nVerifyDialog, XmNcancelCallback,
+      VerifyCB, (void*) &verify_answer);
+    XtAddCallback (pMainWnd->m_nVerifyDialog, XmNhelpCallback,
+      VerifyCB, (void*) &verify_answer);
+    XtAddCallback (pMainWnd->m_nForthShell, XmNvalueChangedCallback,
+      ForthCB, NULL);
 
-  // Setup callbacks and event handlers
+    // Disable menu functions not yet implemented
+    // XtSetSensitive (EditWidgets[ID_EDIT_COPY], False);
 
-  XtAddCallback (pMainWnd->m_nPlotWindow, XmNexposeCallback, 
-    ReDrawCB, (void*) PL_REDRAW);
-  XtAddCallback (pMainWnd->m_nPlotWindow, XmNresizeCallback,
-    ReDrawCB, (void*) PL_RESIZE);
-  XtAddEventHandler (pMainWnd->m_nPlotWindow, PointerMotionMask,
-    False, CoordinatesEH, NULL);
-  XtAddEventHandler (pMainWnd->m_nPlotWindow, ButtonPressMask,
-    False, ButtonEH, NULL);
-  XtAddEventHandler (pMainWnd->m_nPlotWindow, KeyPressMask,
-    False, KeysEH, NULL);
-  XtAddCallback (pMainWnd->m_nFileOpenDialog, XmNokCallback,
-    FileMenuCB, (void*) PL_FILE_OPEN);
-  XtAddCallback (pMainWnd->m_nFileOpenDialog, XmNcancelCallback,
-    FileMenuCB, (void*) PL_FILE_CANCEL);
-  XtAddCallback (pMainWnd->m_nFileSaveDialog, XmNokCallback,
-    FileMenuCB, (void*) PL_FILE_SAVE);
-  XtAddCallback (pMainWnd->m_nFileSaveDialog, XmNcancelCallback,
-    FileMenuCB, (void*) PL_SAVE_CANCEL);
-  XtAddEventHandler (pMainWnd->m_nStatusBar, ButtonPressMask,
-    False, StatusButtonEH, NULL);
-  XtAddCallback (HelpWidgets[ID_ABOUT], XmNactivateCallback,
-    AboutCB, NULL);
-  XtAddCallback (FileWidgets[ID_FILE_NEW],  XmNactivateCallback, 
-    FileMenuCB, (void*) PL_NEW);
-  XtAddCallback (FileWidgets[ID_FILE_OPEN], XmNactivateCallback,
-    FileMenuCB, (void*) PL_OPEN);
-  XtAddCallback (FileWidgets[ID_FILE_SAVE], XmNactivateCallback,
-    FileMenuCB, (void*) PL_SAVE);
-  XtAddCallback (FileWidgets[ID_SAVE_OPTIONS], XmNactivateCallback,
-    SaveOptionsCB, (void*) PL_SAVE_OPTIONS);
-  XtAddCallback (FileWidgets[ID_FILE_PRINT], XmNactivateCallback,
-    FileMenuCB, (void*) PL_PRINT);
-  XtAddCallback (FileWidgets[ID_APP_EXIT], XmNactivateCallback,
-    ExitCB, NULL);
-  XtAddCallback (EditWidgets[ID_EDIT_HDR], XmNactivateCallback,
-    EditMenuCB, (void*) PL_HEADER);
-  XtAddCallback (pMainWnd->m_nHeaderMessage, XmNokCallback,
-    EditMenuCB, (void*) PL_HEADER_OK);
-  XtAddCallback (pMainWnd->m_nHeaderMessage, XmNcancelCallback,
-    EditMenuCB, (void*) PL_HEADER_CANCEL);
-  XtAddCallback (EditWidgets[ID_EDIT_DEL], XmNactivateCallback,
-    EditMenuCB, (void*) PL_DELETE);
-  XtAddCallback (EditWidgets[ID_EDIT_DUP], XmNactivateCallback,
-    EditMenuCB, (void*) PL_DUPLICATE);
-  XtAddCallback (PlotWidgets[ID_PLOT_PICK], XmNactivateCallback,
-    PlotMenuCB, (void*) PL_PICK);
-  XtAddCallback (pMainWnd->m_nPickDialog, XmNokCallback,
-    PlotMenuCB, (void*) PL_PICK_DATA);
-  XtAddCallback (PlotWidgets[ID_PLOT_SYMBOL], XmNactivateCallback,
-    PlotMenuCB, (void*) PL_SYMBOL);
-  XtAddCallback (pMainWnd->m_nSymbolDialog, XmNapplyCallback,
-    PlotMenuCB, (void*) PL_SET_SYMBOL);
-  XtAddCallback (PlotWidgets[ID_PLOT_COLOR], XmNactivateCallback,
-    PlotMenuCB, (void*) PL_COLOR);
-  XtAddCallback (pMainWnd->m_nColorDialog, XmNapplyCallback,
-    PlotMenuCB, (void*) PL_SET_COLOR);
-  XtAddCallback (PlotWidgets[ID_PLOT_EXTREMA], XmNactivateCallback,
-    PlotMenuCB, (void*) PL_EXTREMA_INPUT);
-  XtAddCallback (PlotWidgets[ID_PLOT_DROP], XmNactivateCallback,
-    PlotMenuCB, (void*) PL_DROP);
-  XtAddCallback (PlotWidgets[ID_PLOT_GRID], XmNactivateCallback,
-    PlotMenuCB, (void*) PL_GRID);
-  XtAddCallback (pMainWnd->m_nGridXlines, XmNvalueChangedCallback,
-    PlotMenuCB, (void*) PL_GRID_LINES);
-  XtAddCallback (pMainWnd->m_nGridYlines, XmNvalueChangedCallback,
-    PlotMenuCB, (void*) PL_GRID_LINES);
-  XtAddCallback (pMainWnd->m_nGridXaxis, XmNvalueChangedCallback,
-    PlotMenuCB, (void*) PL_GRID_AXES);
-  XtAddCallback (pMainWnd->m_nGridYaxis, XmNvalueChangedCallback,
-    PlotMenuCB, (void*) PL_GRID_AXES);
-  XtAddCallback (MathWidgets[ID_MATH_EXPRESSION], XmNactivateCallback,
-    MathMenuCB, (void*) PL_EXPRESSION_INPUT);
-  XtAddCallback (pMainWnd->m_nVerifyDialog, XmNokCallback, 
-    VerifyCB, (void*) &verify_answer);
-  XtAddCallback (pMainWnd->m_nVerifyDialog, XmNcancelCallback,
-    VerifyCB, (void*) &verify_answer);
-  XtAddCallback (pMainWnd->m_nVerifyDialog, XmNhelpCallback,
-    VerifyCB, (void*) &verify_answer);
-  XtAddCallback (pMainWnd->m_nForthShell, XmNvalueChangedCallback,
-    ForthCB, NULL);
+    XtMainLoop();
 
-  // Disable menu functions not yet implemented
-
-  // XtSetSensitive (EditWidgets[ID_EDIT_COPY], False);
-
-  XtMainLoop();
-
-  return 0;
+    return 0;
 }
 //------------------------------------------------------------------------
 
 void ExitCB (Widget w, void* client_d, void* call_d)
 {
-  caddr_t client_data = (caddr_t) client_d;
-  XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
+    caddr_t client_data = (caddr_t) client_d;
+    XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
 
-  delete pMainWnd;
-  CloseForth();
+    delete pMainWnd;
+    CloseForth();
 
-  vector<char*>* v = &ForthMenuCommandList;
-  v->erase(v->begin(), v->end());
+    vector<char*>* v = &ForthMenuCommandList;
+    v->erase(v->begin(), v->end());
 
-  exit(0);
+    exit(0);
 }
 
 void ReDrawCB (Widget w, void* client_d, void* call_d)
 {
-  caddr_t client_data = (caddr_t) client_d;
-  XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
+    caddr_t client_data = (caddr_t) client_d;
+    XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
 
-  int i = (int) client_data;
-  switch (i)
-    {
-    case PL_REDRAW:
-      pMainWnd->OnPaint();
-      break;
-    case PL_RESIZE:
-      pMainWnd->OnResize();
-      break;
-    default:
-      ;
+    int i = (int) client_data;
+    switch (i) {
+      case PL_REDRAW:
+        pMainWnd->OnPaint();
+        break;
+      case PL_RESIZE:
+        pMainWnd->OnResize();
+        break;
+      default:
+        ;
     }
 }
 
 void VerifyCB (Widget w, void* client_d, void* call_d)
 {
-  int* answer = (int*) client_d;
-  XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
-  *answer = call_data->reason;
+    int* answer = (int*) client_d;
+    XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
+    *answer = call_data->reason;
 }
 //--------------------------------------------------------------
 
 void CoordinatesEH (Widget w, XtPointer client_data,
   XEvent* event, Boolean* continue_to_dispatch)
 {
-  CPoint p(event->xmotion.x, event->xmotion.y);
-  pMainWnd->OnMouseMove(0, p);
+    CPoint p(event->xmotion.x, event->xmotion.y);
+    pMainWnd->OnMouseMove(0, p);
 }
 
 void ButtonEH (Widget w, XtPointer client_data,
   XEvent* event, Boolean* continue_to_dispatch)
 {
-  CPoint p(event->xmotion.x, event->xmotion.y);
-  pMainWnd->OnLButtonDown(0, p);
+    CPoint p(event->xmotion.x, event->xmotion.y);
+    pMainWnd->OnLButtonDown(0, p);
 }
 
 void KeysEH (Widget w, XtPointer client_data,
   XEvent* event, Boolean* continue_to_dispatch)
 {
-  KeySym key;
-  XComposeStatus compose;
-  char cl [64];
+    KeySym key;
+    XComposeStatus compose;
+    char cl [64];
 
-  if (event->type == KeyPress)
-    {
+    if (event->type == KeyPress) {
       XLookupString (&event->xkey, cl, 64, &key, &compose);
-      switch (key)
-	{
+      switch (key) {
 	case 'D': case 'd':
 	  pMainWnd->OnDrop();
 	  break;
@@ -346,15 +330,14 @@ void KeysEH (Widget w, XtPointer client_data,
 	  pMainWnd->OnFileSave();
 	  break;
 	default:
-	  if ((key > '0') && (key <= '9'))
-	    {
+	  if ((key > '0') && (key <= '9')) {
 	      // set the active plot
 	      int nPlot = key - '0';
 	      --nPlot;
 	      pMainWnd->SelectPlot(nPlot, 1);
-	    }
+	  }
 	  ;
-	}
+      }
     }  
 }
 //-------------------------------------------------------------
@@ -362,36 +345,31 @@ void KeysEH (Widget w, XtPointer client_data,
 void StatusButtonEH (Widget w, XtPointer client_data,
   XEvent* event, Boolean* continue_to_dispatch)
 {
-  // Handle button press in the plot list area
+    // Handle button press in the plot list area
 
-  CPoint p(event->xmotion.x, event->xmotion.y);
-  XEvent report;
-  Display* display = XtDisplay(pMainWnd->m_nStatusBar);
+    CPoint p(event->xmotion.x, event->xmotion.y);
+    XEvent report;
+    Display* display = XtDisplay(pMainWnd->m_nStatusBar);
 
-  // Wait for button to be released
-
-  while (1)
-    {
+    // Wait for button to be released
+    while (1) {
       XNextEvent(display, &report);
-      if (report.type == ButtonRelease)
-	{
-	  // Determine the selected plot number and make it
-	  //   the active plot or operand plot depending on the button 
+      if (report.type == ButtonRelease) {
+	// Determine the selected plot number and make it
+	//   the active plot or operand plot depending on the button 
+	int nPlot = (p.x/7 + 1)/3;
 
-	  int nPlot = (p.x/7 + 1)/3;
+	if (event->xbutton.button == 1)
+	  pMainWnd->SelectPlot(nPlot, 1);
+	else
+	  pMainWnd->SelectPlot(nPlot, 2);
 
-	  if (event->xbutton.button == 1)
-	    pMainWnd->SelectPlot(nPlot, 1);
-	  else
-	    pMainWnd->SelectPlot(nPlot, 2);
-
-	  // cout << event->xbutton.button << ' ' << ' ' << p.x << ' ' << nPlot << '\n';
-	  break;
-	}
-      else
-	{	
-	   ;
-	}      
+	// cout << event->xbutton.button << ' ' << ' ' << p.x << ' ' << nPlot << '\n';
+	break;
+      }
+      else {	
+	;
+      }      
     }
 }
 
@@ -399,72 +377,70 @@ void StatusButtonEH (Widget w, XtPointer client_data,
 
 void AboutCB (Widget w, void* client_d, void* call_d)
 {
-  caddr_t client_data = (caddr_t) client_d;
-  XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
+    caddr_t client_data = (caddr_t) client_d;
+    XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
 
-  pMainWnd->OnAbout();
+    pMainWnd->OnAbout();
 }
 //-------------------------------------------------------------
 
 void FileMenuCB (Widget w, void* client_d, void* call_d)
 {
-  caddr_t client_data = (caddr_t) client_d;
-  XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
+    caddr_t client_data = (caddr_t) client_d;
+    XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
 
-  XmFileSelectionBoxCallbackStruct* sel;
-  XmSelectionBoxCallbackStruct* sel2;
-  XmToggleButtonCallbackStruct* sel3;
-  CDatabase* pDb;
-  char* filename;
-  char* s;
-  int i = (int) client_data;
+    XmFileSelectionBoxCallbackStruct* sel;
+    XmSelectionBoxCallbackStruct* sel2;
+    XmToggleButtonCallbackStruct* sel3;
+    CDatabase* pDb;
+    char* filename;
+    char* s;
+    int i = (int) client_data;
 
-  switch (i)
-    {
-    case PL_NEW:
-      pMainWnd->OnFileNew();
-      break;
-    case PL_OPEN:
-      pMainWnd->OnFileOpen();
-      break;
-    case PL_FILE_OPEN:
-      XtUnmanageChild(pMainWnd->m_nFileOpenDialog);
-      sel = (XmFileSelectionBoxCallbackStruct *) call_data;
-      XmStringGetLtoR(sel->value, XmSTRING_DEFAULT_CHARSET, &filename);
-      strcpy (pMainWnd->m_pFileName, filename);
-      pMainWnd->LoadFile(filename);
-      break;
-    case PL_FILE_LOAD:
-      XtUnmanageChild (pMainWnd->m_nInputDialog);
-      sel2 = (XmSelectionBoxCallbackStruct *) call_data;
-      XmStringGetLtoR(sel2->value, XmSTRING_DEFAULT_CHARSET, &s);
-      if (*(pMainWnd->m_pFileName))
-	pMainWnd->LoadDatasetFile(pMainWnd->m_pFileName, s);
-      break;
-    case PL_LOAD_CANCEL:
-      XtUnmanageChild(pMainWnd->m_nInputDialog);
-      break;
-    case PL_FILE_CANCEL:
-      XtUnmanageChild(pMainWnd->m_nFileOpenDialog);
-      break;
-    case PL_SAVE:
-      pMainWnd->OnFileSave();
-      break;
-    case PL_FILE_SAVE:
-      XtUnmanageChild (pMainWnd->m_nFileSaveDialog);
-      sel = (XmFileSelectionBoxCallbackStruct *) call_data;
-      XmStringGetLtoR(sel->value, XmSTRING_DEFAULT_CHARSET, &filename);
-      pMainWnd->SaveFile(filename);
-      break;
-    case PL_SAVE_CANCEL:
-      XtUnmanageChild (pMainWnd->m_nFileSaveDialog);
-      break;
-
-    case PL_PRINT:
-      pMainWnd->OnPrint();
-      break;
-    default:
-      break;
+    switch (i) {
+      case PL_NEW:
+        pMainWnd->OnFileNew();
+        break;
+      case PL_OPEN:
+        pMainWnd->OnFileOpen();
+        break;
+      case PL_FILE_OPEN:
+        XtUnmanageChild(pMainWnd->m_nFileOpenDialog);
+        sel = (XmFileSelectionBoxCallbackStruct *) call_data;
+        XmStringGetLtoR(sel->value, XmSTRING_DEFAULT_CHARSET, &filename);
+        strcpy (pMainWnd->m_pFileName, filename);
+        pMainWnd->LoadFile(filename);
+        break;
+      case PL_FILE_LOAD:
+        XtUnmanageChild (pMainWnd->m_nInputDialog);
+        sel2 = (XmSelectionBoxCallbackStruct *) call_data;
+        XmStringGetLtoR(sel2->value, XmSTRING_DEFAULT_CHARSET, &s);
+        if (*(pMainWnd->m_pFileName))
+	  pMainWnd->LoadDatasetFile(pMainWnd->m_pFileName, s);
+        break;
+      case PL_LOAD_CANCEL:
+        XtUnmanageChild(pMainWnd->m_nInputDialog);
+        break;
+      case PL_FILE_CANCEL:
+        XtUnmanageChild(pMainWnd->m_nFileOpenDialog);
+        break;
+      case PL_SAVE:
+        pMainWnd->OnFileSave();
+        break;
+      case PL_FILE_SAVE:
+        XtUnmanageChild (pMainWnd->m_nFileSaveDialog);
+        sel = (XmFileSelectionBoxCallbackStruct *) call_data;
+        XmStringGetLtoR(sel->value, XmSTRING_DEFAULT_CHARSET, &filename);
+        pMainWnd->SaveFile(filename);
+        break;
+      case PL_SAVE_CANCEL:
+        XtUnmanageChild (pMainWnd->m_nFileSaveDialog);
+        break;
+      case PL_PRINT:
+        pMainWnd->OnPrint();
+        break;
+      default:
+        break;
     }
 }
 //------------------------------------------------------------------
@@ -478,8 +454,7 @@ void SaveOptionsCB (Widget w, void* client_d, void* call_d)
 
     int data = (int) client_d;
 
-    if (data >= PL_SAVE_OPTIONS)
-    {
+    if (data >= PL_SAVE_OPTIONS) {
 	switch (data) {
 	  case PL_SAVE_OPTIONS:
 	      o = pDb->GetSaveOptions();
@@ -796,14 +771,11 @@ void ForthCB (Widget wSrc, void* client_d,
 int BlankLine (char* s)
 {
 // Return TRUE if the line is blank
-
     char* p = s;
-    while (*p != '\0')
-    {
-        if ((*p != ' ') && (*p != '\t') && (*p != '\n')) return 0;
-        ++p;
+    while (*p != '\0') {
+      if ((*p != ' ') && (*p != '\t') && (*p != '\n')) return 0;
+      ++p;
     }
-
     return 1;
 }
 //---------------------------------------------------------------
@@ -818,68 +790,58 @@ int NumberParse (float* nums, char* s)
     char* p = s, *d, *ep = s + strlen(s);
 
     if (*s == '\0' || *s == '\r' || *s == 27) return 0;
-	if (BlankLine(s)) return 0;
+      if (BlankLine(s)) return 0;
+      int n = 0;
 
-	int n = 0;
-
-	do
-	{
-      d = strchr (p, d1);
-      if (!d)
-      {
-        d = strchr (p, d2);
-        if (!d)
-        {
-          d = strchr (p, d3);
+      do {
+        d = strchr (p, d1);
+        if (!d) {
+          d = strchr (p, d2);
+          if (!d) {
+            d = strchr (p, d3);
+          }
         }
-      }
 
-	  if (!d)       // last delimited value
-	  {
-        nums [n] = atof (p);
-        ++n;
-        break;
-	  }
+	if (!d) {       // last delimited value
+          nums [n] = atof (p);
+          ++n;
+          break;
+	}
 
-      if (d == p)
-      {
-        if (*p == d1 || *p == d2) ++n;
-        ++p;
-      }
-      else
-      {
-        nums [n] = atof (p);
-        ++n;
-        p = d + 1;
-      }
-
-	} while (p < ep) ;
+        if (d == p) {
+          if (*p == d1 || *p == d2) ++n;
+          ++p;
+        }
+        else {
+          nums [n] = atof (p);
+          ++n;
+          p = d + 1;
+        }
+    } while (p < ep) ;
 
     return n;
-
 }
 //---------------------------------------------------------------
 
 void SortRect (CRect* prect)
 {
-	CPoint p1 = prect->TopLeft();
-	CPoint p2 = prect->BottomRight();
+    CPoint p1 = prect->TopLeft();
+    CPoint p2 = prect->BottomRight();
+    int i;
 
-	int i;
+    if (p2.x < p1.x) {
+      i = p1.x;
+      p1.x = p2.x;
+      p2.x = i;
+    }
 
-	if (p2.x < p1.x)
-	{
-		i = p1.x;
-		p1.x = p2.x;
-		p2.x = i;
-	}
-	if (p2.y < p1.y)
-	{
-		i = p1.y;
-		p1.y = p2.y;
-        p2.y = i;
-	}
-	prect->SetRect (p1.x, p1.y, p2.x, p2.y);
+    if (p2.y < p1.y) {
+      i = p1.y;
+      p1.y = p2.y;
+      p2.y = i;
+    }
+
+    prect->SetRect (p1.x, p1.y, p2.x, p2.y);
 }
 //---------------------------------------------------------------------
 
@@ -887,14 +849,13 @@ char* LabelFormat (float x1, float x2, char axis)
 {
 // Determine label output format for range of numbers between x1 and x2.
 
-    static char format[255];
+    static char format[16];
 
     float diff = fabs (x2 - x1);
     int j = (x1 < 0.) || (x2 < 0.);
 
-	switch (axis)
-	{
-	  case 'Y':
+    switch (axis) {
+      case 'Y':
         if ((diff < .001f) || (diff >= 100000.f))
           strcpy (format, "%9.1e");
         else if ((diff >= .001f) && (diff < 1.f))
@@ -907,16 +868,14 @@ char* LabelFormat (float x1, float x2, char axis)
           strcpy (format, "%6.1f");
         else
           strcpy (format, "%6.0f");
-	    break;
-	  case 'X':
+        break;
+      case 'X':
         strcpy (format, DisplayFormat(x1, x2));
         break;
       default:
         ;
     }
-
     return format;
-
 }
 //----------------------------------------------------------------
 
@@ -924,7 +883,7 @@ char* DisplayFormat (float x1, float x2)
 {
 // Determine display format for range of numbers between x1 and x2.
 
-    static char format[255];
+    static char format[16];
     float diff = fabs ((x2 - x1));
     float a1 = fabs (x1);
     float a2 = fabs (x2);
@@ -932,33 +891,30 @@ char* DisplayFormat (float x1, float x2)
     int field_width = 6;
     int precision = 4;
 
-	if ((diff < .01f) || (diff >= 100000.f))
-	  field_width += 6;
-	else if ((diff >= .01f) && (diff < .1f))
-	  ++precision;
-	else if ((diff >= .1f) && (diff < 1.f))
-	  ;
-	else if ((diff >= 1.f) && (diff < 10.f))
-	  --precision;
-	else if ((diff >= 10.f) && (diff < 100.f))
-	  precision -= 2;
-	else if ((diff >= 100.f) && (diff < 1000.f))
-	  precision -= 3;
-	else
-	  {
-	    field_width = 8;
-	    precision = 0;
-	  }
+    if ((diff < .01f) || (diff >= 100000.f))
+      field_width += 6;
+    else if ((diff >= .01f) && (diff < .1f))
+      ++precision;
+    else if ((diff >= .1f) && (diff < 1.f))
+      ;
+    else if ((diff >= 1.f) && (diff < 10.f))
+      --precision;
+    else if ((diff >= 10.f) && (diff < 100.f))
+      precision -= 2;
+    else if ((diff >= 100.f) && (diff < 1000.f))
+      precision -= 3;
+    else {
+      field_width = 8;
+      precision = 0;
+    }
 
-    if (diff != 0.)
-    {
-        float a3 = vmax/diff;
-        if (a3 >= 10. && a3 <= 1.e6)
-        {
-            int i = (int) (log(a3)/log(10.)) - 1;
-            if ((x1 < 0.) || (x2 < 0.)) i++;
-            if (i < 10) field_width += i;;
-	}
+    if (diff != 0.) {
+      float a3 = vmax/diff;
+      if (a3 >= 10. && a3 <= 1.e6) {
+        int i = (int) (log(a3)/log(10.)) - 1;
+        if ((x1 < 0.) || (x2 < 0.)) i++;
+        if (i < 10) field_width += i;;
+      }
     }
     
     if (field_width > 8)
@@ -978,27 +934,25 @@ void LoadInitializationFile ()
 // default directory is HOME/.xyplot. This file can
 // load other forth files containing initialization scripts.
 
-  char start_dir [512];
-  char path[512];
+    char start_dir [512];
+    char path[512];
 
-  getcwd (start_dir, 511);
+    getcwd (start_dir, 511);
 
-  if (getenv("XYPLOT_DIR"))
-    {
+    if (getenv("XYPLOT_DIR")) {
       strcpy(path, getenv("XYPLOT_DIR"));
     }
-  else
-    {
+    else {
       char* home_dir = getenv("HOME");
       strcpy (path, getenv("HOME"));
       strcat (path, "/.xyplot");
     }
-  if (chdir(path) == 0)
-    {
+
+    if (chdir(path) == 0) {
       LoadForthFile("xyplot.4th");
     }
-  chdir(start_dir);
 
+    chdir(start_dir);
 }    
 //--------------------------------------------------------------
 
@@ -1008,14 +962,12 @@ vector<char*> GetStartupFileList (int argc, char* argv[])
 //  The first element in the vector is the program pathname.
 
     vector<char*> filelist;
-
     int i = 1;
 
-    while (i < argc)
-      {
+    while (i < argc) {
 	if (*argv[i] != '-') filelist.push_back(argv[i]);
 	i++;
-      }
+    }
 
     return filelist;
 }
@@ -1023,35 +975,31 @@ vector<char*> GetStartupFileList (int argc, char* argv[])
 
 int AddToHeader (char* text, char* hdr, bool prefix)
 {
-  // Add text to the beginning of a header string
-  // Return non-zero if length exceeded.
+// Add text to the beginning of a header string
+// Return non-zero if length exceeded.
 
-  int ecode = 0;
-  int new_length = strlen(text) + strlen(hdr);
-  if (prefix) new_length += strlen(ANNOTATION_PREFIX);
+    int ecode = 0;
+    int new_length = strlen(text) + strlen(hdr);
+    if (prefix) new_length += strlen(ANNOTATION_PREFIX);
 
-  if (new_length < HEADER_LENGTH)
-    {
+    if (new_length < HEADER_LENGTH) {
       char* temp_str = new char[HEADER_LENGTH];
-      if (prefix) 
-	{
-	  strcpy (temp_str, ANNOTATION_PREFIX);
-	  strcat (temp_str, text);
-	}
-      else
-	{
-	  strcpy (temp_str, text);
-	}
+      if (prefix) {
+	strcpy (temp_str, ANNOTATION_PREFIX);
+	strcat (temp_str, text);
+      }
+      else {
+	strcpy (temp_str, text);
+      }
       strcat (temp_str, hdr);
       strcpy (hdr, temp_str);
       delete [] temp_str;
     }
-  else
-    {
+    else {
       ecode = -1;  // new header will exceed the HEADER_LENGTH
     }
 
-  return ecode;
+    return ecode;
 }
 //-------------------------------------------------------------
 
@@ -1059,42 +1007,40 @@ int ExecuteForthExpression (char* s, ostringstream* pOutput, long int* pLine)
 {
   // Return zero if no error; otherwise return the Forth error code.
 
-  istringstream* pSS = new istringstream (s);
-  long int *sp, nError;
-  byte* tp;
-  vector<byte> op;
+    istringstream* pSS = new istringstream (s);
+    long int *sp, nError;
+    byte* tp;
+    vector<byte> op;
 
-  *pLine = 0;
+    *pLine = 0;
+    SetForthInputStream(*pSS);
+    SetForthOutputStream(*pOutput);
+    nError = ForthCompiler (&op, pLine);
+    delete pSS;
 
-  SetForthInputStream(*pSS);
-  SetForthOutputStream(*pOutput);
-  nError = ForthCompiler (&op, pLine);
-  delete pSS;
+    if (nError) return nError;
 
-  if (nError) return nError;
-
-  if (op.size())
-    {
+    if (op.size()) {
       SetForthInputStream(cin);
       nError = ForthVM (&op, &sp, &tp);
     }
 
-  return nError;
+    return nError;
 }
 //-------------------------------------------------------------
 
 void InitForthInterface ()
 {
-  char fs[256];
-  const void* funcPtr;
-  const char* constName;
-  int i, nError;
-  long int lnum;
-  size_t nIFCfuncs = sizeof(IfcFuncList) / sizeof(IfcFuncList[0]);
-  char out_s[256];
-  stringstream ForthMessages;
+    char fs[256];
+    const void* funcPtr;
+    const char* constName;
+    int i, nError;
+    long int lnum;
+    size_t nIFCfuncs = sizeof(IfcFuncList) / sizeof(IfcFuncList[0]);
+    char out_s[256];
+    stringstream ForthMessages;
 
-  for (i = 0; i < nIFCfuncs; i++) {
+    for (i = 0; i < nIFCfuncs; i++) {
 	funcPtr = IfcFuncList[i].Function;
 	constName = IfcFuncList[i].constantName;
   	sprintf (fs, "%lu constant %s\n", funcPtr, constName);
@@ -1104,17 +1050,17 @@ void InitForthInterface ()
 		pMainWnd->MessageBox(out_s);
 		return;
 	}
-  }
+    }
 
-  IfcFuncTemplate MenuList[5] = {
+    IfcFuncTemplate MenuList[5] = {
      { pMainWnd->m_nFileMenu, "MN_FILE" },
      { pMainWnd->m_nEditMenu, "MN_EDIT" },
      { pMainWnd->m_nPlotMenu, "MN_PLOT" },
      { pMainWnd->m_nMathMenu, "MN_MATH" },
      { pMainWnd->m_nHelpMenu, "MN_HELP" }
-  };
+    };
 
-  for (i = 0; i < 5; i++) {
+    for (i = 0; i < 5; i++) {
 	funcPtr = MenuList[i].Function;
 	constName = MenuList[i].constantName;
   	sprintf (fs, "%lu constant %s\n", funcPtr, constName);
@@ -1124,30 +1070,28 @@ void InitForthInterface ()
 		pMainWnd->MessageBox(out_s);
 		return;
 	}
-  }
-
+    }
 }
 //-----------------------------------------------------------------
 
 int LoadForthFile(char* fname)
 {
-  char s[256], out_s[1024];
-  int nError;
-  long int lnum;
+    char s[256], out_s[1024];
+    int nError;
+    long int lnum;
 
-  strcpy (s, "include ");
-  strcat (s, fname);
+    strcpy (s, "include ");
+    strcat (s, fname);
 
-  stringstream ForthMessages;
-  nError = ExecuteForthExpression (s, (ostringstream*) &ForthMessages, &lnum);
+    stringstream ForthMessages;
+    nError = ExecuteForthExpression (s, (ostringstream*) &ForthMessages, &lnum);
 
-  if (nError)
-    {
-        ForthMessages.getline(out_s, 1023, 0);
-        pMainWnd->MessageBox (out_s);
+    if (nError) {
+      ForthMessages.getline(out_s, 1023, 0);
+      pMainWnd->MessageBox (out_s);
     }
 
-  return nError;
+    return nError;
 }
 
 //----------------------------------------------------------------

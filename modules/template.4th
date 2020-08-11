@@ -5,12 +5,9 @@
 \  "Expression" from the Math Menu to generate plots of simple
 \  functions.
 \
-\  Copyright (c) 2007--2012 Krishna Myneni
+\  Copyright (c) 2007--2020 Krishna Myneni
 \  Provided under the GNU Lesser General Public License (LGPL)
 \
-\  Revisions:
-\    2009-10-29  km  updated data structure member names
-\    2012-06-26  km  convert to unnamed module; update structure names
 
 Begin-Module
 
@@ -49,7 +46,7 @@ Public:
 
     \ Sanity checks on the user's input parameters
     
-    count parse_args
+    count [char] , bl replace-char parse_args
     3 <> IF
 	s" Incorrect number of arguments for Template." message_box
 	abort

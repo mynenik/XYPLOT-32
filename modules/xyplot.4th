@@ -199,8 +199,6 @@ include struct.4th
 include struct-ext.4th
 include signal.4th
 
-[UNDEFINED] ptr [IF] : ptr  CREATE 1 CELLS ?allot ! DOES> a@ ; [THEN]
-
 \ Save Options structure
 \   HeaderType: 0=none, 1=xyplot format, 2=user-defined line prefix
 \   Delimiter:  0=space, 1=tab, 2=comma, other=space

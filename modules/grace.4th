@@ -33,9 +33,6 @@ Public:
 : f>$ ( r -- a u )   f>string count  ;
 : $>f ( a u -- r )   strpck string>f ;
 
-: parse_csv ( a u -- r1 ... rn n )
-    [char] , bl replace-char parse_args ;
-
 : dos2unix-line ( a u -- a u2 )
     2dup 1- + c@ 13 = IF 1- THEN ;
 

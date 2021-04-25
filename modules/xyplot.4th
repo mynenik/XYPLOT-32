@@ -2,7 +2,7 @@
 \
 \ Forth interface to xyplot
 \
-\ Copyright (c) 1999--2020 Krishna Myneni
+\ Copyright (c) 1999--2021 Krishna Myneni
 \
 \ This software is provided under the terms of the 
 \ GNU Affero General Public License (AGPL), v3.0 or later.
@@ -295,6 +295,7 @@ include ylog
 include yln
 include autocorr
 include xyderiv
+include xyarea
 include peak_search
 include xypeaks
 include xymap

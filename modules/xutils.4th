@@ -2,15 +2,38 @@
 \
 \ xyplot Forth interface utilities
 \
-\ Copyright (c) 1999-2009 Krishna Myneni
+\ Copyright (c) 1999-2021 Krishna Myneni
 \
 \ This software is provided under the terms of the GNU
 \ Lesser General Public License (LGPL)
+\
+\ Glossary:
+\
+\   DS_EXTREMA   ( dsaddr -- ) 
+\     Set variables fxmin, fxmax, fymin, fymax given DatasetInfo 
+\     structure address.
+\
+\   FINDX        ( rx dsaddr -- n )
+\     Return index of data point with x value closest to rx.
+\
+\   INDEX_LIMITS ( dsaddr -- n1 n2 ) 
+\     Return indices of data points with abscissas nearest to the
+\     window domain limits: xmin, xmax.
+\
+\   OVERLAP      ( dsaddr1 dsaddr2 -- flag )
+\     Find the overlap interval for two data sets. Return a true 
+\     flag if the two sets have overlap in x. The overlap interval
+\     is stored in the fvariables fx1 and fx2.
+\
+\   INDEX_RANGE  ( -- n1 n2 )
+\     Return the indices of data points in the active data set which
+\     correspond to its overlap interval with the operand data set.
 \
 \ Revisions:
 \   2009-10-28  km  revised data structure members; moved TDSTRING
 \                   from grace.4th to this module.
 \   2020-07-09  km  moved TDSTRING to utils.4th
+\   2021-04-24  km  implemented INDEX_LIMITS
 
 DatasetInfo ds1
 DatasetInfo ds2
@@ -67,12 +90,15 @@ variable jtemp
 	then
 	jtemp @ ;  
 
-
-: index_limits ( dsaddr -- n1 n2 | return indices spanning window domain )
-
-;
-
-
+\ Return indices from a dataset for x-values spanning the window domain.
+\ The returned indices are ordered such that n1 <= n2; it is the
+\ responsibility of calling word to check for condition n1 = n2.
+: index_limits ( dsaddr -- n1 n2 )
+    >r get_window_limits 
+    fdrop fxmax f! fdrop fdup fxmin f!
+    r@ findx
+    fxmax f@ r> findx
+    2dup > IF swap THEN ;
 
 fvariable fx1
 fvariable fx2
@@ -84,8 +110,6 @@ fvariable fx2
 	ds_extrema fxmax f@ fmin fx2 f!
 	fxmin f@ fmax fx1 f!
 	fx1 f@ fx2 f@ f<= ;
-
-
 
 : index_range ( -- n1 n2 | return starting and ending indices of overlap region in active set )
 	?active

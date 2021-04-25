@@ -38,7 +38,7 @@ Public:
 	      r> dsa @xy fdrop xlim2 f!
 	      2>r
 	      0e
-	      2r> 1+ swap DO
+	      2r> swap DO
 	        I dsa @xy y1 f! I 1+ dsa @xy y2 f!
 	        f- y1 f@ y2 f@ f+ f* 0.5e f* f+
 	      LOOP

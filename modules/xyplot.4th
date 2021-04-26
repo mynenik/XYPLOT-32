@@ -304,6 +304,7 @@ include xysort
 \ include pnm
 include grace
 include xyswap
+include xyjoin
 
 \ You can put some initialization stuff here, for example
 \  to set the background and foreground colors.

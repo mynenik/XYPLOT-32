@@ -39,11 +39,6 @@
 \
 \ =======  kForth requires =======================
 \ include ans-words  ( commented out here, but include in main program file)
-[undefined] floats [if] : floats dfloats ; [then]
-: aligned  ( n -- m ) dup 0> if 1- 1 cells / 1+ cells else drop 0 then ;  
-: faligned ( n -- m ) dup 0> if 1- 1 floats / 1+ floats else drop 0 then ;
-: dfaligned  faligned ;
-: sfaligned  aligned ;
 \ ================================================
 
 : naligned ( addr1 n -- addr2 )
@@ -62,7 +57,7 @@
       drop ;
 
 : create-field ( align1 offset1 align size "name" --  align2 offset2 )
-    create swap rot over nalign dup 1 cells ?allot ! ( ,) ( align1 size align offset )
+    create swap rot over nalign dup 1 cells allot? ! ( ,) ( align1 size align offset )
     rot + >r nalign r> ;
 
 : field ( align1 offset1 align size "name" --  align2 offset2 )
@@ -101,7 +96,7 @@ cell% 2*              2constant double%
     ( drop here swap nalign here - allot) 2drop ;
 
 : %allot ( align size -- addr )
-    tuck %align ( here swap) ?allot ;
+    tuck %align ( here swap) allot? ;
 
 : %allocate ( align size -- addr ior )
     nip allocate ;

@@ -1,10 +1,10 @@
 // CDataset.cpp
 //
-// Copyright (c) 1995--2018 Krishna Myneni
+// Copyright (c) 1995--2021 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
-// GNU General Public License (GPL), v3.0 or later.
+// GNU General Public License (AGPL), v3.0 or later.
 //
 
 #include <string.h>
@@ -14,7 +14,7 @@
 CDataset::CDataset(int nLength, int nPoints, char* name, char* hdr) :
   vector<float> (nLength*nPoints)
 {
-  m_nDatumLength = nLength;
+  m_nDatumSize = nLength;
   
   // Initialize the extrema vector
 
@@ -120,12 +120,12 @@ vector<float>::iterator CDataset::Find(float x)
 	  {
             jm = (ju + jl)/2;
 
-	    if (ascending == (x > *(p + jm*m_nDatumLength)))
+	    if (ascending == (x > *(p + jm*m_nDatumSize)))
 	      jl = jm;
 	    else
 	      ju = jm;
 	  }
-        p += jm*m_nDatumLength;
+        p += jm*m_nDatumSize;
     }
     else
     {
@@ -133,7 +133,7 @@ vector<float>::iterator CDataset::Find(float x)
 
         float dev = fabs(*begin() - x), dev2;
 
-        for (i = begin() + m_nDatumLength; i < end(); i += m_nDatumLength)
+        for (i = begin() + m_nDatumSize; i < end(); i += m_nDatumSize)
         {
             dev2 = fabs(*i - x);
             if (dev2 < dev)
@@ -188,9 +188,9 @@ vector<vector<float>::iterator> CDataset::Limits (float x1, float x2,
 	    // Ensure limits are inside of the interval
 	    //   Find() only finds nearest point.
 
-	    if ((*p1 < x1) && (p1 < (end() - m_nDatumLength)))
-	      p1 += m_nDatumLength;
-	    if ((*p2 > x2) && (p2 > begin())) p2 -= m_nDatumLength;
+	    if ((*p1 < x1) && (p1 < (end() - m_nDatumSize)))
+	      p1 += m_nDatumSize;
+	    if ((*p2 > x2) && (p2 > begin())) p2 -= m_nDatumSize;
 
 	  }
 	else
@@ -217,8 +217,8 @@ vector<int> CDataset::IndexLimits (float x1, float x2, int& bOverlap)
     if (bOverlap)
     {
         vector<vector<float>::iterator> flim = Limits(x1, x2, bOverlap);
-        int i1 = (flim[0] - begin())/m_nDatumLength;
-        int i2 = (flim[1] - begin())/m_nDatumLength;
+        int i1 = (flim[0] - begin())/m_nDatumSize;
+        int i2 = (flim[1] - begin())/m_nDatumSize;
         lim.push_back(i1);
         lim.push_back(i2);
     }
@@ -230,9 +230,9 @@ vector<int> CDataset::IndexLimits (float x1, float x2, int& bOverlap)
 void CDataset::CopyData (float* a, int npts)
 {
     vector<float>::iterator p = begin();
-    int n = npts*m_nDatumLength;
+    int n = npts*m_nDatumSize;
     for (int i = 0; i < n; i++) *p++ = *a++;
-    // memcpy ((float*) &(*this)[0], a, npts*m_nDatumLength*sizeof(float));
+    // memcpy ((float*) &(*this)[0], a, npts*m_nDatumSize*sizeof(float));
 }
 
 void CDataset::CopyData (float* x, int js, int je)
@@ -240,11 +240,11 @@ void CDataset::CopyData (float* x, int js, int je)
 // Copy data from buffer given start and stop indices
 
     vector<float>::iterator p = begin();
-    p += js*m_nDatumLength;
+    p += js*m_nDatumSize;
 
-    int n = (je - js + 1)*m_nDatumLength;
+    int n = (je - js + 1)*m_nDatumSize;
     for (int i = 0; i < n; i++) *p++ = *x++;
-    // memcpy (p, x, (je - js + 1)*m_nDatumLength*sizeof(float));
+    // memcpy (p, x, (je - js + 1)*m_nDatumSize*sizeof(float));
 }
 
 void CDataset::CopyData (vector<float>::iterator src, int npts)
@@ -252,7 +252,7 @@ void CDataset::CopyData (vector<float>::iterator src, int npts)
 // Copy data from the iterator for another dataset.
 
     vector<float>::iterator p = begin();
-    int n = npts*m_nDatumLength;
+    int n = npts*m_nDatumSize;
     for (int i = 0; i < n; i++) *p++ = *src++;
 }
 
@@ -263,29 +263,29 @@ void CDataset::CopyFromXY (float* x, float* y, int npts)
     for (int i = 0; i < npts; i++)
     {
 	*p++ = *x++;
-	for (int j = 1; j < m_nDatumLength; j++) *p++ = *y++;
+	for (int j = 1; j < m_nDatumSize; j++) *p++ = *y++;
     }
 }
 
 void CDataset::CopyFromXY (float* x, float* y, int js, int je)
 {
     vector<float>::iterator p = begin();
-    p += js*m_nDatumLength;
+    p += js*m_nDatumSize;
 
     for (int i = js; i <= je; i++)
     {
         *p++ = *x++;
-        for (int j = 1; j < m_nDatumLength; j++) *p++ = *y++;
+        for (int j = 1; j < m_nDatumSize; j++) *p++ = *y++;
     }
 }
 
 void CDataset::CopyToBuffer (float* a)
 {
     vector<float>::iterator p = begin();
-    int n = size()*m_nDatumLength;
+    int n = size()*m_nDatumSize;
     for (int i = 0; i < n; i++) *a++ = *p++;
 
-    // memcpy (a, (float*) &(*this)[0], size()*m_nDatumLength*sizeof(float));
+    // memcpy (a, (float*) &(*this)[0], size()*m_nDatumSize*sizeof(float));
 }
 
 //---------------------------------------------------------------

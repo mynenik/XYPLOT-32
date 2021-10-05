@@ -1,4 +1,4 @@
-\ runge4.4th    Runge-Kutta ODE Solver for systems of ODEs
+\ runge4-x86.4th    Runge-Kutta ODE Solver for systems of ODEs
 \
 \ Forth Scientific Library Algorithm #29
 \   Adapted for integrated fp/data stack Forths (km 2003-03-18)
@@ -71,8 +71,7 @@
 \     2007-10-27  km; save base, switch to decimal, and restore base
 \     2011-09-16  km; use Neal Bridges' anonymous modules.
 \     2012-02-19  km; use KM/DNW's modules library
-\     2021-07-09  km; updated for separate fp stack; removed Lorenz eqns.
-CR .( RUNGE4            V1.2g         09 July      2021   EFC )
+CR .( RUNGE4            V1.2f         19 February  2012   EFC )
 BEGIN-MODULE
 
 BASE @ DECIMAL
@@ -125,62 +124,198 @@ Public:
 
 Private:
 
+0 [IF]
 
 : runge4_step ( t -- t' )
 
-     FDUP u{ dudt{ dsdt()
+     FDUP u{ dudt{ dsdt()         \ -- t
 
-     h F@ F2/
+     h F@ F2/                     \ -- t h/2
      dim 0 DO
              dudt{ I } F@ FOVER F* u{ I } F@ F+
              ut{ I } F!
-            LOOP
+            LOOP                  \ -- t h/2
 
-     FOVER F+ ut{ dut{ dsdt()
+     FOVER F+ ut{ dut{ dsdt()     \ -- t
 
-     h F@ F2/
+     h F@ F2/                     \ -- t h/2
      dim 0 DO
              dut{ I } F@ FOVER F* u{ I } F@ F+
              ut{ I } F!
-            LOOP
+            LOOP                  \ -- t h/2
 
-     FOVER F+ ut{ dum{ dsdt()
+     FOVER F+ ut{ dum{ dsdt()     \ -- t
 
-     h F@
+     h F@                         \ -- t h
      dim 0 DO
              dum{ I } F@ FOVER F* u{ I } F@ F+
              ut{ I } F!
 
-             dum{ I } DUP F@ dut{ I } F@ F+ 
-[ fp-stack? invert ] [IF] ROT [THEN] F!             
+             dum{ I } DUP F@ dut{ I } F@ F+ ROT F!             
 
-           LOOP
+           LOOP                  \ -- t h
 
-     F+           \ tos is now t+dt
+     F+                          \ -- t+h
 
-     FDUP ut{ dut{ dsdt()
+     FDUP ut{ dut{ dsdt()        \ -- t+h
 
-     h F@ 6.0E0 F/
+     h F@ 6.0E0 F/               \ -- t+h h/6
      dim 0 DO
               dudt{ I } F@ dut{ I } F@ F+
               dum{ I } F@ F2* F+
               FOVER F*
               u{ I } DUP >R F@ F+ R> F!
-           LOOP
+           LOOP                 \ -- t+h h/6
 
-     FDROP
-          
+     FDROP                      \ -- t+h
 ;
+
+[ELSE]
+
+fvariable temph
+
+CODE runge4_step_l1 ( h/2 dim ut{ du{ u{ -- )
+                 ebp push,
+         0 [ebx] edx mov,   \ edx = u{
+         TCELL # ebx add,   
+         0 [ebx] eax mov,   \ eax = du{
+         TCELL # ebx add,
+         0 [ebx] ebp mov,   \ ebp = ut{
+         TCELL # ebx add,
+         0 [ebx] ecx mov,   \ ecx = dim
+         TCELL # ebx add,
+         0 [ebx]     fld,   \ st0 = h/2
+       DFLOAT #  ebx add,
+                 ebx push,
+         ebp     ebx mov,
+         DO,
+           0 [eax]   fld,  \ st0 = du{I}; st1 = h/2   
+           1 st      fld,
+                     fmulp,
+           0 [edx]   fld,
+                     faddp,
+           0 [ebx]   fstp,
+           DFLOAT # eax add,
+           DFLOAT # edx add,
+           DFLOAT # ebx add,
+         LOOP,
+         temph #@    fstp,  \ pop the h/2 off fpu stack                 
+                 ebx pop,
+                 ebp pop,
+         eax     eax xor,
+END-CODE
+
+CODE runge4_step_l2 ( h dim ut{ dut{ dum{ u{ -- )
+                 ebp push,
+                 esi push,
+         0 [ebx] edx mov,   \ edx = u{
+         TCELL # ebx add,
+         0 [ebx] eax mov,   \ eax = dum{
+         TCELL # ebx add,
+         0 [ebx] esi mov,
+         TCELL # ebx add,
+         0 [ebx] ebp mov,   \ ebp = ut{
+         TCELL # ebx add,
+         0 [ebx] ecx mov,   \ ecx = dim
+         TCELL # ebx add,
+         0 [ebx]     fld,   \ st0 = h
+       DFLOAT #  ebx add,
+                 ebx push,
+         esi     ebx mov,   \ ebx = dut{
+         DO,
+            0 [eax] fld,  \ st0 = dum{I}; st1 = h
+            1 st    fld,  \ st0 = h; st1 = dum{I}; st2 = h
+            1 st    fld,
+                    fmulp,
+            0 [edx] fld,
+                    faddp,
+            0 [ebp] fstp,  \ st0 = dum{I}; st1 = h
+            0 [ebx] fld,
+                    faddp,
+            0 [eax] fstp,
+            DFLOAT # eax add,
+            DFLOAT # ebx add,
+            DFLOAT # ebp add,
+            DFLOAT # edx add,
+          LOOP,
+          temph #@   fstp,
+                 ebx pop,
+                 esi pop,
+                 ebp pop,
+          eax    eax xor,
+END-CODE
+
+CODE runge4_step_l3 ( h/6 dim dudt{ dut{ dum{ u{ -- )
+                 ebp push,
+                 esi push,
+         0 [ebx] edx mov,   \ edx = u{
+         TCELL # ebx add,
+         0 [ebx] eax mov,   \ eax = dum{
+         TCELL # ebx add,
+         0 [ebx] esi mov,
+         TCELL # ebx add,
+         0 [ebx] ebp mov,   \ ebp = dudt{
+         TCELL # ebx add,
+         0 [ebx] ecx mov,   \ ecx = dim
+         TCELL # ebx add,
+         0 [ebx]     fld,   \ st0 = h/6
+       DFLOAT #  ebx add,
+                 ebx push,
+         esi     ebx mov,   \ ebx = dut{
+         DO,
+           0 [ebp]   fld,
+           0 [ebx]   fld,
+                     faddp,
+           0 [eax]   fld,
+                     fld1,
+                     fld1,
+                     faddp,
+                     fmulp,
+                     faddp,
+           1 st      fld,
+                     fmulp,
+           0 [edx]   fld,
+                     faddp,
+           0 [edx]   fstp,
+           DFLOAT # eax add,
+           DFLOAT # ebx add,
+           DFLOAT # ebp add,
+           DFLOAT # edx add,
+         LOOP,
+         temph #@  fstp,
+                   ebx pop,
+                   esi pop,
+                   ebp pop,
+         eax       eax xor,
+END-CODE
+
+: runge4_step ( t -- t' )
+     FDUP u{ dudt{ dsdt()                  \ t
+     h F@ F2/                              \ t h/2
+     fdup dim ut{ dudt{ u{ runge4_step_l1  \ t h/2
+     FOVER F+ ut{ dut{ dsdt()              \ t
+     h F@ F2/                              \ t h/2
+     fdup dim ut{ dut{ u{ runge4_step_l1   \ t h/2
+     FOVER F+ ut{ dum{ dsdt()              \ t
+     h F@                                  \ t h
+     fdup dim ut{ dut{ dum{ u{ runge4_step_l2  \ t h
+     F+                                    \ t+h 
+     FDUP ut{ dut{ dsdt()                  \ t+h
+     h F@ 6.0E0 F/                         \ t+h h/6
+     fdup dim dudt{ dut{ dum{ u{ runge4_step_l3 
+     FDROP                                 \ t+h
+;
+
+[THEN]
+
 
 Public:
 
-: runge_kutta4_integrate() ( t dt &u steps -- t')
 
+: runge_kutta4_integrate() ( t dt &u steps -- t')
      SWAP & u{ &!
      >R h F! R>
-
      0 ?DO runge4_step LOOP
-
 ;
 
 
@@ -211,7 +346,7 @@ FLOAT DARRAY uscal{
 	tstart F@ uorig{ uscal{ dsdt()	
 	dim 0 ?DO uscal{ I } DUP F@ step F@ F* FABS
 		  uorig{ I }     F@ FABS F+ tiny F+
-[ fp-stack? invert ] [IF] ROT  [THEN] F!		 
+		  ROT F!		 
 	    LOOP ;
 
 \ With a trick the result of a step can be made accurate to 5th order.
@@ -219,8 +354,7 @@ FLOAT DARRAY uscal{
 	dim 0 DO 		\ get 5th order truncation error
 		 uorig{ I } DUP F@  FDUP  
 	         u1{ I }    F@ F-  fcor F* 
-		 F+  
-[ fp-stack? invert ] [IF] ROT [THEN] F! 
+		 F+  ROT F! 
 	    LOOP ;
 
 \ Test if the step size needs shrinking
@@ -339,40 +473,110 @@ FVARIABLE t_start
 \ dy/dt = -y
 \ y(0) = 1
 \ Exact solution is y(t) = exp(-t)
-: derivs-A1() ( t 'u 'dudt -- )
-    >R 0 } F@  FNEGATE R> 0 } F! FDROP ;
+\ : derivs-A1() ( t 'y 'dydt -- )
+\   >R 0 } F@  FNEGATE R> 0 } F! FDROP ;
 
+CODE derivs-A1c  ( t 'y 'dydt -- )
+    0 [ebx]  ecx mov,  \ ecx = 'dydt
+    TCELL #  ebx add,
+    0 [ebx]  edx mov,  \ edx = 'y
+    TCELL #  ebx add,
+    DFLOAT # ebx add,
+    0 [edx]      fld,  \ st0 = y
+                 fchs,
+    0 [ecx]      fstp, \ dy/dt{ 0 } = -y
+END-CODE
+
+: derivs-A1() derivs-A1c ;
 : A1 ( t -- r ) FNEGATE FEXP ;
 
 \ E & P nonstiff problem #A2:
 \ dy/dt = -(y^3)/2
 \ y(0) = 1
 \ Exact solution is y(t) = 1 / sqrt(t + 1)
-: derivs-A2() ( t 'u 'dudt -- )
-    >R 0 } F@ FDUP FDUP F* F* FNEGATE 2e F/ R> 0 } F! FDROP ;
+\ : derivs-A2() ( t 'y 'dydt -- )
+\    >R 0 } F@ FDUP FDUP F* F* FNEGATE 2e F/ R> 0 } F! FDROP ;
 
-: A2 ( t -- r )
-    1e F+ FSQRT 1e FSWAP F/ ;
+CODE derivs-A2c ( t 'y 'dydt -- )
+    0 [ebx]  ecx mov,  \ ecx = 'dydt
+    TCELL #  ebx add,
+    0 [ebx]  edx mov,  \ edx = 'y
+    TCELL #  ebx add,
+    DFLOAT # ebx add,
+    0 [edx]      fld,  \ st0 = y
+    0 st         fld,
+    0 st         fld,
+                 fmulp,
+                 fmulp, 
+                 fchs,  \ st0 = -y^3 
+                 fld1,
+                 fld1,
+                 faddp,
+                 fdivp, 
+    0 [ecx]      fstp,  \ dydt{ 0 } = -y^3/2
+END-CODE
+
+: derivs-A2() derivs-A2c ;
+: A2 ( t -- r )  1e F+ FSQRT 1e FSWAP F/ ;
 
 \ E & P nonstiff problem #A3:
 \ dy/dt = cos(t) * y
 \ y(0) = 1
 \ Exact solution is y(t) = exp( sin( t ) )
-: derivs-A3() ( t 'u 'dudt -- )
-    >R 0 } F@ FSWAP FCOS F* R> 0 } F! ;
+\ : derivs-A3() ( t 'u 'dudt -- )
+\    >R 0 } F@ FSWAP FCOS F* R> 0 } F! ;
 
-: A3 ( t -- r )
-    FSIN FEXP ;
+CODE derivs-A3c  ( t 'y 'dydt -- )
+    0 [ebx]  ecx mov,  \ ecx = 'dydt
+    TCELL #  ebx add,
+    0 [ebx]  edx mov,  \ edx = 'y
+    TCELL #  ebx add,
+    0 [ebx]      fld,  \ st0 = t
+    DFLOAT # ebx add,
+                 fcos,
+    0 [edx]      fld,
+                 fmulp,
+    0 [ecx]      fstp, \ dydt{ 0 } = y*cos(t)
+END-CODE
+
+: derivs-A3() derivs-A3c ;
+: A3 ( t -- r )  FSIN FEXP ;
 
 \ E & P nonstiff problem #A4:
 \ dy/dt = y*(20 - y)/80
 \ y(0) = 1
 \ Exact solution is y(t) = 20 / ( 1 + 19*exp( -t / 4 ) )
-: derivs-A4() ( t 'u 'dudt -- ) 
+
+false [IF]
+
+: derivs-A4() ( t 'y 'dydt -- ) 
     >R 0 } F@ FDUP 20e FSWAP F- F* 80e F/ R> 0 } F! FDROP ;
 
-: A4 ( t -- r )
-    FNEGATE 4e F/ FEXP 19e F* 1e F+ 20e FSWAP F/ ;
+[ELSE]
+
+variable IC_20  20 IC_20 !
+variable IC_80  80 IC_80 !
+
+CODE derivs-A4c ( t 'y 'dydt -- )
+    0 [ebx]  ecx  mov,  \ ecx = 'dydt
+    TCELL #  ebx  add,
+    0 [ebx]  edx  mov,  \ edx = 'y
+    TCELL #  ebx  add,
+    DFLOAT # ebx  add,
+    0 [edx]       fld,
+    IC_20 #@      fild,
+    1 st          fld,
+                  fsubp,
+                  fmulp,
+    IC_80 #@      fild,
+                  fdivp,
+    0 [ecx]       fstp,  \ dydt{ 0 } = (20 - y)*y/80
+END-CODE
+: derivs-A4()  derivs-A4c ;
+
+[THEN]
+
+: A4 ( t -- r )  FNEGATE 4e F/ FEXP 19e F* 1e F+ 20e FSWAP F/ ;
 
 \ E & P nonstiff problem #A5:
 \ dy/dt = (y - t)/(y + t)
@@ -383,9 +587,8 @@ FVARIABLE t_start
 \
 \      r = 4 * exp ( pi/2 - theta )
 
-fvariable ftemp
 : derivs-A5() ( t 'u 'dudt -- )
-    >R >R FDUP R> 0 } F@ FDUP FROT F- ftemp F! F+ ftemp F@ F/ R> 0 } F! ;
+    >R >R FDUP R> 0 } F@ FDUP FROT F- 2>R F+ 2R> F/ R> 0 } F! ;
 
 FVARIABLE r
 FVARIABLE theta
@@ -403,12 +606,35 @@ FVARIABLE theta
 100E-3  FCONSTANT tau ( tau = R*C; 100 ms for this example)
 10E     FCONSTANT Vin ( charging voltage source is 10 Volts)	
 
-: derivs-Vc() ( t 'u 'dudt -- ) 
-    >R >R FDROP
-    Vin  R> 0 } F@ F-   tau F/  R>  0 } F! ;
+false [IF]
 
-: VC ( t -- v )
-    1e  FSWAP FNEGATE tau F/ FEXP  F-  Vin F* ; 
+: derivs-Vc() ( t 'u 'dudt -- ) 
+     >R >R FDROP
+     Vin  R> 0 } F@ F-   tau F/  R>  0 } F! ;
+
+[ELSE]
+
+fvariable FC_tau  tau FC_tau f!
+fvariable FC_Vin  Vin FC_Vin f!
+
+CODE derivs-Vcc ( t 'Vc 'dVc/dt -- )
+    0 [ebx]  ecx mov,  \ ecx = 'dVc/dt
+    TCELL #  ebx add,
+    0 [ebx]  edx mov,  \ edx = 'Vc
+    TCELL #  ebx add,
+    DFLOAT # ebx add,
+    FC_Vin #@    fld,
+    0 [edx]      fld,
+                 fsubp,
+    FC_tau #@    fld,
+                 fdivp,
+    0 [ecx]      fstp,
+END-CODE
+: derivs-Vc()  derivs-Vcc ;
+
+[THEN]
+
+: VC ( t -- v )  1e  FSWAP FNEGATE tau F/ FEXP  F-  Vin F* ; 
 
 \ Damped vibrations:
 \ u'' + cm*u' + km*u = 0
@@ -427,6 +653,8 @@ FVARIABLE theta
 1e PI*2 F/ FCONSTANT u0
 cm FNEGATE F2/ PI*2 F/ FCONSTANT v0
 
+0 [IF]
+
 : derivs-DV() ( t 'u 'dudt -- ) 
     >R >R FDROP     \ does not use t
     R@ 1 } F@ 2R@ DROP 0 } F!
@@ -435,6 +663,32 @@ cm FNEGATE F2/ PI*2 F/ FCONSTANT v0
     R> 1 } F!   
 ;
 
+[ELSE]
+
+fvariable FC_cm  cm FC_cm f!
+fvariable FC_km  km FC_km f!
+
+CODE derivs-DVc  ( t 'x  'dx/dt -- )
+    0 [ebx]   ecx  mov,  \ ecx = 'dx/dt
+    TCELL #   ebx  add,
+    0 [ebx]   edx  mov,  \ edx = 'x
+    TCELL #   ebx  add,
+    DFLOAT #  ebx  add,
+    DFLOAT [edx]   fld,
+    0 st           fld,
+    0 [ecx]        fstp, \ dx{0}/dt = x{1}
+    FC_cm #@       fld,
+                   fmulp,
+    0 [edx]        fld,
+    FC_km #@       fld,
+                   fmulp,
+                   faddp,
+                   fchs,
+    DFLOAT [ecx]   fstp, \ dx{1}/dt = -(cm*x{1} + km*x{0})
+END-CODE
+: derivs-DV()  derivs-DVc ;
+
+[THEN]
 : DV ( t -- a )             \ just the U value not V for damped vib.
     cm FOVER F* F2/ FNEGATE FEXP
     FSWAP
@@ -448,19 +702,36 @@ cm FNEGATE F2/ PI*2 F/ FCONSTANT v0
 \ dy/dt = r * x - y - x * z
 \ dz/dt = -bp * z + x * y
 \ Exact solution: NONE
-\
-\ See fsl/demo/lorenz.4th for an example of using the fixed and
-\ adaptive steppers for solving the Lorenz equations.
-\
 \ Comments: Since chaotic equations are extremely sensitive to
 \   initial conditions, the result after integration will
-\   depend sensitively on the precision of the input values
+\   depend very sensitively on the precision of the input values
 \   x(t0), y(t0), and z(t0), and on the precision with which
 \   floating point calculations are performed. Such sensitivity is
 \   not useful for directly testing the accuracy of a portable ODE
 \   solver; however, some invariant properties of the attractor can
 \   be computed from the solution, and may possibly serve as suitable
 \   tests of the ODE solver. 
+16.0E0  FCONSTANT sig
+45.92E0 FCONSTANT r
+4.0E0   FCONSTANT bp
+
+: derivs-LE() ( t 'u 'dudt -- ) 
+       2SWAP FDROP     \ does not use t
+
+       >R	\ 'u
+       DUP DUP 1 } F@ ROT 0 } F@ F- sig F*
+       R@ 0 } F!
+
+       DUP 2DUP 2 } F@ FNEGATE r F+
+       ROT      0 } F@ F*
+       ROT      1 } F@ F-
+       R@ 1 } F!
+
+       DUP 2DUP 0 } F@ ROT 1 } F@ F* ROT 2 } F@ bp F* F-
+       R> 2 } F!
+       DROP   
+;
+
 
 \ ----- Begin Testing --------------------
 
@@ -497,6 +768,24 @@ t{ use(  derivs-DV() 80 0e u0 v0  )rk_fixed2  ->  t_final F@ DV  r}t
 
 TESTING Charging Capacitor (Fixed Step)
 t{ use(  derivs-Vc() 4  0e 0e  )rk_fixed1  ->  t_final F@ Vc  r}t
+
+
+0 [IF]
+\ see comments for the Lorenz equations, above -- km 2007-09-27
+    
+: lorenz_test ( n -- )               \ n is the number of time steps to run
+
+    0.0E0 x{ 0 } F!   1.0E0 x{ 1 } F!   0.0E0 x{ 2 } F!     
+    use( derivs-LE() 3 )runge_kutta4_init
+    0.0E0       \ initial time
+          
+    ROT 0 DO
+	x{ 1 dt runge_kutta4_integrate()      
+    LOOP
+
+    FDROP runge_kutta4_done
+;
+[THEN]
 
 BASE !
 [THEN]

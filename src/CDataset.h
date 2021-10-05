@@ -2,11 +2,11 @@
 //
 // Abstract base class CDataset
 //
-// Copyright (c) 1995--2020 Krishna Myneni
+// Copyright (c) 1995--2021 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
-// GNU Affero General Public License (GPL), v3.0 or later.
+// GNU Affero General Public License (AGPL), v3.0 or later.
 //
 
 #ifndef __CDATASET_H__
@@ -22,7 +22,7 @@ class CDataset : public vector<float>
 {
 protected:
 	vector<float> m_vEx;		// the extrema vector
-	int m_nDatumLength;
+	int m_nDatumSize;
 	int m_nOrdering;
 	int m_nEquallySpaced;
 public:
@@ -30,8 +30,8 @@ public:
 	char* m_szHeader;
 	CDataset (int, int, char*, char*);
 	~CDataset ();
-	int NumberOfPoints() {return size()/m_nDatumLength;}
-	int SizeOfDatum() {return m_nDatumLength;}
+	int NumberOfPoints() {return size()/m_nDatumSize;}
+	int SizeOfDatum() {return m_nDatumSize;}
 	void SetExtrema();
 	vector<float> GetExtrema() {return m_vEx;}
 	void CopyData (float*, int);
@@ -46,8 +46,6 @@ public:
 	vector<vector<float>::iterator> Limits (float, float, int&);
 	vector<int> IndexLimits (float, float, int&);
 	virtual CDataset* Duplicate() = 0;
-// void Sort();
-// void Prune();
 };
 
 class CReal : public CDataset

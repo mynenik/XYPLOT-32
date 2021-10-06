@@ -9,7 +9,7 @@
 \
 \ Please report bugs to <krishna.myneni@ccreweb.org>
 \
-\ Requires: xyplot version >= 2.5.0
+\ Requires: xyplot version >= 2.7.1
 \
 \
 \ XYPLOT defines Forth constants which contain pointers to
@@ -195,8 +195,12 @@ include strings.4th
 include files.4th
 include utils.4th
 include modules.fs
+0 [IF]
 include struct.4th
 include struct-ext.4th
+[ELSE] \ standard Forth 200x structures
+include struct-200x.4th
+[THEN]
 include signal.4th
 
 \ Save Options structure
@@ -205,6 +209,7 @@ include signal.4th
 \   NumberFormat: 0=exponential, 1=floating poin, 2=integer, other=exponential
 \   EndOfLine:  0=Unix, 1=DOS
 \   UserPrefix: text prefix for header type option 2 
+0 [IF]
 struct
   cell%  field  SaveOptions->HeaderType 
   cell%  field  SaveOptions->Delimiter   
@@ -213,8 +218,18 @@ struct
   1 16 chars field SaveOptions->UserPrefix
 end-struct SaveOptions%
 
+[ELSE]  \ Use standardized Forth-2012 structures
+begin-structure SaveOptions%
+  field:  SaveOptions->HeaderType
+  field:  SaveOptions->Delimiter
+  field:  SaveOptions->NumberFormat
+  field:  SaveOptions->EndOfLine
+16 chars +field SaveOptions->UserPrefix
+end-structure
+[THEN]
 
 \ Dataset Information Structure
+0 [IF]
 struct
   cell%  field  DataSetInfo->Name    \ pointer to name string
   cell%  field  DataSetInfo->Header  \ pointer to header string
@@ -224,7 +239,19 @@ struct
   cell%  field  DataSetInfo->Data    \ pointer to data
 end-struct DatasetInfo%
 
+[ELSE]  \ standard Forth-200x structure
+begin-structure DatasetInfo%
+  field:  DataSetInfo->Name    \ pointer to name string
+  field:  DataSetInfo->Header  \ pointer to header string
+  field:  DataSetInfo->Type    \ dataset type
+  field:  DataSetInfo->Npts    \ number of points in set
+  field:  DataSetInfo->Size    \ datum dimension
+  field:  DataSetInfo->Data    \ pointer to data
+end-structure
+[THEN]
+
 \ Plot Information Structure
+0 [IF]
 struct
   cell%  field  PlotInfo->Set     \ data set number
   cell%  field  PlotInfo->Type    \
@@ -232,13 +259,26 @@ struct
   cell%  field  PlotInfo->Color   \ plot color
 end-struct PlotInfo%
 
+[ELSE]  \ standard Forth-200x structure
+begin-structure PlotInfo%
+  field:  PlotInfo->Set     \ data set number
+  field:  PlotInfo->Type    \
+  field:  PlotInfo->Symbol  \ plot symbol
+  field:  PlotInfo->Color   \ plot color
+end-structure
+[THEN]
 
 \ Defining words for making various structures
-
+0 [IF]
 : DatasetInfo  create DatasetInfo% %allot drop ;
 : PlotInfo     create PlotInfo%    %allot drop ;
 : SaveOptions  create SaveOptions% %allot drop ;
 
+[ELSE]  \ standard Forth-200x structure creation words
+: DatasetInfo  create DatasetInfo% allot ;
+: PlotInfo     create PlotInfo%    allot ;
+: SaveOptions  create SaveOptions% allot ;
+[THEN]
 
 \ Useful words to fetch and store the i^th x, y pair from/to
 \ a dataset are given below. Note that addr is the address of 

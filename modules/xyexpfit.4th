@@ -99,11 +99,11 @@ PlotInfo pl3
     if
       c" Enter initial a, b, c for y=a*exp(-x/b) + c:" get_input
       if
-        count parse_args 3 <> abort" Entered wrong number of parameters!"
+        count parse_csv 3 <> abort" Entered wrong number of parameters!"
         params{ 2 } f!  params{ 1 } f!  params{ 0 } f!
         c" Enter initial increments da, db, dc:" get_input
         if
-         count parse_args 3 <> abort" Entered wrong number of params!"
+         count parse_csv 3 <> abort" Entered wrong number of params!"
          increments{ 2 } f!  increments{ 1 } f!  increments{ 0 } f!
         else
           exit

@@ -2,13 +2,8 @@
 \
 \ Take absolute value of y values of the active dataset
 \
-\ Copyright (c) 2000--2012 Krishna Myneni
-\ 
-\ Revisions:
-\    2000-06-21  KM
-\    2009-10-29  km  updated data structure field names
-\    2012-06-26  km  convert to unnamed module; update names
-
+\ Copyright (c) 2000--2020 Krishna Myneni
+\
 Begin-Module
 
 DatasetInfo ds
@@ -17,23 +12,19 @@ Public:
 
 : abs_ds ( -- )
 	?active			\ get the active set number
-	dup 0 >=		\ is it valid (non-negative)?
-	if
-	  ds get_ds	        \ ok, get info about the dataset
-	  0 >=			\ did get_ds return an error?
-	  if
-	    ds DatasetInfo->Npts @	\ ok, obtain the number of points
-	    0 do	
-	      i ds @xy		\ fetch the i^th x, y pair 
-	      fabs  		\ take absolute value
-	      i ds !xy		\ store the i^th x, y pair
-	    loop
+	dup 0 >= IF		\ is it valid (non-negative)?
+	  ds get_ds		\ ok, get info about the dataset
+	  0 >= IF		\ did get_ds return an error?
+	    ds DatasetInfo->Npts @
+	    0 DO
+	      I ds @xy  fabs  I ds !xy
+	    LOOP
 	    ?active
-	    set_ds_extrema	\ reset the extrema for that dataset
-	  then
-	else
+	    set_ds_extrema	\ reset extrema for dataset
+	  THEN
+	ELSE
 	  drop
-	then ;
+	THEN ;
 
 \ add this function to the math menu
 

@@ -1,7 +1,7 @@
 /*
 XYPLOT.CPP
 
-  Copyright (c) 1995--2020 Krishna Myneni
+  Copyright (c) 1995--2023 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the
@@ -407,9 +407,13 @@ void FileMenuCB (Widget w, void* client_d, void* call_d)
       case PL_FILE_OPEN:
         XtUnmanageChild(pMainWnd->m_nFileOpenDialog);
         sel = (XmFileSelectionBoxCallbackStruct *) call_data;
-        XmStringGetLtoR(sel->value, XmSTRING_DEFAULT_CHARSET, &filename);
-        strcpy (pMainWnd->m_pFileName, filename);
-        pMainWnd->LoadFile(filename);
+        if (XmStringGetLtoR(sel->value, XmSTRING_DEFAULT_CHARSET, &filename))
+	{
+          strcpy (pMainWnd->m_pFileName, filename);
+          pMainWnd->LoadFile(filename);
+	}
+	else
+	  pMainWnd->MessageBox("Error parsing file name!");
         break;
       case PL_FILE_LOAD:
         XtUnmanageChild (pMainWnd->m_nInputDialog);

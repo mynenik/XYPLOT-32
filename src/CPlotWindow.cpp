@@ -1,6 +1,6 @@
 // CPlotWindow.cpp
 //
-// Copyright 1996--2020 Krishna Myneni 
+// Copyright 1996--2023 Krishna Myneni 
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
@@ -10,7 +10,7 @@
 #ifdef COPYRIGHT
 const char* copyright=COPYRIGHT;
 #else
-const char* copyright="1999--2020"
+const char* copyright="1999--2023"
 #endif
 
 #ifdef VERSION
@@ -123,7 +123,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   Arg al[10];
   int ac;
   Display* disp = XtDisplay(TopLevel);
-  m_pFileName = new char[256];
+  m_pFileName = new char[512];
   *m_pFileName = '\0';
 
   CxDC* pDc = new CxDC (DEV_X_WINDOW, 800, 640);
@@ -1647,7 +1647,7 @@ void CPlotWindow::LoadDatasetFile (char* fname, char* col_spec)
   // Load a dataset file into the database, with the columns
   //   to load specified in the col_spec
 
-  char s[128];
+  char s[512];
   CDataset* d;
 
   int ecode = m_pDb->LoadDataset(&d, fname, ParseColumns(col_spec), 0);
@@ -1737,7 +1737,7 @@ bool CPlotWindow::LoadFile(char* fname)
 bool CPlotWindow::SaveFile (char* fname)
 {
     bool success = False;
-    char s[256];
+    char s[512];
     XmString prompt, no;
 
     CDataset* d = m_pDi->GetActiveSet();

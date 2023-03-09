@@ -2,7 +2,7 @@
 \
 \ Forth interface to xyplot
 \
-\ Copyright (c) 1999--2021 Krishna Myneni
+\ Copyright (c) 1999--2022 Krishna Myneni
 \
 \ This software is provided under the terms of the 
 \ GNU Affero General Public License (AGPL), v3.0 or later.
@@ -63,12 +63,7 @@ include strings.4th
 include files.4th
 include utils.4th
 include modules.fs
-0 [IF]
-include struct.4th
-include struct-ext.4th
-[ELSE] \ standard Forth 200x structures
 include struct-200x.4th
-[THEN]
 [UNDEFINED] _WIN32_ [IF] include signal.4th [THEN]
 
 
@@ -223,16 +218,6 @@ prec_DOUBLE  8 LSHIFT  data_REAL  OR  constant  REAL_DOUBLE
 \   NumberFormat: 0=exponential, 1=fixed point, 2=integer, other=exponential
 \   EndOfLine:  0=Unix, 1=DOS
 \   UserPrefix: text prefix for header type option 2 
-0 [IF]
-struct
-  cell%  field  SaveOptions->HeaderType 
-  cell%  field  SaveOptions->Delimiter   
-  cell%  field  SaveOptions->NumberFormat
-  cell%  field  SaveOptions->EndOfLine        
-  1 16 chars field SaveOptions->UserPrefix
-end-struct SaveOptions%
-
-[ELSE]  \ Use standardized Forth-2012 structures
 begin-structure SaveOptions%
   field:  SaveOptions->HeaderType
   field:  SaveOptions->Delimiter
@@ -240,20 +225,8 @@ begin-structure SaveOptions%
   field:  SaveOptions->EndOfLine
 16 chars +field SaveOptions->UserPrefix
 end-structure
-[THEN]
 
 \ Dataset Information Structure
-0 [IF]
-struct
-  cell%  field  DataSetInfo->Name    \ pointer to name string
-  cell%  field  DataSetInfo->Header  \ pointer to header string
-  cell%  field  DataSetInfo->Type    \ dataset type
-  cell%  field  DataSetInfo->Npts    \ number of points in set
-  cell%  field  DataSetInfo->Size    \ datum dimension
-  cell%  field  DataSetInfo->Data    \ pointer to data
-end-struct DatasetInfo%
-
-[ELSE]  \ standard Forth-200x structure
 begin-structure DatasetInfo%
   field:  DataSetInfo->Name    \ pointer to name string
   field:  DataSetInfo->Header  \ pointer to header string
@@ -262,37 +235,19 @@ begin-structure DatasetInfo%
   field:  DataSetInfo->Size    \ datum dimension
   field:  DataSetInfo->Data    \ pointer to data
 end-structure
-[THEN]
 
 \ Plot Information Structure
-0 [IF]
-struct
-  cell%  field  PlotInfo->Set     \ data set number
-  cell%  field  PlotInfo->Type    \
-  cell%  field  PlotInfo->Symbol  \ plot symbol
-  cell%  field  PlotInfo->Color   \ plot color
-end-struct PlotInfo%
-
-[ELSE]  \ standard Forth-200x structure
 begin-structure PlotInfo%
   field:  PlotInfo->Set     \ data set number
   field:  PlotInfo->Type    \
   field:  PlotInfo->Symbol  \ plot symbol
   field:  PlotInfo->Color   \ plot color
 end-structure
-[THEN]
 
 \ Defining words for making various structures
-0 [IF]
-: DatasetInfo  create DatasetInfo% %allot drop ;
-: PlotInfo     create PlotInfo%    %allot drop ;
-: SaveOptions  create SaveOptions% %allot drop ;
-
-[ELSE]  \ standard Forth-200x structure creation words
 : DatasetInfo  create DatasetInfo% allot ;
 : PlotInfo     create PlotInfo%    allot ;
 : SaveOptions  create SaveOptions% allot ;
-[THEN]
 
 
 \ Useful words to fetch and store the i^th x, y pair from/to

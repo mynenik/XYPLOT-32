@@ -16,12 +16,11 @@
 
 Begin-Module
 
-:noname ( fx a -- fy )
+: Exp-func ( fx a -- fy )
     >r 
     r@ 1 } f@ f/ fnegate fexp
     r@ 0 } f@ f* 
     r> 2 } f@ f+ ;
-ptr 'Exp-Func
 
 MAX_POINTS FLOAT array x{
 MAX_POINTS FLOAT array y{
@@ -52,7 +51,7 @@ Public:
          I ds1 @xy  y{ I } f!  x{ I } f!
        LOOP
 
-       'Exp-Func IS functn
+       ['] Exp-Func IS functn
 
        5 0 DO
          x{ y{ params{ increments{ 3 npts @ curfit chi-sqr f!

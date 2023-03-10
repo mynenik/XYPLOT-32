@@ -153,7 +153,12 @@ Public:
    pl3 make_plot
 ;
 
-MN_EDIT c" Join Sets"  c" join_datasets draw_window" add_menu_item
+[DEFINED] _WIN32_ [IF]
+MN_DATA
+[ELSE]
+MN_EDIT
+[THEN]
+c" Join Sets"  c" join_datasets draw_window" add_menu_item
 
 End-Module
 

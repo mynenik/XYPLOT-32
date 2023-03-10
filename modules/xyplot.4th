@@ -66,6 +66,8 @@ include modules.fs
 include struct-200x.4th
 [UNDEFINED] _WIN32_ [IF] include signal.4th [THEN]
 
+: f>$ ( r -- ) 6 f>string count ;
+: f$. ( r -- ) f>$ type ;
 
 \ Data type and precision constants
 

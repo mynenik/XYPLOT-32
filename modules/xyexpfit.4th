@@ -90,10 +90,10 @@ PlotInfo pl3
 ;
 
 : .expfit-params ( -- )
-    ." Reduced Chi^2 = " chi-sqr f@ f. cr
-    ." a = " params{ 0 } f@ f. cr
-    ." b = " params{ 1 } f@ f. cr
-    ." c = " params{ 2 } f@ f. cr ;
+    ." Reduced Chi^2 = " chi-sqr f@ f$. cr
+    ." a = " params{ 0 } f@ f$. cr
+    ." b = " params{ 1 } f@ f$. cr
+    ." c = " params{ 2 } f@ f$. cr ;
 
 : xyexpfit ( -- )
     ?active 0 >= 
@@ -110,7 +110,7 @@ PlotInfo pl3
           exit
         then
         ." Initial parameters and increments:" cr
-        3 0 do params{ I } f@ f. 2 spaces increments{ I } f@ f. cr loop
+        3 0 do params{ I } f@ f$. 2 spaces increments{ I } f@ f$. cr loop
         expfit if
           .expfit-params
           make-expfit-ds

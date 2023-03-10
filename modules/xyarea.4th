@@ -20,11 +20,11 @@ Public:
 
 : print_area ( rA -- )
 	s" Area[ " 
-	xlim1 f@ 6 f>string count strcat
+	xlim1 f@ f>$ strcat
 	s" , " strcat
-	xlim2 f@ 6 f>string count strcat
+	xlim2 f@ f>$ strcat
 	s"  ] = " strcat
-	2>r 6 f>string count 2r> 2swap strcat
+	2>r f>$ 2r> 2swap strcat
 	type ;
 
 \ Trapezoidal Area Calculation

@@ -2,7 +2,7 @@
 //
 //  Forth Byte Codes (FBC) for kForth
 //
-//  Copyright (c) 1996--2021 Krishna Myneni,
+//  Copyright (c) 1996--2022 Krishna Myneni,
 //    <krishna.myneni@ccreweb.org>
 //
 //  This software is provided under the terms of the GNU
@@ -371,7 +371,7 @@
 #define OP_CATCH                356
 #define OP_THROW                357
 #define OP_USED                 358
-
+#define OP_VMTHROW              359
 #define OP_PRECISION            360
 #define OP_SET_PRECISION        361
 #define OP_REPRESENT            362
@@ -426,6 +426,8 @@
 #define OP_STARSLASHMOD_FLOORED 414
 #define OP_MSLASH_FLOORED       415
 #define OP_MSTARSLASH_FLOORED   416
+#define OP_UDIVMOD              417
+#define OP_UDDIVMOD             418
 
 #define OP_SFLOATS              420
 #define OP_SFLOATPLUS           421

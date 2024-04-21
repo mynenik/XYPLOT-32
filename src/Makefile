@@ -17,9 +17,9 @@
 #   1. If a debug version is being built, always invoke "make clean" 
 #      before "make debug".
 #
-COPYRIGHT=1999--2023
-VERSION=2.7.2
-KFORTH_VER=1.7.1u1
+COPYRIGHT=1999--2024
+VERSION=2.8.0
+KFORTH_VER=1.8.0
 MODULE_DIR_VAR=XYPLOT_DIR
 BUILD_DATE=`date +%F`
 DEBUG = 
@@ -147,10 +147,12 @@ CpsDC.o: CpsDC.cpp CpsDC.h CPoint.h CRect.h CDeviceContext.h
 AlgebraCompiler.o: fbc.h AlgebraCompiler.cpp
 	${CPP} ${CPPFLAGS} -I${INCLUDEDIRS} ${DEBUG} AlgebraCompiler.cpp
 
-ForthCompiler.o: fbc.h ForthCompiler.h ForthCompiler.cpp ForthWords.h
+ForthCompiler.o: fbc.h ForthCompiler.h ForthCompiler.cpp ForthWords.h \
+	VMerrors.h kfmacros.h
 	${CPP} ${CPPFLAGS} -I${INCLUDEDIRS} ${DEBUG} ForthCompiler.cpp
 
-ForthVM.o: fbc.h ForthCompiler.h ForthVM.h ForthVM.cpp kfmacros.h
+ForthVM.o: fbc.h ForthCompiler.h ForthVM.h ForthVM.cpp VMerrors.h \
+	kfmacros.h 
 	${CPP} ${CPPFLAGS} -DDIR_ENV_VAR=\"${MODULE_DIR_VAR}\" \
         -I${INCLUDEDIRS} ${DEBUG} ForthVM.cpp
 

@@ -3,7 +3,7 @@ vmc.c
 
   C portion of the kForth Virtual Machine
 
-  Copyright (c) 1998--2021 Krishna Myneni, 
+  Copyright (c) 1998--2022 Krishna Myneni, 
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the GNU
@@ -11,7 +11,9 @@ vmc.c
 
 */
 
+#ifndef _WIN32_
 #define _GNU_SOURCE
+#endif
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -31,19 +33,14 @@ vmc.c
 #include <string.h>
 #include <math.h>
 #include "fbc.h"
+#include "VMerrors.h"
 #include "kfmacros.h"
 
 #define WSIZE 4
 #define TRUE -1
 #define FALSE 0
-#define E_V_NOTADDR 1
-#define E_V_BADCODE 6
-#define E_V_STK_UNDERFLOW   7
-#define E_V_QUIT  8
-#define E_V_DBL_OVERFLOW   21
 
 #define byte unsigned char
-
 
 /*  Provided by ForthVM.cpp  */
 extern int* GlobalSp;
@@ -70,21 +67,26 @@ extern char TIB[];
 extern char NumberBuf[];
 
 /*  Provided by vmxx.s/vmxx-fast.s  */
-int L_dnegate();
-int L_dplus();
-int L_dminus();
-int L_udmstar();
-int L_utmslash();
-int L_quit();
-int L_abort();
-int vm(byte*);
+extern int L_dnegate();
+extern int L_dplus();
+extern int L_dminus();
+extern int L_udmstar();
+extern int L_utmslash();
+extern int L_uddivmod();
+extern int L_quit();
+extern int L_abort();
+extern int vm(byte*);
 
+#ifdef _WIN32_
+unsigned long int ForthStartTime;
+#else
 struct timeval ForthStartTime;
 struct termios tios0;
+char key_query_char = 0;
+#endif
 double* pf;
 double f;
 char temp_str[256];
-char key_query_char = 0;
 
 /*  signal dispatch table  */
 
@@ -126,6 +128,35 @@ void* signal_xtmap [32] =
 
 static void forth_signal_handler (int, siginfo_t*, void*); 
 
+#define DOUBLE_FUNC(x)   pf = (double*)(GlobalSp+1); *pf=x(*pf);
+  
+int C_ftan  () { DOUBLE_FUNC(tan)  return 0; }
+int C_facos () { DOUBLE_FUNC(acos) return 0; }
+int C_fasin () { DOUBLE_FUNC(asin) return 0; }
+int C_fatan () { DOUBLE_FUNC(atan) return 0; }
+int C_fsinh () { DOUBLE_FUNC(sinh) return 0; }
+int C_fcosh () { DOUBLE_FUNC(cosh) return 0; }
+int C_ftanh () { DOUBLE_FUNC(tanh) return 0; }
+int C_fasinh () { DOUBLE_FUNC(asinh) return 0; }
+int C_facosh () { DOUBLE_FUNC(acosh) return 0; }
+int C_fatanh () { DOUBLE_FUNC(atanh) return 0; }
+int C_fexp  () { DOUBLE_FUNC(exp)   return 0; }
+int C_fexpm1() { DOUBLE_FUNC(expm1) return 0; }
+int C_fln   () { DOUBLE_FUNC(log)   return 0; }
+int C_flnp1 () { DOUBLE_FUNC(log1p) return 0; }
+int C_flog  () { DOUBLE_FUNC(log10) return 0; }
+#ifndef _WIN32_
+int C_falog () { DOUBLE_FUNC(exp10) return 0; }
+#else
+int C_falog ()
+{
+     pf = (double*)(GlobalSp + 1);
+     f = *pf;
+     *pf = pow(10., f);
+     return 0;
+}
+#endif
+
 // powA  is copied from the source of the function pow() in paranoia.c,
 //   at  http://www.math.utah.edu/~beebe/software/ieee/ 
 double powA(double x, double y) /* return x ^ y (exponentiation) */
@@ -154,25 +185,6 @@ double powA(double x, double y) /* return x ^ y (exponentiation) */
     if (flip) { xy = 1. / xy; ey = -ey; }
     return ldexp(xy, ey);
 } 
-
-#define DOUBLE_FUNC(x)   pf = (double*)(GlobalSp+1); *pf=x(*pf);
-  
-int C_ftan  () { DOUBLE_FUNC(tan)  return 0; }
-int C_facos () { DOUBLE_FUNC(acos) return 0; }
-int C_fasin () { DOUBLE_FUNC(asin) return 0; }
-int C_fatan () { DOUBLE_FUNC(atan) return 0; }
-int C_fsinh () { DOUBLE_FUNC(sinh) return 0; }
-int C_fcosh () { DOUBLE_FUNC(cosh) return 0; }
-int C_ftanh () { DOUBLE_FUNC(tanh) return 0; }
-int C_fasinh () { DOUBLE_FUNC(asinh) return 0; }
-int C_facosh () { DOUBLE_FUNC(acosh) return 0; }
-int C_fatanh () { DOUBLE_FUNC(atanh) return 0; }
-int C_fexp  () { DOUBLE_FUNC(exp)   return 0; }
-int C_fexpm1() { DOUBLE_FUNC(expm1) return 0; }
-int C_fln   () { DOUBLE_FUNC(log)   return 0; }
-int C_flnp1 () { DOUBLE_FUNC(log1p) return 0; }
-int C_flog  () { DOUBLE_FUNC(log10) return 0; }
-int C_falog () { DOUBLE_FUNC(exp10) return 0; }
 
 int C_fpow ()
 {
@@ -726,40 +738,25 @@ int C_sharp()
 {
   /* stack: ( ud1 -- ud2 | convert one digit of ud1 ) */
 
-  unsigned int u1, u2, rem;
+  unsigned long int uq1, uq2, urem;
   char ch;
 
-  *GlobalSp = *(GlobalSp+2); --GlobalSp;
-  *GlobalSp = *(GlobalSp+2); --GlobalSp;  /* 2dup */
-#ifndef __FAST__
-  *GlobalTp = *(GlobalTp+2); --GlobalTp;
-  *GlobalTp = *(GlobalTp+2); --GlobalTp;  /*  "  */
-#endif
-  TOS = 0; /* pad to triple length */
-  DEC_DSP
-  DEC_DTSP
   TOS = Base;
   DEC_DSP
   DEC_DTSP
-
-  L_utmslash();
-  u1 = *(GlobalSp + 1);  /* quotient */
-  u2 = *(GlobalSp + 2);
-
-  /* quotient is on the stack; we need the remainder */
-
-  TOS = Base;
-  DEC_DSP
-  DEC_DTSP
-  L_udmstar();
+  L_uddivmod();
   DROP
-
-  L_dminus();
-  rem = *(GlobalSp + 2);  /* get the remainder */
-
-  *(GlobalSp + 1) = u1;   /* replace rem with quotient on the stack */
-  *(GlobalSp + 2) = u2;
-  ch = (rem < 10) ? (rem + 48) : (rem + 55);
+  uq1  = TOS;   /* quotient: uq1,uq2 */
+  INC_DSP
+  uq2  = TOS;
+  INC_DSP
+  urem = TOS;   /* remainder */
+  TOS = uq2;
+  DEC_DSP
+  TOS = uq1;
+  DEC_DSP
+	
+  ch = (urem < 10) ? (urem + 48) : (urem + 55);
   ++NumberCount;
   NumberBuf[255 - NumberCount] = ch;
 
@@ -870,6 +867,45 @@ int C_tonumber ()
 }
 /*-----------------------------------------------------------*/
  
+int C_numberquery ()
+{
+  /* stack: ( ^str -- d b | translate characters into number using current base ) */
+
+  char *pStr;
+  int b, sign, nc;
+
+  b = FALSE;
+  sign = FALSE;
+
+  DROP
+  if (GlobalSp > BottomOfStack) return E_V_STK_UNDERFLOW;
+  CHK_ADDR
+  pStr = *((char**)GlobalSp);
+  PUSH_IVAL(0)
+  PUSH_IVAL(0)
+  nc = *pStr;
+  ++pStr;
+
+  if (*pStr == '-') {
+    sign = TRUE; ++pStr; --nc;
+  }
+  if (nc > 0) {
+        PUSH_ADDR((int) pStr)
+        PUSH_IVAL(nc)
+        C_tonumber();
+	DROP
+        b = TOS;
+	DROP
+	b = (b == 0) ? TRUE : FALSE ;
+  }
+
+  if (sign) L_dnegate();
+
+  PUSH_IVAL(b)
+  return 0;
+}
+/*----------------------------------------------------------*/
+
 int C_tofloat ()
 {
   /* stack: ( a u -- f true | false ; convert string to floating point number ) */
@@ -950,44 +986,6 @@ int C_tofloat ()
 }
 /*-------------------------------------------------------------*/
 
-int C_numberquery ()
-{
-  /* stack: ( ^str -- d b | translate characters into number using current base ) */
-
-  char *pStr;
-  int b, sign, nc;
-
-  b = FALSE;
-  sign = FALSE;
-
-  DROP
-  if (GlobalSp > BottomOfStack) return E_V_STK_UNDERFLOW;
-  CHK_ADDR
-  pStr = *((char**)GlobalSp);
-  PUSH_IVAL(0)
-  PUSH_IVAL(0)
-  nc = *pStr;
-  ++pStr;
-
-  if (*pStr == '-') {
-    sign = TRUE; ++pStr; --nc;
-  }
-  if (nc > 0) {
-        PUSH_ADDR((int) pStr)
-        PUSH_IVAL(nc)
-        C_tonumber();
-	DROP
-        b = TOS;
-	DROP
-	b = (b == 0) ? TRUE : FALSE ;
-  }
-
-  if (sign) L_dnegate();
-
-  PUSH_IVAL(b)
-  return 0;
-}
-/*----------------------------------------------------------*/
 
 int C_syscall ()
 {
@@ -1355,7 +1353,7 @@ int C_forth_signal ()
         PUSH_ADDR( (int) oldxt )
     }
     else
-	return E_V_BADCODE;
+	return E_V_BAD_OPCODE;
 
     return 0;
 }

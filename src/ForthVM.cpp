@@ -3,7 +3,7 @@
 // The C++ portion of the kForth Virtual Machine to 
 // execute Forth byte code.
 //
-// Copyright (c) 1996--2021 Krishna Myneni,
+// Copyright (c) 1996--2022 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -19,11 +19,13 @@ const char* dir_env_var=DIR_ENV_VAR;
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <stack>
 using namespace std;
 
 #include "fbc.h"
 #include "ForthCompiler.h"
 #include "ForthVM.h"
+#include "VMerrors.h"
 #include "kfmacros.h"
 
 #define STACK_SIZE 32768
@@ -39,17 +41,18 @@ extern const char* C_ErrorMessages[];
 extern long int linecount;
 extern istream* pInStream ;    // global input stream
 extern ostream* pOutStream ;   // global output stream
-extern vector<byte>* pCurrentOps;
-extern vector<int> ifstack;
-extern vector<int> beginstack;
-extern vector<int> whilestack;
-extern vector<int> dostack;
-extern vector<int> querydostack;
-extern vector<int> leavestack;
-extern vector<int> recursestack;
-extern vector<int> casestack;
-extern vector<int> ofstack;
+extern stack<int> ifstack;
+extern stack<int> beginstack;
+extern stack<int> whilestack;
+extern stack<int> dostack;
+extern stack<int> querydostack;
+extern stack<int> leavestack;
+extern stack<int> recursestack;
+extern stack<int> casestack;
+extern stack<int> ofstack;
 extern WordListEntry NewWord;
+extern vector<byte>* pCurrentOps;
+
 extern size_t NUMBER_OF_INTRINSIC_WORDS;
 
 extern "C" {
@@ -133,31 +136,118 @@ bool FileOutput = FALSE;
 vector<byte>* pPreviousOps;    // copy of ptr to old opcode vector for [ and ]
 vector<byte> tempOps;          // temporary opcode vector for [ and ]
 
-const char* V_ErrorMessages[] =
-{
-	"",
-	"Not data type ADDR",
-	"Not data type IVAL",
-	"Invalid data type",	
-	"Divide by zero",
-	"Return stack corrupt",
-	"Invalid opcode", 
-        "Stack underflow",
-	"",
-	"Allot failed --- cannot reassign pfa",
-	"Cannot create word",
-	"End of string not found",
-	"No matching DO",
-	"No matching BEGIN",
-	"ELSE without matching IF",
-	"THEN without matching IF",
-	"ENDOF without matching OF",
-	"ENDCASE without matching CASE",
-	"Cannot open file",
-	"Address outside of stack space",
-	"Division overflow",
-        "Unsigned double number overflow"
+const char* V_ThrowMessages[] = {
+  "",                                    // E_V_NOERROR
+  "",                                    // E_V_ABORT
+  "",                                    // E_V_ABORTQUOTE
+  "Stack overflow",                      // E_V_STK_OVERFLOW
+  "Stack underflow",                     // E_V_STK_UNDERFLOW
+  "Return stack overflow",               // E_V_RET_STK_OVERFLOW
+  "Return stack underflow",              // E_V_RET_STK_UNDERFLOW
+  "Do-Loop nesting too deep",            // E_V_DO_NESTING
+  "Dictionary overflow",                 // E_V_DICT_OVERFLOW
+  "Invalid memory address",              // E_V_INVALID_ADDR
+  "Division by zero",                    // E_V_DIV_ZERO
+  "Result out of range",                 // E_V_OUT_OF_RANGE
+  "Argument type mismatch",              // E_V_ARGTYPE_MISMATCH
+  "Undefined word",                      // E_V_UNDEFINED_WORD
+  "Interpreting a compile-only word",    // E_V_COMPILE_ONLY
+  "Invalid FORGET",                      // E_V_INVALID_FORGET
+  "Attempt to use zero-length string as a name", // E_V_ZEROLENGTH_NAME
+  "Pictured numeric output string overflow", // E_V_OUTSTR_OVERFLOW
+  "Parsed string overflow",              // E_V_PARSE_OVERFLOW
+  "Definition name too long",            // E_V_DEFNAME_TOOLONG
+  "Write to a read-only location",       // E_V_READONLY
+  "Unsupported operation",               // E_V_UNSUPPORTED
+  "Control structure mismatch",          // E_V_CONTROL_MISMATCH
+  "Address alignment exception",         // E_V_ADDR_ALIGN
+  "Invalid numeric argument",            // E_V_INVALID_ARG
+  "Return stack imbalance",              // E_V_RET_STK_BALANCE
+  "Loop parameters unavailable",         // E_V_LOOP_PARAMS
+  "Invalid recursion",                   // E_V_INVALID_RECURSE
+  "User interrupt",                      // E_V_USER_INTERRUPT
+  "Compiler nesting",                    // E_V_COMPILER_NESTING
+  "Obsolescent feature",                 // E_V_OBSCOLESCENT
+  ">BODY used on non-CREATEd definition", // E_V_TOBODY
+  "Invalid name argument",               // E_V_INVALID_NAMEARG
+  "Block read exception",                // E_V_BLK_READ
+  "Block write exception",               // E_V_BLK_WRITE
+  "Invalid block number",                // E_V_INVALID_BLKNUM
+  "Invalid file position",               // E_V_INVALID_FILEPOS
+  "File I/O exception",                  // E_V_FILE_IO
+  "Non-existent file",                   // E_V_FILE_NOEXIST
+  "Unexpected end of file",              // E_V_EOF
+  "Invalid BASE for floating point conversion", // E_V_INVALID_BASE
+  "Loss of precision",                   // E_V_PRECISION_LOSS
+  "Floating-point divide by zero",       // E_V_FDIVZERO
+  "Floating-point result out of range",  // E_V_FPRANGE
+  "Floating-point stack overflow",       // E_V_FP_STK_OVERFLOW
+  "Floating-point stack underflow",      // E_V_FP_STK_UNDERFLOW
+  "Floating-point invalid argument",     // E_V_FP_INVALID_ARG
+  "Compilation word list deleted",       // E_V_WLCOMP_DELETED
+  "Invalid POSTPONE",                    // E_V_INVALID_POSTPONE
+  "Search-order overflow",               // E_V_SO_OVERFLOW
+  "Search-order underflow",              // E_V_SO_UNDERFLOW
+  "Compilation word list changed",       // E_V_WLCOMP_CHANGED
+  "Control-flow stack overflow",         // E_V_CF_STK_OVERFLOW
+  "Exception stack overflow",            // E_V_EX_STK_OVERFLOW
+  "Floating-point underflow",            // E_V_FP_UNDERFLOW
+  "Floating-point unidentified fault",   // E_V_FP_FAULT
+  "",                                    // E_V_QUIT
+  "Exception in sending or receiving a character", // E_V_EXC_TXRXCHAR
+  "[IF], [ELSE], or [THEN] exception",   // E_V_EXC_BRACKETCTL
+  "ALLOCATE",                            // E_V_ALLOCATE
+  "FREE",                                // E_V_FREE
+  "RESIZE",                              // E_V_RESIZE
+  "CLOSE-FILE",                          // E_V_CLOSE_FILE
+  "CREATE-FILE",                         // E_V_CREATE_FILE
+  "DELETE-FILE",                         // E_V_DELETE_FILE
+  "FILE-POSITION",                       // E_V_FILE_POSITION
+  "FILE-SIZE",                           // E_V_FILE_SIZE
+  "FILE-STATUS",                         // E_V_FILE_STATUS
+  "FLUSH-FILE",                          // E_V_FLUSH_FILE
+  "OPEN-FILE",                           // E_V_OPEN_FILE
+  "READ-FILE",                           // E_V_READ_FILE
+  "READ-LINE",                           // E_V_READ_LINE
+  "RENAME-FILE",                         // E_V_RENAME_FILE
+  "REPOSITION-FILE",                     // E_V_REPOSITION_FILE
+  "RESIZE-FILE",                         // E_V_RESIZE_FILE
+  "WRITE-FILE",                          // E_V_WRITE_FILE
+  "WRITE-LINE",                          // E_V_WRITE_LINE
+  "Malformed xchar",                     // E_V_BAD_XCHAR
+  "SUBSTITUTE",                          // E_V_SUBSTITUTE
+  "REPLACES"                             // E_V_REPLACES
 };
+
+const char* V_SysDefinedMessages[] =  {
+  "Not data type ADDR",                  // E_V_NOT_ADDR
+  "Not data type IVAL",                  // E_V_NOT_IVAL
+  "Return stack corrupt",                // E_V_RET_STK_CORRUPT
+  "Invalid opcode",                      // E_V_BAD_OPCODE
+  "Allot failed -- cannot reassign pfa", // E_V_REALLOT
+  "Cannot create word",                  // E_V_CREATE
+  "End of string not found",             // E_V_NO_EOS
+  "No matching DO",                      // E_V_NO_DO
+  "No matching BEGIN",                   // E_V_NO_BEGIN
+  "ELSE without matching IF",            // E_V_ELSE_NO_IF
+  "THEN without matching IF",            // E_V_THEN_NO_IF
+  "ENDOF without matching OF",           // E_V_ENDOF_NO_OF
+  "ENDCASE without matching CASE",       // E_V_NO_CASE
+  "Address outside of stack space",      // E_V_BAD_STACK_ADDR
+  "Division overflow",                   // E_V_DIV_OVERFLOW
+  "Unsigned double number overflow",     // E_V_DBL_OVERFLOW
+  "Incomplete IF...THEN structure",      // E_V_INCOMPLETE_IF
+  "Incomplete BEGIN structure",          // E_V_INCOMPLETE_BEGIN
+  "Incomplete DO loop",                  // E_V_INCOMPLETE_LOOP
+  "Incomplete CASE structure",           // E_V_INCOMPLETE_CASE
+  "End of definition with no beginning", // E_V_END_OF_DEF
+  "Not allowed inside colon definition", // E_V_NOT_IN_DEF
+  "Unexpected end of input stream",      // E_V_END_OF_STREAM
+  "Unexpected end of string",            // E_V_END_OF_STRING
+  "VM returned unknown error",           // E_V_VM_UNKNOWN_ERROR
+  "No pending definition"                // E_V_NOPENDING_DEF
+};
+
 //---------------------------------------------------------------
 
 void WordList::RemoveLastWord ()
@@ -379,15 +469,15 @@ void ClearControlStacks ()
 {
   // Clear the flow control stacks
 
-  if (debug) cout << "Clearing all flow control stacks" << endl; 
-  ifstack.erase(ifstack.begin(), ifstack.end());
-  beginstack.erase(beginstack.begin(),beginstack.end());
-  whilestack.erase(whilestack.begin(),whilestack.end());
-  dostack.erase(dostack.begin(), dostack.end());
-  querydostack.erase(querydostack.begin(), querydostack.end());
-  leavestack.erase(leavestack.begin(), leavestack.end());
-  ofstack.erase(ofstack.begin(), ofstack.end());
-  casestack.erase(casestack.begin(), casestack.end());
+  if (debug) cout << "Clearing all flow control stacks" << endl;
+  while (!ifstack.empty())    ifstack.pop();
+  while (!beginstack.empty()) beginstack.pop();
+  while (!whilestack.empty()) whilestack.pop();
+  while (!dostack.empty())    dostack.pop();
+  while (!querydostack.empty()) querydostack.pop();
+  while (!leavestack.empty()) leavestack.pop();
+  while (!ofstack.empty())    ofstack.pop();
+  while (!casestack.empty())  casestack.pop();
 }
 //---------------------------------------------------------------
 
@@ -456,19 +546,19 @@ int OpsCompileDouble ()
 
 void PrintVM_Error (long int ec)
 {
-    int ei = ec & 0xFF;
-    int imax = (ec >> 8) ? MAX_C_ERR_MESSAGES : MAX_V_ERR_MESSAGES;
-    const char *pMsg;
-    char elabel[12];
-    
-    if ((ei >= 0) && (ei < imax))
-    {
-	pMsg = (ec >> 8) ? C_ErrorMessages[ei] : V_ErrorMessages[ei];
-	if (ec >> 8)  strcpy(elabel, "Compiler"); 
-	else strcpy(elabel, "VM");
-	*pOutStream << elabel << " Error(" << ei << "): " <<
-	    pMsg << endl;
-   }
+    if (ec) {
+      const char *pMsg = "?";
+      if (ec < 0) {
+        int ei = labs(ec);
+        bool b = ei > 255;
+        int imax = b ? MAX_V_SYS_DEFINED : MAX_V_RESERVED;
+        int ioffs = b ? ei - 256 : ei;
+        if (ioffs < imax)
+          pMsg = b ? V_SysDefinedMessages[ioffs] :
+              V_ThrowMessages[ioffs];
+      }
+      *pOutStream << " VM Error(" << ec << "): " << pMsg << endl;
+    }
 }
 //---------------------------------------------------------------
 
@@ -498,7 +588,7 @@ if (debug)  cout << ">ForthVM Sp: " << GlobalSp << " Rp: " << GlobalRp << endl;
 
   ecode = vm (ip);
 
-  if (ecode & 0xff)
+  if (ecode)
     {
       if (debug) cout << "vm Error: " << ecode << endl; // "  Offending OpCode: " << ((int) *(GlobalIp-1)) << endl;
       ClearControlStacks();
@@ -806,7 +896,7 @@ int CPP_noname()
 {
     State = TRUE;
     strcpy(NewWord.WordName, "");
-    recursestack.erase(recursestack.begin(), recursestack.end());
+    while (!recursestack.empty()) recursestack.pop();
     pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
     return 0;
 }
@@ -825,7 +915,7 @@ int CPP_colon()
     NewWord.Precedence = PRECEDENCE_NONE;
     NewWord.Pfa = NULL;
     NewWord.Cfa = NULL;
-    recursestack.erase(recursestack.begin(), recursestack.end());
+    while (!recursestack.empty()) recursestack.pop();
     pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
     return 0;
 }
@@ -843,10 +933,10 @@ int CPP_semicolon()
     {
       // Check for incomplete control structures
 		    
-      if (ifstack.size())                          ecode = E_C_INCOMPLETEIF;
-      if (beginstack.size() || whilestack.size())  ecode = E_C_INCOMPLETEBEGIN;
-      if (dostack.size() || leavestack.size())     ecode = E_C_INCOMPLETELOOP;
-      if (casestack.size() || ofstack.size())      ecode = E_C_INCOMPLETECASE;
+      if (ifstack.size())                          ecode = E_V_INCOMPLETE_IF;
+      if (beginstack.size() || whilestack.size())  ecode = E_V_INCOMPLETE_BEGIN;
+      if (dostack.size() || leavestack.size())     ecode = E_V_INCOMPLETE_LOOP;
+      if (casestack.size() || ofstack.size())      ecode = E_V_INCOMPLETE_CASE;
       if (ecode) return ecode;
 
       if (debug) OutputForthByteCode (pCurrentOps);
@@ -878,10 +968,10 @@ int CPP_semicolon()
       bp = (byte*) &lambda;
       while (recursestack.size())
 	{
-	  i = recursestack[recursestack.size() - 1];
+	  i = recursestack.top();
 	  ib = pCurrentOps->begin() + i;
 	  for (i = 0; i < sizeof(void*); i++) *ib++ = *(bp + i);
-	  recursestack.pop_back();
+	  recursestack.pop();
 	}
 
       dest = (byte*) lambda;
@@ -893,8 +983,7 @@ int CPP_semicolon()
     }
   else
     {
-      ecode = E_C_ENDOFDEF;
-      // goto endcompile;
+      ecode = E_V_END_OF_DEF;
     }
     
   return ecode;
@@ -1405,7 +1494,7 @@ int CPP_tick ()
         PUSH_ADDR((long int) w.Cfa)
     }
     else
-	return E_C_UNKNOWNWORD;
+	return E_V_UNDEFINED_WORD;
     
     return 0;
 }
@@ -1540,7 +1629,7 @@ int CPP_allocate()
 
 #ifndef __FAST__
   if (*GlobalTp != OP_IVAL)
-    return E_V_NOTIVAL;  // need an int
+    return E_V_NOT_IVAL;  // need an int
 #endif
 
   unsigned int requested = TOS;
@@ -1597,7 +1686,7 @@ int CPP_allot ()
     return E_V_STK_UNDERFLOW;
 #ifndef __FAST__
   if (*GlobalTp != OP_IVAL)
-    return E_V_BADTYPE;  // need an int
+    return E_V_NOT_IVAL;  // need an int
 #endif
 
   WordIndex id = pCompilationWL->end() - 1;
@@ -1665,7 +1754,7 @@ int CPP_alias ()
       bp[WSIZE+1] = OP_RET;
     }
     else
-      return E_C_UNKNOWNWORD;
+      return E_V_UNDEFINED_WORD;
 
     return 0;
 }
@@ -2006,7 +2095,7 @@ int CPP_do ()
   pCurrentOps->push_back(OP_PUSH);
   pCurrentOps->push_back(OP_PUSHIP);
 
-  dostack.push_back(pCurrentOps->size());
+  dostack.push(pCurrentOps->size());
   return 0;
 }
 //------------------------------------------------------------------
@@ -2022,7 +2111,7 @@ int CPP_querydo ()
   CPP_else();
   CPP_do();
 
-  querydostack.push_back(pCurrentOps->size());
+  querydostack.push(pCurrentOps->size());
   return 0;
 }
 //------------------------------------------------------------------
@@ -2033,24 +2122,24 @@ int CPP_loop ()
   pCurrentOps->push_back(OP_RTLOOP);  // run-time loop
 
   int i, j, ival;
-  i = dostack[dostack.size() - 1];
+  i = dostack.top();
   if (leavestack.size()) {
     do {
-      j = leavestack[leavestack.size() - 1];
+      j = leavestack.top();
       if (j > i) {
         ival = pCurrentOps->size() - j + 1;
         OpsCopyInt(j, ival); // write relative jump count
-        leavestack.pop_back();
+        leavestack.pop();
       }
     } while ((j > i) && (leavestack.size())) ;
   }
-  dostack.pop_back();
+  dostack.pop();
 
   if (querydostack.size()) {
-    j = querydostack[querydostack.size() - 1];
+    j = querydostack.top();
     if (j >= i) {
       CPP_then();
-      querydostack.pop_back();
+      querydostack.pop();
     }
   }
   return 0;
@@ -2063,24 +2152,24 @@ int CPP_plusloop ()
   pCurrentOps->push_back(OP_RTPLUSLOOP);  // run-time +loop
 
   int i, j, ival;
-  i = dostack[dostack.size() - 1];
+  i = dostack.top();
   if (leavestack.size()) {
     do {
-      j = leavestack[leavestack.size() - 1];
+      j = leavestack.top();
       if (j > i) {
         ival = pCurrentOps->size() - j + 1;
         OpsCopyInt(j, ival); // write relative jump count
-        leavestack.pop_back();
+        leavestack.pop();
       }
     } while ((j > i) && (leavestack.size())) ;
   }
-  dostack.pop_back();
+  dostack.pop();
 
   if (querydostack.size()) {
-    j = querydostack[querydostack.size() - 1];
+    j = querydostack.top();
     if (j >= i) {
       CPP_then();
-      querydostack.pop_back();
+      querydostack.pop();
     }
   }
   return 0;
@@ -2102,7 +2191,7 @@ int CPP_leave ()
   if (dostack.empty()) return E_V_NO_DO;
   pCurrentOps->push_back(OP_RTUNLOOP);
   pCurrentOps->push_back(OP_JMP);
-  leavestack.push_back(pCurrentOps->size());
+  leavestack.push(pCurrentOps->size());
   OpsPushInt(0);
   return 0;
 }
@@ -2141,7 +2230,7 @@ int CPP_begin()
 {
   // stack: ( -- | mark the start of a begin ... structure )
 
-  beginstack.push_back(pCurrentOps->size());
+  beginstack.push(pCurrentOps->size());
   return 0;
 }
 //------------------------------------------------------------------
@@ -2151,8 +2240,16 @@ int CPP_while()
   // stack: ( -- | build the begin ... while ... repeat structure )	      
 
   if (beginstack.empty()) return E_V_NO_BEGIN;
+
   pCurrentOps->push_back(OP_JZ);
-  whilestack.push_back(pCurrentOps->size());
+  if (!whilestack.empty()) {
+    int i = whilestack.top();
+    if (i > beginstack.top()) {   // convert last while to if
+      ifstack.push( i );
+      whilestack.pop();
+    }
+  }
+  whilestack.push(pCurrentOps->size());
   OpsPushInt(0);
   return 0;
 }
@@ -2164,18 +2261,18 @@ int CPP_repeat()
 
   if (beginstack.empty()) return E_V_NO_BEGIN;  // no matching BEGIN
 
-  int i = beginstack[beginstack.size()-1];
-  beginstack.pop_back();
+  int i = beginstack.top();
+  beginstack.pop();
 
   long int ival;
 
   if (whilestack.size())
     {
-      int j = whilestack[whilestack.size()-1];
+      int j = whilestack.top();
       if (j > i)
 	{
-	  whilestack.pop_back();
-	  ival = pCurrentOps->size() - j + 6;
+          whilestack.pop();
+	  ival = pCurrentOps->size() - j + WSIZE + 2;
 	  OpsCopyInt (j, ival);  // write the relative jump count
 	}
     }
@@ -2194,8 +2291,15 @@ int CPP_until()
 
   if (beginstack.empty()) return E_V_NO_BEGIN;  // no matching BEGIN
 
-  int i = beginstack[beginstack.size()-1];
-  beginstack.pop_back();
+  int i = beginstack.top();
+  beginstack.pop();
+  if (!whilestack.empty()) {
+    int j = whilestack.top();
+    if (j > i) {   // convert last while to if
+      ifstack.push( j );
+      whilestack.pop();
+    }
+  }
   long int ival = i - pCurrentOps->size();
   pCurrentOps->push_back(OP_JZ);
   OpsPushInt(ival);   // write the relative jump count
@@ -2210,8 +2314,15 @@ int CPP_again()
 
   if (beginstack.empty()) return E_V_NO_BEGIN;  // no matching BEGIN
 
-  int i = beginstack[beginstack.size()-1];
-  beginstack.pop_back();
+  int i = beginstack.top();
+  beginstack.pop();
+  if (!whilestack.empty()) {
+    int j = whilestack.top();
+    if (j > i) {   // convert last while to if
+      ifstack.push( j );
+      whilestack.pop();
+    }
+  }
   long int ival = i - pCurrentOps->size();
   pCurrentOps->push_back(OP_JMP);
   OpsPushInt(ival);   // write the relative jump count
@@ -2225,7 +2336,7 @@ int CPP_if()
   // stack: ( -- | generate start of an if-then or if-else-then block )
 
   pCurrentOps->push_back(OP_JZ);
-  ifstack.push_back(pCurrentOps->size());
+  ifstack.push(pCurrentOps->size());
   OpsPushInt(0);   // placeholder for jump count
   return 0;
 }
@@ -2239,9 +2350,9 @@ int CPP_else()
   OpsPushInt(0);  // placeholder for jump count
 
   if (ifstack.empty()) return E_V_ELSE_NO_IF;  // ELSE without matching IF
-  int i = ifstack[ifstack.size()-1];
-  ifstack.pop_back();
-  ifstack.push_back(pCurrentOps->size() - sizeof(long int));
+  int i = ifstack.top();
+  ifstack.pop();
+  ifstack.push(pCurrentOps->size() - sizeof(long int));
   int ival = pCurrentOps->size() - i + 1;
   OpsCopyInt (i, ival);  // write the relative jump count
 
@@ -2256,8 +2367,8 @@ int CPP_then()
   if (ifstack.empty()) 
     return E_V_THEN_NO_IF;  // THEN without matching IF or IF-ELSE
 
-  int i = ifstack[ifstack.size()-1];
-  ifstack.pop_back();
+  int i = ifstack.top();
+  ifstack.pop();
   long int ival = (long int) (pCurrentOps->size() - i) + 1;
   OpsCopyInt (i, ival);   // write the relative jump count
 
@@ -2269,7 +2380,7 @@ int CPP_then()
 // Forth-94
 int CPP_case()
 {
-  casestack.push_back(-1);
+  casestack.push(-1);
   return 0;
 }
 
@@ -2286,8 +2397,8 @@ int CPP_endcase()
   int i; long int ival;
   do
     {
-      i = casestack[casestack.size()-1];
-      casestack.pop_back();
+      i = casestack.top();
+      casestack.pop();
       if (i == -1) break;
       ival = (long int) (pCurrentOps->size() - i) + 1;
       OpsCopyInt (i, ival);   // write the relative jump count
@@ -2304,7 +2415,7 @@ int CPP_of()
   pCurrentOps->push_back(OP_OVER);
   pCurrentOps->push_back(OP_EQ);
   pCurrentOps->push_back(OP_JZ);
-  ofstack.push_back(pCurrentOps->size());
+  ofstack.push(pCurrentOps->size());
   OpsPushInt(0);   // placeholder for jump count
   pCurrentOps->push_back(OP_DROP);
   return 0;
@@ -2316,14 +2427,14 @@ int CPP_of()
 int CPP_endof()
 {
   pCurrentOps->push_back(OP_JMP);
-  casestack.push_back(pCurrentOps->size());
+  casestack.push(pCurrentOps->size());
   OpsPushInt(0);   // placeholder for jump count
 
   if (ofstack.empty())
     return E_V_ENDOF_NO_OF;  // ENDOF without matching OF
 
-  int i = ofstack[ofstack.size()-1];
-  ofstack.pop_back();
+  int i = ofstack.top();
+  ofstack.pop();
   long int ival = (long int) (pCurrentOps->size() - i) + 1;
   OpsCopyInt (i, ival);   // write the relative jump count
 
@@ -2338,7 +2449,7 @@ int CPP_recurse()
   pCurrentOps->push_back(OP_ADDR);
   if (State)
     {
-      recursestack.push_back(pCurrentOps->size());
+      recursestack.push(pCurrentOps->size());
       OpsPushInt(0);
     }
   else
@@ -2450,7 +2561,7 @@ int CPP_evaluate ()
 
 	  --linecount;
 	  ec = ForthCompiler(pOps, &linecount);
-	  if ( State && (ec == E_C_ENDOFSTREAM)) ec = 0;
+	  if ( State && (ec == E_V_END_OF_STREAM)) ec = 0;
 
 	  // Restore the opcode vector, the input stream, and the input buffer
 
@@ -2478,7 +2589,7 @@ int CPP_included()
   DROP
   char *cp = (char*) TOS;
 
-  if ((nc < 0) || (nc > 255)) return E_V_OPENFILE;
+  if ((nc < 0) || (nc > 255)) return E_V_OPEN_FILE;
 
   memcpy (filename, cp, nc);
   filename[nc] = 0;
@@ -2506,7 +2617,7 @@ int CPP_included()
   if (f.fail()) 
     {
       *pOutStream << endl << filename << endl;
-      return (E_V_OPENFILE);
+      return (E_V_OPEN_FILE);
     }
 
   vector<byte> ops, *pOldOps;
@@ -2589,16 +2700,11 @@ int CPP_spstore()
 {
     // stack: ( addr -- | make the stack ptr point to a new address)
 
-// cout << "GlobalSp = " << GlobalSp << "  ForthStack = " << ForthStack << endl;
-// #ifndef __FAST__
-// cout << "GlobalTp = " << (void *) GlobalTp << "  ForthTypeStack = " << (void *) ForthTypeStack << endl;
-// #endif
-
     DROP
     CHK_ADDR
     long int* p = (long int*) TOS; --p;
     if ((p > BottomOfStack) || (p < ForthStack))
-	return E_V_BADSTACKADDR;  // new SP must be within its stack space
+	return E_V_BAD_STACK_ADDR;  // new SP must be within its stack space
     int n = (int) (p - ForthStack);
 
     GlobalSp = ForthStack + n;
@@ -2617,7 +2723,7 @@ int CPP_rpstore()
     CHK_ADDR
     long int* p = (long int*) TOS; --p;
     if ((p > BottomOfReturnStack) || (p < ForthReturnStack))
-	return E_V_BADSTACKADDR;  // new RP must be within its stack space
+	return E_V_BAD_STACK_ADDR;  // new RP must be within its stack space
 
     int n = (int) (p - ForthReturnStack);
     GlobalRp = ForthReturnStack + n;

@@ -2,7 +2,7 @@
 //
 // Common declarations and data for kForth 32-bit Virtual Machine
 //
-// Copyright (c) 1998--2021 Krishna Myneni,
+// Copyright (c) 1998--2022 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -18,13 +18,17 @@
 .equ OP_RET,	238
 .equ SIGN_MASK,	0x80000000
 	
-// Error Codes
+// Error Codes must be same as those in VMerrors.h
 
-.equ E_NOT_ADDR,	1
-.equ E_DIV_ZERO,	4
-.equ E_RET_STK_CORRUPT,	5
-.equ E_UNKNOWN_OP,	6
-.equ E_DIV_OVERFLOW,   20
+.equ E_DIV_ZERO,          -10
+.equ E_ARG_TYPE_MISMATCH, -12
+.equ E_QUIT,              -56
+.equ E_NOT_ADDR,          -256
+.equ E_RET_STK_CORRUPT,   -258
+.equ E_BAD_OPCODE,        -259
+.equ E_DIV_OVERFLOW,      -270
+
+// .equ E_UNKNOWN_OP,	6
 	
 .data
 NDPcw: .int 0
@@ -121,8 +125,8 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .long CPP_only, CPP_also, CPP_order, CPP_previous                 # 340--343
            .long CPP_forth, CPP_assembler, L_nop, L_nop        # 344--347
            .long L_nop, L_nop, CPP_defined, CPP_undefined      # 348--351
-           .long L_nop, L_nop, L_nop, L_nop            # 352--355
-           .long L_nop, L_nop, L_nop, L_nop            # 356--359
+           .long L_nop, L_nop, L_nop, L_nop           # 352--355
+           .long L_nop, L_nop, L_nop, L_vmthrow       # 356--359
            .long L_precision, L_setprecision, L_nop, CPP_fsdot   # 360--363
 	   .long L_nop, L_nop, C_fexpm1, C_flnp1      # 364--367
 	   .long CPP_uddotr, CPP_ddotr, L_f2drop, L_f2dup  # 368--371
@@ -136,13 +140,15 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .long L_nop, L_nop, L_nop, L_nop           # 400--403   
            .long L_nop, L_uwfetch, L_ulfetch, L_slfetch  # 404--407
            .long L_lstore, L_nop, L_nop, L_nop        # 408--411
+           .long L_nop, L_nop, L_nop, L_nop           # 412--415
+           .long L_nop, L_udivmod, L_uddivmod, L_nop  # 416--419
 
 .text
 	.align 4
 .global JumpTable
 .global L_initfpu, L_depth, L_quit, L_abort, L_ret
 .global L_dabs, L_dplus, L_dminus, L_dnegate
-.global L_mstarslash, L_udmstar, L_utmslash
+.global L_mstarslash, L_udmstar, L_uddivmod, L_utmslash
 
 .macro LDSP                      # load stack ptr into ebx reg
   .ifndef __FAST__
@@ -248,6 +254,22 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	notl WSIZE(%ebx)
 .endm
 
+// use algorithm from DNW's vm-osxppc.s
+// Regs: eax, ebx, ecx, edx
+// In: ebx = DSP
+// Out: eax = 0, ebx = DSP
+.macro _ABS
+        movl WSIZE(%ebx), %ecx
+        xorl %eax, %eax
+        cmpl %eax, %ecx
+        setl %al
+        negl %eax
+        movl %eax, %edx
+        xorl %ecx, %edx
+        subl %eax, %edx
+        movl %edx, WSIZE(%ebx)
+        xorl %eax, %eax
+.endm
 
 .macro STOD
 	LDSP
@@ -292,6 +314,99 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	xor %eax, %eax
 .endm
 
+// signed single division
+// Regs: eax, ebx, ecx, edx
+// In: ebx = TOS
+// Out: eax = quot, edx = rem, ebx = TOS
+.macro DIV
+       mov (%ebx), %ecx
+       cmpl $0, %ecx
+       jz E_div_zero
+       INC_DSP
+       mov (%ebx), %eax
+       cdq
+       idivl %ecx
+.endm
+
+// unsigned single division
+// Regs: eax, ebx, ecx, edx
+// In: ebx = TOS
+// Out: eax = quot, edx = rem, ebx = TOS
+.macro UDIV
+       mov (%ebx), %ecx
+       cmpl $0, %ecx
+       jz E_div_zero
+       INC_DSP
+       mov (%ebx), %eax
+       movl $0, %edx
+       divl %ecx
+.endm
+
+// Regs: eax, ebx, ecx
+// In: ebx = DSP
+// Out: eax = 0, ebx = DSP
+.macro DNEGATE
+        INC_DSP
+        movl %ebx, %ecx
+        INC_DSP
+        movl (%ebx), %eax
+        notl %eax
+        clc
+        addl $1, %eax
+        movl %eax, (%ebx)
+        movl %ecx, %ebx
+        movl (%ebx), %eax
+        notl %eax
+        adcl $0, %eax
+        movl %eax, (%ebx)
+        DEC_DSP
+        xor %eax, %eax
+.endm
+
+// Regs: eax, ebx
+// In: ebx = DSP
+// Out: eax = 0, ebx = DSP
+.macro STARSLASH
+        cmpl $0, WSIZE(%ebx)
+        jz E_div_zero
+        INC2_DSP
+        movl WSIZE(%ebx), %eax
+        imull (%ebx)
+        idivl -WSIZE(%ebx)
+        movl %eax, WSIZE(%ebx)
+        INC2_DTSP
+        xor %eax, %eax
+.endm
+
+// Regs: eax, ebx, ecx, edx
+// In: ebx = DSP
+// Out: eax = 0, ebx = DSP
+.macro TNEG
+        push %ebx
+        movl $WSIZE, %eax
+        addl %eax, %ebx
+        movl (%ebx), %edx
+        addl %eax, %ebx
+        movl (%ebx), %ecx
+        addl %eax, %ebx
+        movl (%ebx), %eax
+        notl %eax
+        notl %ecx
+        notl %edx
+        clc
+        addl $1, %eax
+        adcl $0, %ecx
+        adcl $0, %edx
+        movl %eax, (%ebx)
+        movl $WSIZE, %eax
+        subl %eax, %ebx
+        movl %ecx, (%ebx)
+        subl %eax, %ebx
+        movl %edx, (%ebx)
+        pop %ebx
+        xor %eax, %eax
+.endm
+
 // Error jumps
 E_not_addr:
         movl $E_NOT_ADDR, %eax
@@ -309,6 +424,14 @@ E_div_overflow:
 	movl $E_DIV_OVERFLOW, %eax
 	ret
 
+L_vmthrow:      # throw VM error (used as default exception handler)
+        LDSP
+        INC_DSP
+        INC_DTSP
+        movl (%ebx), %eax
+        STSP
+        ret
+
 L_cputest:
 	ret
 
@@ -324,7 +447,7 @@ L_initfpu:
 	ret
 
 L_nop:
-        movl $E_UNKNOWN_OP, %eax   # unknown operation
+        movl $E_BAD_OPCODE, %eax   # unknown operation
         ret
 L_quit:
 	movl BottomOfReturnStack, %eax	# clear the return stacks
@@ -334,7 +457,7 @@ L_quit:
 	movl BottomOfReturnTypeStack, %eax
 	movl %eax, GlobalRtp
   .endif
-	movl $8, %eax		# exit the virtual machine
+	movl $E_QUIT, %eax		# exit the virtual machine
 	ret
 L_abort:
 	movl BottomOfStack, %eax
@@ -382,9 +505,6 @@ L_calladdr:
 	addl $3, %ebp
 	movl %ebp, GlobalIp
         jmpl *(%ecx)
-#	call *(%ecx)
-#	movl GlobalIp, %ebp
-#	ret
 
 L_binary:
 	movl $Base, %ecx

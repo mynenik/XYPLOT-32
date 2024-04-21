@@ -2,7 +2,7 @@
 \
 \ Forth interface to xyplot
 \
-\ Copyright (c) 1999--2022 Krishna Myneni
+\ Copyright (c) 1999--2023 Krishna Myneni
 \
 \ This software is provided under the terms of the 
 \ GNU Affero General Public License (AGPL), v3.0 or later.
@@ -212,8 +212,6 @@ prec_DOUBLE  8 LSHIFT  data_REAL  OR  constant  REAL_DOUBLE
     FN_SET_SAVE_OPTIONS call ;
 [THEN]
 
-1 SFLOATS constant SFLOAT      \ size in bytes of single precision float
-
 \ Save Options structure
 \   HeaderType: 0=none, 1=xyplot format, 2=user-defined line prefix
 \   Delimiter:  0=space, 1=tab, 2=comma, other=space
@@ -264,13 +262,15 @@ end-structure
 \ directly with the data pointer are illustrated in the words 
 \ test1 and test2, contained in test.4th.
 
-: @xy ( i addr -- fx fy | retrieve the i^th x, y pair )
-	dup DatasetInfo->Size @ SFLOAT * rot * swap DatasetInfo->Data a@
-	swap + dup >r sf@ r> SFLOAT + sf@ ; 
+: @xy ( i addr -- F: fx fy | retrieve the i^th x, y pair )
+    dup  DatasetInfo->Size @ floats rot * 
+    swap DatasetInfo->Data a@ + 
+    dup  >r f@ r> float+ f@ ; 
 
 : !xy ( fx fy i addr -- | store the i^th x, y pair )
-	dup DatasetInfo->Size @ SFLOAT * rot * swap DatasetInfo->Data a@
-	swap + dup >r SFLOAT + sf! r> sf! ; 
+    dup  DatasetInfo->Size @ floats rot * 
+    swap DatasetInfo->Data a@ + 
+    dup  >r float+ f! r> f! ; 
 
 
 \ see the file test.4th for examples of usage

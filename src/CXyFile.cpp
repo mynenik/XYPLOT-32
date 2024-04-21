@@ -1,6 +1,6 @@
 // CXyFile.cpp
 //
-// Copyright 1995--2018 Krishna Myneni
+// Copyright 1995--2023 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -18,7 +18,7 @@ CXyFile::CXyFile (char* name, int open_mode)
     m_szName = new char [255];
     m_szHeader = new char [HEADER_LENGTH];
     m_szFirstLine = new char [MAX_LINE_LENGTH];
-    m_pValues = new float [MAX_DATA_COLUMNS];
+    m_pValues = new double [MAX_DATA_COLUMNS];
 
 // Default output format
 
@@ -50,7 +50,7 @@ CXyFile::~CXyFile()
     delete [] m_pValues;
     delete [] m_szFirstLine;
     delete [] m_szHeader;
-	delete [] m_szName;
+    delete [] m_szName;
 }
 //---------------------------------------------------------------
 
@@ -213,7 +213,7 @@ int CXyFile::Columns()
     return m_nCols;
 }
 //---------------------------------------------------------------
-int CXyFile::ReadData(float* data, int nSel, int ColumnSelections[])
+int CXyFile::ReadData(double* data, int nSel, int ColumnSelections[])
 {
 /*
 Reads data from the data file.
@@ -227,7 +227,7 @@ Arguments:
 Return the number of points read from the file.
 */
 
-	float* d = data;
+    double* d = data;
     int nPts = 0, i, *cp;
     char s [MAX_LINE_LENGTH];
 
@@ -272,11 +272,11 @@ Return the number of points read from the file.
 }
 //---------------------------------------------------------------
 
-int CXyFile::WriteData(float* data, int nrows, int ncols)
+int CXyFile::WriteData(double* data, int nrows, int ncols)
 {
 // Write data to file
 
-    float* d = data;
+    double* d = data;
     char temp [32], szDelimiter[4], szFormat[16], szEOL[4];
     int i, j;
 

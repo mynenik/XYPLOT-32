@@ -2,7 +2,7 @@
 //
 // Header file for class CTransform
 //
-// Copyright 1995--2018 Krishna Myneni
+// Copyright 1995--2023 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -23,37 +23,37 @@ using std::vector;
 class CTransform {
 protected:
     CRect m_nPRect;             // rectangle for physical area
-    vector<float> m_vEx;        // extrema
-    vector<float> m_vDelta;
+    vector<double> m_vEx;       // extrema
+    vector<double> m_vDelta;
 public:
 	void SetPhysical (CRect rect) {m_nPRect = rect;}
 	CRect GetPhysical (void) {return m_nPRect;}
-	void SetLogical (vector<float>);
-	vector<float> GetLogical () {return m_vEx;}
-	virtual CPoint Physical (float*) = 0;
-	CPoint Physical (double*);
-	CPoint Physical (vector<float> x) {return Physical( (float*) &x[0]);}
-	virtual void Logical (CPoint, float*) = 0;
-	vector<float> Logical (CPoint);
-	vector<float> Logical (CRect);
+	void SetLogical (vector<double>);
+	vector<double> GetLogical () {return m_vEx;}
+	virtual CPoint Physical (double*) = 0;
+	// CPoint Physical (double*);
+	CPoint Physical (vector<double> x) {return Physical( (double*) &x[0]);}
+	virtual void Logical (CPoint, double*) = 0;
+	vector<double> Logical (CPoint);
+	vector<double> Logical (CRect);
 };
 
 class C2D_Transform : public CTransform {
 public:
-    CPoint Physical (float*);
-    void Logical (CPoint, float*);
+    CPoint Physical (double*);
+    void Logical (CPoint, double*);
 };
 
 class C2Di_Transform : public CTransform {
  public:
-  CPoint Physical (float*);
-  void Logical (CPoint, float*);
+  CPoint Physical (double*);
+  void Logical (CPoint, double*);
 };
 
 class C2D_PolarTransform : public C2D_Transform {
 public:
-	CPoint Physical (float*);
-	void Logical (CPoint, float*);
+	CPoint Physical (double*);
+	void Logical (CPoint, double*);
 };
 
 #endif

@@ -784,9 +784,9 @@ int BlankLine (char* s)
 }
 //---------------------------------------------------------------
 
-int NumberParse (float* nums, char* s)
+int NumberParse (double* nums, char* s)
 {
-// Parse a string into array of floats; Return number of values
+// Parse a string into array of doubles; Return number of values
 
     const char d1 = 44; // comma
     const char d2 = 9;  // tab
@@ -849,13 +849,13 @@ void SortRect (CRect* prect)
 }
 //---------------------------------------------------------------------
 
-char* LabelFormat (float x1, float x2, char axis)
+char* LabelFormat (double x1, double x2, char axis)
 {
 // Determine label output format for range of numbers between x1 and x2.
 
     static char format[16];
 
-    float diff = fabs (x2 - x1);
+    double diff = fabs (x2 - x1);
     int j = (x1 < 0.) || (x2 < 0.);
 
     switch (axis) {
@@ -883,15 +883,15 @@ char* LabelFormat (float x1, float x2, char axis)
 }
 //----------------------------------------------------------------
 
-char* DisplayFormat (float x1, float x2)
+char* DisplayFormat (double x1, double x2)
 {
 // Determine display format for range of numbers between x1 and x2.
 
     static char format[16];
-    float diff = fabs ((x2 - x1));
-    float a1 = fabs (x1);
-    float a2 = fabs (x2);
-    float vmax = (a2 > a1) ? a2 : a1;
+    double diff = fabs ((x2 - x1));
+    double a1 = fabs (x1);
+    double a2 = fabs (x2);
+    double vmax = (a2 > a1) ? a2 : a1;
     int field_width = 6;
     int precision = 4;
 
@@ -913,7 +913,7 @@ char* DisplayFormat (float x1, float x2)
     }
 
     if (diff != 0.) {
-      float a3 = vmax/diff;
+      double a3 = vmax/diff;
       if (a3 >= 10. && a3 <= 1.e6) {
         int i = (int) (log(a3)/log(10.)) - 1;
         if ((x1 < 0.) || (x2 < 0.)) i++;
@@ -1589,7 +1589,7 @@ int get_window_limits ()
 
   // Return x1, y1, x2, y2 on top of the stack
 
-  vector<float> e = pMainWnd->m_pDi->GetExtrema();
+  vector<double> e = pMainWnd->m_pDi->GetExtrema();
 
   --GlobalSp; --GlobalTp;
   *((double*)GlobalSp) = (double) e[0];
@@ -1613,7 +1613,7 @@ int set_window_limits ()
 {
   // Set the plot window limits
 
-  vector<float> e(4);
+  vector<double> e(4);
   ++GlobalSp;
   e[3] = *((double*)GlobalSp);
   GlobalSp += 2;

@@ -45,7 +45,7 @@ using namespace std;
 // Functions and data defined externally
 
 extern void SortRect (CRect *);
-extern int NumberParse (float*, char*);
+extern int NumberParse (double*, char*);
 extern int CompileAE (vector<byte>*, char* exp);
 extern "C" char* strupr (char*);
 extern int AddToHeader (char*, char*, bool);
@@ -823,7 +823,7 @@ CPlotMessage* CPlotWindow::GetPlotMessage()
 void CPlotWindow::OnMouseMove(unsigned int mf, CPoint p)
 {
     char cur_x [24], cur_y [24], cur_xy[48];
-    vector<float> x;
+    vector<double> x;
     
     m_pDi->m_nMousePt = p;
     x = m_pDi->Logical(p);
@@ -886,7 +886,7 @@ void CPlotWindow::OnLButtonDown(unsigned int mf, CPoint p)
 
     if ((ExpRect.Width() > 9) && (ExpRect.Height() > 9))
       {
-	vector<float> x = m_pDi->Logical(ExpRect);
+	vector<double> x = m_pDi->Logical(ExpRect);
         m_pDi->CreateView(CARTESIAN, x);
         Invalidate ();
      }
@@ -959,8 +959,8 @@ void CPlotWindow::OnExtremaInput ()
 
 void CPlotWindow::OnExtrema (char* s)
 {
-  float x[6];
-  vector<float> e = m_pDi->GetExtrema();
+  double x[6];
+  vector<double> e = m_pDi->GetExtrema();
   x[0] = e[0];
   x[1] = e[2];
   x[2] = e[1];
@@ -1097,8 +1097,8 @@ void CPlotWindow::OnTemplate()
     strcpy (prompt, "Enter x1, x2, dx:");
     if (GetInput(prompt, tmpl) == 0) return;
 
-    float x[6], temp;
-    vector<float> e = m_pDi->GetExtrema();
+    double x[6], temp;
+    vector<double> e = m_pDi->GetExtrema();
     x[0] = e[0];
     x[1] = e[1];
     x[2] = (x[1] - x[0])/100.f;
@@ -1136,7 +1136,7 @@ void CPlotWindow::OnTemplate()
         return;
     }
 
-    float* data = &(*(d->begin()));
+    double* data = &(*(d->begin()));
     temp = x[0];
     for (int i = 0; i < npts; i++)
     {
@@ -1210,7 +1210,7 @@ void CPlotWindow::OnExpression(char* exp)
 	  CDataset* d = m_pDi->GetActiveSet();
 	  int npts = d->NumberOfPoints();
 	  int nsize = d->SizeOfDatum();
-	  float *p = &(*(d->begin()));
+	  double *p = &(*(d->begin()));
 	  BYTE* bp = (BYTE*) &p;
 	  prefix.push_back(OP_ADDR);
 	  for (i = 0; i < sizeof(void*); i++)
@@ -1625,7 +1625,7 @@ vector<int> CPlotWindow::ParseColumns (char* cs)
 {
 // Parse a column specifier string into a vector of column numbers
 
-  float x[8];
+  double x[8];
   int i, nSel = 0;
   char s[64];
   vector<int> Cols;
@@ -1650,7 +1650,7 @@ void CPlotWindow::LoadDatasetFile (char* fname, char* col_spec)
   char s[512];
   CDataset* d;
 
-  int ecode = m_pDb->LoadDataset(&d, fname, ParseColumns(col_spec), 0);
+  int ecode = m_pDb->LoadDataset(&d, fname, ParseColumns(col_spec), 256);
   if (ecode <= 0)
     {
       MessageBox ("Error reading file.");
@@ -1753,7 +1753,7 @@ bool CPlotWindow::SaveFile (char* fname)
 	{
 	  // Save the active data set
 
-	  vector<float> e = m_pDi->GetExtrema();
+	  vector<double> e = m_pDi->GetExtrema();
 	  int bOverlap;
 	  vector<int> lim = d->IndexLimits(e[0], e[1], bOverlap);
 	  if (bOverlap)

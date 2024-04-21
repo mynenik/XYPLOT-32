@@ -1,6 +1,6 @@
 // CPlotView.cpp
 //
-// Copyright 2020 Krishna Myneni
+// Copyright 2020--2023 Krishna Myneni
 //
 // This software is provided under the terms of the
 // GNU Affero General Public License (AGPL) v 3.0 or later.
@@ -14,7 +14,7 @@ using namespace std;
 #include "CPolarGrid.h"
 #include "CPlotView.h"
 
-CPlotView::CPlotView( COORDINATE_SYSTEM cdns, vector<float> x )
+CPlotView::CPlotView( COORDINATE_SYSTEM cdns, vector<double> x )
 {
     m_pCt = NULL;
     m_pGrid = NULL;
@@ -46,12 +46,12 @@ CPlotView::~CPlotView()
     delete m_pCt;
 }
 
-void CPlotView::SetExtrema(vector<float> x)
+void CPlotView::SetExtrema(vector<double> x)
 {
      m_pCt->SetLogical(x);
 }
 
-vector<float> CPlotView::GetExtrema()
+vector<double> CPlotView::GetExtrema()
 {
     return( m_pCt->GetLogical() );
 }

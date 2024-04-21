@@ -1,6 +1,6 @@
 // CPlotList.h
 //
-// Copyright (c) 1996-2020 Krishna Myneni
+// Copyright (c) 1996-2023 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
@@ -42,7 +42,7 @@ public:
     char* GetList();
     void DisplayList (CDC*);
     void Draw (CDC*);
-    vector<float> GetExtrema ();
+    vector<double> GetExtrema ();
     CPlot* operator[] (const int);
 //    BOOL Write (CFile*);
 };

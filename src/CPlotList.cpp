@@ -1,6 +1,6 @@
 // CPlotList.cpp
 //
-// Copyright (c) 1996--2020 Krishna Myneni
+// Copyright (c) 1996--2023 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
@@ -370,12 +370,12 @@ void CPlotList::Draw(CDC* pDC)
 }
 //---------------------------------------------------------------
 
-vector<float> CPlotList::GetExtrema()
+vector<double> CPlotList::GetExtrema()
 {
 // Return extrema vector for the datasets which are plotted
 
     CDataset* d;
-    vector<float> e(4), ex(4);
+    vector<double> e(4), ex(4);
     int i;
 
     PlotListNode* node = m_pHead;

@@ -2,7 +2,7 @@
 //
 // Header file for class CXyFile
 //
-// Copyright 1995--2018 Krishna Myneni
+// Copyright 1995--2023 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -33,7 +33,7 @@ class CXyFile {
 	int m_nFail;
 	int m_nCols;
 	int m_bReadData;
-	float* m_pValues;
+	double* m_pValues;
 public:
 	char* m_szHeader;
 
@@ -43,14 +43,14 @@ public:
 	void WriteHeader (char*);
 	void WriteHeaderLines(char*, char*);
 	int Columns (void);
-	int ReadData (float*, int, int []);
-	int WriteData (float*, int, int);
+	int ReadData (double*, int, int []);
+	int WriteData (double*, int, int);
 	int Fail () ;
 	void SetSaveOptions (SaveOptions s) {m_nSave = s;}
 };
 
 extern int BlankLine (char*);
-extern int NumberParse (float*, char*);
+extern int NumberParse (double*, char*);
 #endif
 
 

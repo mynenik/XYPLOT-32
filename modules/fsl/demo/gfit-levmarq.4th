@@ -18,12 +18,13 @@
 \
 \   2004-01-03  created
 \   2007-11-03  renamed to gfit-levmarq.4th
+\   2021-07-09  updated file paths, replaced DEFINES with IS
 
 include ans-words
-include fsl-util
-include dynmem
-include gaussj
-include levmarq
+include fsl/fsl-util
+include fsl/dynmem
+include fsl/gaussj
+include fsl/levmarq
 
 \ Define the fitting function. Computes the y value and the derivatives dy/da.
 \ Derivatives are computed from analytic expressions.
@@ -36,22 +37,22 @@ fvariable fx
 	to dyda{
 	to arr{
 	fdup fx f!
-	arr{ 1 } f@ f- fdup f*
-	arr{ 2 } f@ fdup f* 2e f* f/
+	arr{ 1 } f@ f- fsquare
+	arr{ 2 } f@ fsquare 2e f* f/
 	fnegate fexp
 	fdup dyda{ 0 } f!
 	arr{ 0 } f@ f*
 	fx f@
-	arr{ 4 } f@ f- fdup f*
-	arr{ 5 } f@ fdup f* 2e f* f/
+	arr{ 4 } f@ f- fsquare
+	arr{ 5 } f@ fsquare 2e f* f/
 	fnegate fexp
 	fdup dyda{ 3 } f!
 	arr{ 3 } f@ f*
 	f+
 	arr{ 6 } f@ f+
-	arr{ 0 } f@ arr{ 2 } f@ fdup f* f/ fx f@ arr{ 1 } f@ f- f*
+	arr{ 0 } f@ arr{ 2 } f@ fsquare f/ fx f@ arr{ 1 } f@ f- f*
 	dyda{ 0 } f@ f* dyda{ 1 } f!
-	arr{ 3 } f@ arr{ 5 } f@ fdup f* f/ fx f@ arr{ 4 } f@ f- f*
+	arr{ 3 } f@ arr{ 5 } f@ fsquare f/ fx f@ arr{ 4 } f@ f- f*
 	dyda{ 3 } f@ f* dyda{ 4 } f!
 	dyda{ 1 } f@ fx f@ arr{ 1 } f@ f- f* arr{ 2 } f@ f/ 
 	dyda{ 2 } f!
@@ -59,7 +60,7 @@ fvariable fx
 	dyda{ 5 } f!
 	1e dyda{ 6 } f! ;
 
-& f2gauss defines MrqFitter
+& f2gauss IS MrqFitter
 	
 
 FLOAT DARRAY  x{

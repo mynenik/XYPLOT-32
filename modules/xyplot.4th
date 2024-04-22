@@ -297,7 +297,7 @@ include xutils
 [UNDEFINED] _WIN32_ [IF] include template [THEN]
 include arithmetic
 include xypolyfit
-include xyexpfit
+\ include xyexpfit
 include xyhistogram
 \ include xyfft
 include smooth

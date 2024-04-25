@@ -2,7 +2,7 @@
 \
 \ Forth interface to xyplot
 \
-\ Copyright (c) 1999--2022 Krishna Myneni
+\ Copyright (c) 1999--2024 Krishna Myneni
 \
 \ This software is provided under the terms of the 
 \ GNU Affero General Public License (AGPL), v3.0 or later.
@@ -297,7 +297,7 @@ include xutils
 [UNDEFINED] _WIN32_ [IF] include template [THEN]
 include arithmetic
 include xypolyfit
-\ include xyexpfit
+include xyexpfit
 include xyhistogram
 \ include xyfft
 include smooth

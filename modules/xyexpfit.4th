@@ -22,14 +22,32 @@ Begin-Module
     r@ 0 } f@ f* 
     r> 2 } f@ f+ ;
 
-MAX_POINTS FLOAT array x{
-MAX_POINTS FLOAT array y{
-MAX_POINTS 2 FLOAT MATRIX fit_data{{
+FLOAT DARRAY x{
+FLOAT DARRAY y{
+FLOAT DARRAY yfit{
+FLOAT DMATRIX fit_data{{
 
 3 FLOAT array params{
 3 FLOAT array increments{
+3 FLOAT array sigma_par{
+
 fvariable chi-sqr
 variable npts
+
+: alloc-mem ( u -- bfail )
+    & x{ over }malloc
+    & y{ over }malloc
+    & yfit{ over }malloc
+    & fit_data{{ over 2 }}malloc
+    malloc-fail?
+;
+
+: free-mem ( -- )
+    & x{ }free
+    & y{ }free
+    & yfit{ }free
+    & fit_data{{ }}free
+;
 
 Public:
 
@@ -40,9 +58,9 @@ Public:
     IF
       ds1 get_ds
       0 >= IF
-        ds1 DatasetInfo->Npts @ dup npts !
-        MAX_POINTS > IF
-          ." Too many points in data set. Resize MAX_POINTS." cr
+        ds1 DatasetInfo->Npts @ npts !
+        npts @ alloc-mem IF
+          ." Too many points. Unable to allocate memory!" cr
           EXIT
         THEN
        THEN
@@ -51,11 +69,9 @@ Public:
          I ds1 @xy  y{ I } f!  x{ I } f!
        LOOP
 
-       ['] Exp-Func IS functn
+       x{ y{ yfit{ params{ increments{ sigma_par{ 3 npts @ ['] Exp-Func init-curvefit 
 
-       5 0 DO
-         x{ y{ params{ increments{ 3 npts @ curfit chi-sqr f!
-       LOOP
+       5 0 DO  curfit chi-sqr f!  LOOP
        true
      ELSE false
      THEN ;
@@ -90,30 +106,32 @@ PlotInfo pl3
 ;
 
 : .expfit-params ( -- )
-    ." Reduced Chi^2 = " chi-sqr f@ f$. cr
-    ." a = " params{ 0 } f@ f$. cr
-    ." b = " params{ 1 } f@ f$. cr
-    ." c = " params{ 2 } f@ f$. cr ;
+    ." Fit to y = a*exp(-x/b) + c" cr
+    ." a = " params{ 0 } f@ f$. ."  +/- " sigma_par{ 0 } f@ f$. cr
+    ." b = " params{ 1 } f@ f$. ."  +/- " sigma_par{ 1 } f@ f$. cr
+    ." c = " params{ 2 } f@ f$. ."  +/- " sigma_par{ 2 } f@ f$. cr
+    ." Reduced Chi^2 = " chi-sqr f@ f$. cr ;
 
 : xyexpfit ( -- )
     ?active 0 >= 
-    if
+    IF
       c" Enter initial a, b, c for y=a*exp(-x/b) + c:" get_input
-      if
+      IF
         count parse_csv 3 <> abort" Entered wrong number of parameters!"
         params{ 2 } f!  params{ 1 } f!  params{ 0 } f!
         c" Enter initial increments da, db, dc:" get_input
-        if
+        IF
          count parse_csv 3 <> abort" Entered wrong number of params!"
          increments{ 2 } f!  increments{ 1 } f!  increments{ 0 } f!
-        else
-          exit
-        then
+        ELSE
+          EXIT
+        THEN
         ." Initial parameters and increments:" cr
         3 0 do params{ I } f@ f$. 2 spaces increments{ I } f@ f$. cr loop
-        expfit if
+        expfit IF
           .expfit-params
           make-expfit-ds
+          free-mem
           make-expfit-plot
           reset_window
         then

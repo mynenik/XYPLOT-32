@@ -742,11 +742,11 @@ void ForthCB (Widget wSrc, void* client_d,
 	return;
     }
 
-  char out_s[256];
+  char out_s[1024];
   long int nLine;
   stringstream ForthMessages;
   nError = ExecuteForthExpression (s, (ostringstream*) &ForthMessages, &nLine);
-  ForthMessages.getline(out_s, 255, 0);
+  ForthMessages.getline(out_s, 1023, 0);
 
   if (nError)
   {

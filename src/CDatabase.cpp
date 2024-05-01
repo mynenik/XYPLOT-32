@@ -1,6 +1,6 @@
 // CDatabase.cpp
 //
-// Copyright 1995--2018 Krishna Myneni
+// Copyright 1995--2024 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -358,14 +358,14 @@ CDataset* CDatabase::MakeDataset (CWorkspace41* ws, int n)
 	    d = new CComplex (2, npts, name, hdr);
 	    break;
 	  default:
-        d = NULL;
+            d = NULL;
 	}
 
     if (d)
     {
-	    d->CopyFromXY (&ws->x[jsr], &ws->y[jsr], ws->ds[n].npts);
-	    d->SetExtrema();
-	}
+       d->CopyFromXY (&ws->x[jsr], &ws->y[jsr], ws->ds[n].npts);
+       d->SetExtrema();
+    }
 
     return d;
 }

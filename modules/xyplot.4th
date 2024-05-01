@@ -189,6 +189,8 @@ prec_DOUBLE  8 LSHIFT  data_REAL  OR  constant  REAL_DOUBLE
 : file_open_dialog ( ^filter -- ^filename flag )
     FN_FILE_OPEN_DIALOG call ;
 
+: set_save_options ( addr -- | set file save format options )
+    FN_SET_SAVE_OPTIONS call ;
 
 [DEFINED] _WIN32_ [IF]  \ Interface functions for Windows version only
 : get_window_title ( c-addr umax -- uret )
@@ -208,8 +210,6 @@ prec_DOUBLE  8 LSHIFT  data_REAL  OR  constant  REAL_DOUBLE
 : radio_box ( ^label1 ^label2 ... n -- m | provide a radio button selection box )
     FN_RADIO_BOX call ;
 
-: set_save_options ( addr -- | set file save format options, specified in structure )
-    FN_SET_SAVE_OPTIONS call ;
 [THEN]
 
 1 SFLOATS constant SFLOAT      \ size in bytes of single precision float
@@ -324,7 +324,6 @@ c" white" set_background
 c" black" set_foreground
 0 0 set_grid_lines
 
-[UNDEFINED] _WIN32_ [IF]
 \ Modify the save options to some non-default values
 
 SaveOptions sv-opt
@@ -337,7 +336,6 @@ sv-opt    SaveOptions->UserPrefix 16 erase
 s" #" sv-opt SaveOptions->UserPrefix swap cmove  ( this is the line prefix used by xmgrace ) 
 
 sv-opt set_save_options
-[THEN]
 
 \ end of xyplot.4th
 

@@ -2,7 +2,7 @@
 //
 // Header file for class CXyFile
 //
-// Copyright 1995--2018 Krishna Myneni
+// Copyright 1995--2024 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -14,8 +14,7 @@
 
 #include <stdio.h>
 #include <fstream>
-using std::ifstream;
-using std::ofstream;
+using namespace std;
 #include "CDataset.h"
 #include "saveopts.h"
 
@@ -41,12 +40,13 @@ public:
 	~CXyFile (void);
 	void ReadHeader (void);
 	void WriteHeader (char*);
-	void WriteHeaderLines(char*, char*);
+	void WriteHeaderLines(char*, char*, char*);
 	int Columns (void);
 	int ReadData (float*, int, int []);
 	int WriteData (float*, int, int);
 	int Fail () ;
 	void SetSaveOptions (SaveOptions s) {m_nSave = s;}
+	void GetFormatStrings(char*, char*, char*, char*);
 };
 
 extern int BlankLine (char*);

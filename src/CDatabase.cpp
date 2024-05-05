@@ -17,11 +17,12 @@ CDatabase::CDatabase()
 {
     Clear();
 
-    m_nSave.HeaderType = 1;  // header is in standard xyplot style
+    m_nSave.HeaderType = 1;  // standard xyplot format
     m_nSave.Delimiter = 0;
     m_nSave.NumberFormat = 0;
     m_nSave.CrLf = 0;
-    strcpy(m_nSave.UserPrefix, "#"); // default prefix for alternate header style is xmgrace comment
+    // default prefix for alternate header style is xmgrace comment
+    strcpy(m_nSave.UserPrefix, "#");
 }
 //---------------------------------------------------------------
 CDatabase::~CDatabase()
@@ -392,8 +393,7 @@ CDataset* CDatabase::MakeDataset (int* ds_info)
   int data_type = ntype & 255;      // data_type can be real or complex
   int data_precision = ntype/256;   // precision can be single or double 
 
-  switch (data_precision)
-    {
+  switch (data_precision) {
     case 0:
       // Single precision floating point n-D real dataset
       temp_buf = new float [nelem];
@@ -406,28 +406,25 @@ CDataset* CDatabase::MakeDataset (int* ds_info)
     case 1:
       // Double precision floating point n-D real dataset
       temp_buf = new float [nelem];
-      if (temp_buf)
-	{
-	  temp = temp_buf;
-	  d1 = (double*) data;
-	  for (i = 0; i < nelem; i++) *temp++ = (float) *d1++;
-	}
-      else
-	return NULL;
+      if (temp_buf) {
+        temp = temp_buf;
+        d1 = (double*) data;
+        for (i = 0; i < nelem; i++) *temp++ = (float) *d1++;
+      }
       break;
     default:
-      return NULL;
+      break;
     }
 
+  if (temp_buf == NULL) return NULL;
   temp = temp_buf;
   int nRem = npts;
 
-  do
-    {
+  do {
       LoadBuffer.push_back(temp);
       nRem -= MAX_POINTS;
       temp += MAX_POINTS*ncols;
-    }
+  }
   while (nRem > 0) ;
 
   CDataset* d = MakeDataset(LoadBuffer, npts, ncols, data_type, name, hdr);

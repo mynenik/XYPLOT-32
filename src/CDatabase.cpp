@@ -383,9 +383,11 @@ CDataset* CDatabase::MakeDataset (int* ds_info)
   void* data = *((void**)(ds_info + 5));
 
   vector<float*> LoadBuffer;
-  float* temp_buf = NULL, *temp;
+  float *temp_buf = NULL, *temp, *f1;
   double* d1;
   int i, nelem = npts*ncols;
+
+  if (nelem == 0) return NULL;
 
   int data_type = ntype & 255;      // data_type can be real or complex
   int data_precision = ntype/256;   // precision can be single or double 
@@ -394,7 +396,12 @@ CDataset* CDatabase::MakeDataset (int* ds_info)
     {
     case 0:
       // Single precision floating point n-D real dataset
-      temp_buf = (float*) data;
+      temp_buf = new float [nelem];
+      if (temp_buf) {
+        temp = temp_buf;
+	f1 = (float*) data;
+	for (i = 0; i < nelem; i++) *temp++ = *f1++;
+      }
       break;
     case 1:
       // Double precision floating point n-D real dataset
@@ -426,8 +433,7 @@ CDataset* CDatabase::MakeDataset (int* ds_info)
   CDataset* d = MakeDataset(LoadBuffer, npts, ncols, data_type, name, hdr);
   if (d) AddSet(d);
 
-  //  delete [] temp_buf;
-  // cout << "Erased the temp buffer\n";
+  delete [] temp_buf;
   return d;
 }
 //---------------------------------------------------------------

@@ -45,10 +45,10 @@
 \  copyright notice is preserved.
 \
 \     2011-09-16  km; use Neal Bridges' anonymous modules.
-\     2012-02-24  km; use KM/DNW's modules library 
+ 
 
-CR .( SERIESPWR         V1.3b          24 February  2012   EFC )
-Begin-Module
+CR .( SERIESPWR         V1.3b          16 September 2011   EFC )
+BEGIN-MODULE
 
 BASE @
 DECIMAL
@@ -92,7 +92,7 @@ Public:
 ;
 
 BASE !
-End-Module
+END-MODULE
 
 TEST-CODE? [IF]     \ test code =============================================
 
@@ -102,8 +102,8 @@ TEST-CODE? [IF]     \ test code =============================================
 BASE @
 DECIMAL
 
-8 FLOAT ARRAY a{
-8 FLOAT ARRAY res{
+100 FLOAT ARRAY a{
+100 FLOAT ARRAY res{
 
 : clear_a ( -- )
      8 1 DO 0e a{ I } F! LOOP
@@ -210,7 +210,7 @@ DECIMAL
 : test_1/(1+x)
 	test_(1+x)^-1
 	CR ."  x   Approximation     Exact          Error (%) "
-	10 0 DO  CR ." 0." I 0 .R 4 SPACES 
+	10 0 DO  CR ." 0." I 1 .R 4 SPACES 
 		 I S>F 10e F/ FDUP res{ 6 }Horner FDUP F. 5 SPACES
 		 1e FROT 1e F+ F/ FDUP F. 6 SPACES
 		 FOVER F- FABS 100e F* FSWAP F/ F.

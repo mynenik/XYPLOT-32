@@ -129,9 +129,9 @@
 \       the probability of a transition to these sublevels is zero. The
 \       relative probabilities for the remaining sublevels are given by:
 \
-\       cg< 2 -1  1  1 | 1 0 >  fdup f* f.   \  30%  |1,0> --> |2, m = -1>
-\       cg< 2  0  1  0 | 1 0 >  fdup f* f.   \  40%  |1,0> --> |2, m =  0>  
-\       cg< 2  1  1 -1 | 1 0 >  fdup f* f.   \  30%  |1,0> --> |2, m =  1>
+\       cg< 2 -1  1  1 | 1 0 >  fsquare f.   \  30%  |1,0> --> |2, m = -1>
+\       cg< 2  0  1  0 | 1 0 >  fsquare f.   \  40%  |1,0> --> |2, m =  0>  
+\       cg< 2  1  1 -1 | 1 0 >  fsquare f.   \  30%  |1,0> --> |2, m =  1>
 \
 \
 \  References:
@@ -155,10 +155,10 @@
 ;
 
 : gcd ( n1 n2 -- gcd | find greatest common divisor)
-    ?DUP IF SWAP OVER MOD RECURSE THEN ABS ;
+    ?DUP IF TUCK MOD RECURSE THEN ABS ;
 
 : simplify-fraction ( num denom -- num' denom' | simplify)
-    2DUP gcd DUP >R / SWAP R> / SWAP ;    
+    2DUP gcd TUCK / >R / R> ;    
 
 : /sqrt ( isign inum idenom -- f | f = isign*sqrt[inum/idenom])
     ROT >R >R s>f r> s>f f/ fsqrt R> 0< IF FNEGATE THEN ;

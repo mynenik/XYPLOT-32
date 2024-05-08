@@ -29,9 +29,7 @@
 \    VPUT-COL ( N 'v c1 'M -- )   Put vector v into column c1 of matrix M
 \
 
-CR .( VECTOR            V1.0           13 Jan  2019 )
-
-[UNDEFINED] ptr [IF] : ptr  CREATE 1 CELLS ?allot ! DOES> a@ ; [THEN]
+CR .( VECTOR            V1.0b          05 Dec  2023 )
 
 Begin-Module
 
@@ -52,7 +50,7 @@ Public:
 : vmag ( N 'v -- r )
     to vec{ >r
     0e  
-    r> 0 ?DO  vec{ I } f@ fdup f* f+  LOOP 
+    r> 0 ?DO  vec{ I } f@ fsquare f+  LOOP 
     fsqrt ;
 
 \ Scale the components of a vector by r

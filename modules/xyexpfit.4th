@@ -106,10 +106,12 @@ PlotInfo pl3
 ;
 
 : .expfit-params ( -- )
+    chi-sqr f@ fsqrt  \ approximate sigma(y_i's) as sqrt(chi-sqr)
     ." Fit to y = a*exp(-x/b) + c" cr
-    ." a = " params{ 0 } f@ f$. ."  +/- " sigma_par{ 0 } f@ f$. cr
-    ." b = " params{ 1 } f@ f$. ."  +/- " sigma_par{ 1 } f@ f$. cr
-    ." c = " params{ 2 } f@ f$. ."  +/- " sigma_par{ 2 } f@ f$. cr
+    ." a = " params{ 0 } f@ f$. ."  +/- " sigma_par{ 0 } f@ fover f* f$. cr
+    ." b = " params{ 1 } f@ f$. ."  +/- " sigma_par{ 1 } f@ fover f* f$. cr
+    ." c = " params{ 2 } f@ f$. ."  +/- " sigma_par{ 2 } f@ fover f* f$. cr
+    fdrop
     ." Reduced Chi^2 = " chi-sqr f@ f$. cr ;
 
 : xyexpfit ( -- )

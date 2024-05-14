@@ -156,7 +156,6 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   ++ac;
   XtSetValues (TopLevel, al, ac);
 
-
   m_pDb = NULL;
   m_pDi = NULL;
 
@@ -1094,6 +1093,8 @@ void CPlotWindow::OnTemplate()
 {
     char tmpl[256], prompt[256];
 
+    MessageBox("In Template");
+    
     strcpy (prompt, "Enter x1, x2, dx:");
     if (GetInput(prompt, tmpl) == 0) return;
 
@@ -1184,13 +1185,10 @@ void CPlotWindow::OnExpression(char* exp)
   int i;
   long int *StackPtr;
   BYTE* TypePtr;
-  ostringstream* pSS = NULL;
   
   if (*exp)
     {
       vector<BYTE> opcodes, prefix;
-      pSS = new ostringstream(emsg);
-      SetForthOutputStream (*pSS);
       strupr(exp);
 
       int ecode = CompileAE (&opcodes, exp);
@@ -1198,13 +1196,11 @@ void CPlotWindow::OnExpression(char* exp)
       //OutputForthByteCode (&opcodes);
       //MessageBox(emsg);
  
-      if (ecode)
-	{
+      if (ecode) {
 	  sprintf (emsg, "%s %d", "Expression Compiler Error:", ecode);
 	  MessageBox (emsg);
-	}
-      else
-	{
+      }
+      else {
             // Perform the expression operations
 
 	  CDataset* d = m_pDi->GetActiveSet();
@@ -1227,7 +1223,8 @@ void CPlotWindow::OnExpression(char* exp)
 	  prefix.push_back(OP_RET);
 
 	  // SetForthInputStream (cin);
-	  SetForthOutputStream (*pSS);
+          stringstream ForthMessages;
+	  SetForthOutputStream (ForthMessages);
 	  ecode = ForthVM (&prefix, &StackPtr, &TypePtr);
 	  if (ecode)
 	    {
@@ -1261,24 +1258,6 @@ void CPlotWindow::OnExpression(char* exp)
     }
 }
 //--------------------------------------------------------------
-
-void CPlotWindow::OnArithmetic()
-{
-  ;
-}
-//--------------------------------------------------------------
-
-void CPlotWindow::OnSwap()
-{
-  ;
-}
-//---------------------------------------------------------------
-
-void CPlotWindow::OnSmooth()
-{
-  ;
-}
-//---------------------------------------------------------------
 
 void CPlotWindow::OnGrid()
 {

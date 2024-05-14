@@ -1,7 +1,7 @@
 /*
 XYPLOT.CPP
 
-  Copyright (c) 1995--2023 Krishna Myneni
+  Copyright (c) 1995--2024 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the
@@ -59,6 +59,7 @@ extern char* color_names[];
 extern "C" char* strupr(char*);
 
 Widget TopLevel;
+XtAppContext xapp;
 
 Widget RadioButtons[16];
 
@@ -122,10 +123,10 @@ CPlotWindow* pMainWnd;
 
 int main(int argc, char* argv[])
 {
-
-    TopLevel = XtInitialize(argv[0],"",NULL,0,&argc,argv);
+    TopLevel = XtVaAppInitialize( &xapp, argv[0], NULL,
+		    0, &argc, argv, NULL, NULL);
     XtRealizeWidget(TopLevel);
-  
+
     pMainWnd = new CPlotWindow(argc, argv);
     OpenForth();       
     InitForthInterface();
@@ -228,8 +229,7 @@ int main(int argc, char* argv[])
 
     // Disable menu functions not yet implemented
     // XtSetSensitive (EditWidgets[ID_EDIT_COPY], False);
-
-    XtMainLoop();
+    XtAppMainLoop(xapp);
 
     return 0;
 }
@@ -706,11 +706,11 @@ void ForthCB (Widget wSrc, void* client_d,
   nPos = XmTextGetLastPosition(w);
   static bool ignore = False;
 
-  if (ignore)
-    {
-      ignore = False;
-      return;
-    }
+//  if (ignore)
+//    {
+//      ignore = False;
+//      return;
+//    }
 
   char* fs = XmTextGetString(w); 
 
@@ -742,33 +742,54 @@ void ForthCB (Widget wSrc, void* client_d,
 	return;
     }
 
-  char out_s[1024];
   long int nLine;
-  stringstream ForthMessages;
-  nError = ExecuteForthExpression (s, (ostringstream*) &ForthMessages, &nLine);
-  ForthMessages.getline(out_s, 1023, 0);
+  stringstream* pForthMessages = new stringstream();
 
-  if (nError)
-  {
-      if (nError & 0x100)
-	  sprintf (s, "Compiler Error %d\n", nError & 0xFF);
-      else
-	  sprintf (s, "VM Error %d\n", nError);
+  nError = ExecuteForthExpression (s, (ostringstream*) pForthMessages,
+             &nLine);
+
+  char out_s[2048], ErrorStr[64], Msg[1024];
+
+  int msgLength = pForthMessages->str().size();
+  int msgDisplayLength;
+
+  if (nError) {
+
+    // if (nError & 0x100)
+    //  sprintf(ErrorStr, "Compiler Error: %d", nError & 0xFF);
+    // else
+      sprintf (ErrorStr, "VM Error: %d", nError);
+
+    msgDisplayLength = min(msgLength, 511);
+    pForthMessages->getline(Msg, msgDisplayLength, 0);
+    Msg[msgDisplayLength] = '\0';
+
+    sprintf (out_s, 
+      "Command: %s\n%s\nMsg Size: %d\nMessage:\n%s", 
+      s, ErrorStr, msgLength, Msg); 
+
+    pMainWnd->MessageBox(out_s);
   }
-  else
-      strcpy (s, " ok\n");
+  else {
+    msgDisplayLength = min(msgLength, 1023);
+    pForthMessages->getline(Msg, msgDisplayLength, 0);
+    Msg[msgDisplayLength] = '\0';
 
-  strcat (out_s, s);
-  nLen = strlen(fs);
+    sprintf (out_s, "%s\n  ok\n", Msg);
+    pMainWnd->WriteConsoleMessage(out_s);
+
+    // nLen = strlen(out_s);
+    ignore = True;
+
+    // XmTextInsert (w, nLen, out_s);
+
+    // nPos = XmTextGetLastPosition (w);
+    // XmTextShowPosition(w, nPos);
+    // XmTextSetInsertionPosition(w, nPos);
+  }
+
   XtFree(fs);
-  ignore = True;
-
-  XmTextInsert (w, nLen, out_s);
-
-  nPos = XmTextGetLastPosition (w);
-  XmTextShowPosition(w, nPos);
-  XmTextSetInsertionPosition(w, nPos);
-
+  delete pForthMessages;
 }
 //---------------------------------------------------------------
 
@@ -1025,7 +1046,7 @@ int ExecuteForthExpression (char* s, ostringstream* pOutput, long int* pLine)
     if (nError) return nError;
 
     if (op.size()) {
-      SetForthInputStream(cin);
+      // SetForthInputStream(cin);
       nError = ForthVM (&op, &sp, &tp);
     }
 
@@ -1035,25 +1056,29 @@ int ExecuteForthExpression (char* s, ostringstream* pOutput, long int* pLine)
 
 void InitForthInterface ()
 {
-    char fs[256];
+    char s[256];
     const void* funcPtr;
     const char* constName;
-    int i, nError;
+    int i, nError, nCount, nDisplay;
     long int lnum;
     size_t nIFCfuncs = sizeof(IfcFuncList) / sizeof(IfcFuncList[0]);
     char out_s[256];
     stringstream ForthMessages;
 
     for (i = 0; i < nIFCfuncs; i++) {
-	funcPtr = IfcFuncList[i].Function;
-	constName = IfcFuncList[i].constantName;
-  	sprintf (fs, "%lu constant %s\n", funcPtr, constName);
-  	nError = ExecuteForthExpression(fs, (ostringstream*) &ForthMessages, &lnum);
-  	if (nError) {
-		ForthMessages.getline(out_s, 255, 0);
-		pMainWnd->MessageBox(out_s);
-		return;
-	}
+      funcPtr = IfcFuncList[i].Function;
+      constName = IfcFuncList[i].constantName;
+      sprintf (s, "%lu constant %s\n", funcPtr, constName);
+      nError = ExecuteForthExpression(s, (ostringstream*) &ForthMessages,
+		    &lnum);
+      if (nError) {
+        nCount = ForthMessages.str().size();
+        nDisplay = min(nCount, 255);
+	ForthMessages.getline(out_s, nDisplay, 0);
+	out_s[nDisplay] = '\0';
+	pMainWnd->MessageBox(out_s);
+	return;
+      }
     }
 
     IfcFuncTemplate MenuList[5] = {
@@ -1065,15 +1090,19 @@ void InitForthInterface ()
     };
 
     for (i = 0; i < 5; i++) {
-	funcPtr = MenuList[i].Function;
-	constName = MenuList[i].constantName;
-  	sprintf (fs, "%lu constant %s\n", funcPtr, constName);
-  	nError = ExecuteForthExpression(fs, (ostringstream*) &ForthMessages, &lnum);
-  	if (nError) {
-		ForthMessages.getline(out_s, 255, 0);
-		pMainWnd->MessageBox(out_s);
-		return;
-	}
+      funcPtr = MenuList[i].Function;
+      constName = MenuList[i].constantName;
+      sprintf (s, "%lu constant %s\n", funcPtr, constName);
+      nError = ExecuteForthExpression(s, (ostringstream*) &ForthMessages,
+                 &lnum);
+      if (nError) {
+        nCount = ForthMessages.str().size();
+	nDisplay = min(nCount, 255);
+	ForthMessages.getline(out_s, nDisplay, 0);
+	out_s[nDisplay] = '\0';
+	pMainWnd->MessageBox(out_s);
+	return;
+      }
     }
 }
 //-----------------------------------------------------------------
@@ -1084,14 +1113,15 @@ int LoadForthFile(char* fname)
     int nError;
     long int lnum;
 
-    strcpy (s, "include ");
-    strcat (s, fname);
-
+    sprintf (s, "include %s\n", fname);
     stringstream ForthMessages;
     nError = ExecuteForthExpression (s, (ostringstream*) &ForthMessages, &lnum);
 
     if (nError) {
-      ForthMessages.getline(out_s, 1023, 0);
+      int nCount = ForthMessages.str().size();
+      int nDisplay = min(nCount, 1023);
+      ForthMessages.getline(out_s, nDisplay, 0);
+      out_s[nDisplay] = '\0';
       pMainWnd->MessageBox (out_s);
     }
 
@@ -1702,29 +1732,23 @@ int make_menu ()
 
 int make_submenu ()
 {
-    // Create a new menu.
+    // Create a new menu, attached to a parent menu
     // Stack: ( menu_id ^menu_name -- submenu_id )
 
     char name[256];
     ++GlobalSp; ++GlobalTp;
-    if (*GlobalTp != OP_ADDR) { pMainWnd->MessageBox("make_submenu: Invalid parameter"); return 0;}
+    if (*GlobalTp != OP_ADDR) { 
+      pMainWnd->MessageBox("make_submenu: Invalid parameter");
+      return 0;
+    }
     unsigned char *cp = *((unsigned char**) GlobalSp);
     int nCount = (int) *cp;
-    ++GlobalSp; ++GlobalTp;
-    Widget menu_id = (Widget) *GlobalSp;
-    // XmString title = XmStringCreateLocalized ((char*)cp+1);
-    Widget PullDown = pMainWnd->AddSubMenu(menu_id, (char*) cp+1);
-    // XmCreatePulldownMenu (menu_id, "  ", NULL, 0);
-    // Widget cascade = XtVaCreateManagedWidget((char*)cp+1, 
-    //						xmCascadeButtonWidgetClass, menu_id, 
-    //						XmNsubMenuId, PullDown,
-    //						XmNlabelString, title,
-    //						XmNmnemonic, 0,
-    //						NULL);
-    // XmStringFree(title);
 
-    *GlobalTp-- = OP_IVAL; *GlobalSp-- = (int) PullDown;
- 
+    ++GlobalSp; ++GlobalTp;
+    Widget parent_id = (Widget) *GlobalSp;
+    Widget submenu_id = pMainWnd->AddSubMenu(parent_id, (char*) cp+1);
+
+    *GlobalTp-- = OP_IVAL; *GlobalSp-- = (int) submenu_id;
     return 0;
 }
 //---------------------------------------------------------------
@@ -1835,6 +1859,7 @@ int message_box ()
 
 int get_input ()
 {
+  // stack: ^prompt -- ^resp flag
   ++GlobalSp; ++GlobalTp;
   if (*GlobalTp == OP_ADDR)
     {
@@ -1844,10 +1869,12 @@ int get_input ()
       int ac = 0;
       XtSetArg(al[ac], XmNselectionLabelString, 
 	       XmStringCreateLtoR(prompt, 
-				  XmSTRING_DEFAULT_CHARSET));  
+	       XmSTRING_DEFAULT_CHARSET));  
       ac++;
       XtSetArg(al[ac], XmNtextString, XmStringCreateLtoR("",
-							 XmSTRING_DEFAULT_CHARSET));
+			XmSTRING_DEFAULT_CHARSET));
+      ac++;
+      XtSetArg(al[ac], XmNdialogStyle, XmDIALOG_FULL_APPLICATION_MODAL);
       ac++;
       XtSetValues(pMainWnd->m_nInputDialog, al, ac);
 
@@ -1856,12 +1883,10 @@ int get_input ()
       XtAddCallback (pMainWnd->m_nInputDialog, XmNcancelCallback,
       	     InputCB, (void*) FALSE);
       XtManageChild (pMainWnd->m_nInputDialog);
-      XtPopup(XtParent(pMainWnd->m_nInputDialog), XtGrabNone);
 
+      // XtPopup(XtParent(pMainWnd->m_nInputDialog), XtGrabNone);
       InputData = FALSE;
-
-      while ((!InputData) || XtPending()) 
-	XtProcessEvent(XtIMAll);
+      while (!InputData) XtAppProcessEvent(xapp, XtIMAll);
     }
   else
     {
@@ -1905,8 +1930,7 @@ int file_open_dialog ()
 
       InputData = FALSE;
 
-      while ((!InputData) || XtPending()) 
-	XtProcessEvent(XtIMAll);
+      while (!InputData) XtAppProcessEvent(xapp, XtIMAll);
     }
   else
     {

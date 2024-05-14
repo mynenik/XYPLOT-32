@@ -144,13 +144,8 @@ Public:
    
 
 \ add arithmetic functions to menu/submenu of Math Menu
-[UNDEFINED] _WIN32_ [IF]
 MN_MATH  c" Arithmetic"  make_submenu  CONSTANT  MN_ARITHMETIC
 MN_ARITHMETIC
-[ELSE]
-MN_MATH
-[THEN]
-
 dup  c" Add" 		c" add_ds reset_window"  add_menu_item
 dup  c" Subtract"	c" sub_ds reset_window"  add_menu_item
 dup  c" Multiply"	c" mul_ds reset_window"  add_menu_item

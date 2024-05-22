@@ -61,6 +61,7 @@ extern void RadioToggledCB (Widget, void*, void*);
 
 extern Widget TopLevel;
 extern volatile int verify_answer;
+extern XtAppContext xapp;
 
 // Global data
 
@@ -1759,7 +1760,7 @@ bool CPlotWindow::SaveFile (char* fname)
 		    XmStringFree(prompt); XmStringFree(no);
 		    XtManageChild(m_nVerifyDialog);
 		    XtPopup (XtParent(m_nVerifyDialog), XtGrabNone);
-		    while (verify_answer == 0) XtProcessEvent (XtIMAll);
+		    while (verify_answer == 0) XtAppProcessEvent (xapp, XtIMAll);
 		    XtPopdown (XtParent(m_nVerifyDialog));
 		    
 		  if (verify_answer == XmCR_HELP)
@@ -1786,7 +1787,7 @@ bool CPlotWindow::SaveFile (char* fname)
 	      XtVaSetValues(m_nVerifyDialog, XmNmessageString, prompt, XmNhelpLabelString, no, NULL);
 	      XtManageChild(m_nVerifyDialog);
 	      XtPopup (XtParent(m_nVerifyDialog), XtGrabNone);
-	      while (verify_answer == 0) XtProcessEvent (XtIMAll);
+	      while (verify_answer == 0) XtAppProcessEvent (xapp, XtIMAll);
 	      XtPopdown (XtParent(m_nVerifyDialog));
 	      
 	      if (verify_answer == XmCR_OK) 

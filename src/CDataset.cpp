@@ -24,8 +24,14 @@ CDataset::CDataset(int nLength, int nPoints, char* name, char* hdr) :
   m_nEquallySpaced = 0;
   m_szHeader = new char [HEADER_LENGTH];
   m_szName = new char [NAME_LENGTH];
-  strcpy (m_szHeader, hdr);
-  strcpy (m_szName, name);
+  if (hdr)
+    strcpy (m_szHeader, hdr);
+  else
+    *m_szHeader = '\0';
+  if (name)
+    strcpy (m_szName, name);
+  else
+    *m_szName = '\0';
 
 }
 //---------------------------------------------------------------

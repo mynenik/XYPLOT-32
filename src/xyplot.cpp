@@ -974,7 +974,8 @@ void LoadInitializationFile ()
     }
 
     if (chdir(path) == 0) {
-      LoadForthFile("xyplot.4th");
+      char ini_file[32];
+      LoadForthFile(strcpy(ini_file, "xyplot.4th"));
     }
 
     chdir(start_dir);
@@ -1671,16 +1672,15 @@ int add_menu_item ()
   //   forth_command is the address of a Forth counted string
 
   char name[256];
-  char* emsg1 = "add_menu_item: Invalid parameter";
+  const char* emsg1 = "add_menu_item: Invalid parameter";
   unsigned char *cp;
   Widget menu, new_item;
 
   ++GlobalSp; ++GlobalTp;
-  if (*GlobalTp != OP_ADDR)
-    {
+  if (*GlobalTp != OP_ADDR) {
       pMainWnd->MessageBox(emsg1);
       return 0;
-    }
+  }
   cp = *((unsigned char**) GlobalSp);
   int nCount = (int) *cp;
 
@@ -1689,11 +1689,10 @@ int add_menu_item ()
   strncpy (fc, (const char*) cp+1, nCount);
   fc[nCount] = '\0';
   ++GlobalSp; ++GlobalTp;
-  if (*GlobalTp != OP_ADDR)
-    {
+  if (*GlobalTp != OP_ADDR) {
       pMainWnd->MessageBox(emsg1);
       return 0;
-    }
+  }
   cp = *((unsigned char**) GlobalSp);
   nCount = (int) *cp;
   strncpy (name, (const char*) cp+1, nCount);
@@ -1702,8 +1701,7 @@ int add_menu_item ()
   menu = (Widget) *GlobalSp;
   
   new_item = pMainWnd->AddMenuItem (menu, name);
-  if (new_item)
-  {
+  if (new_item) {
       ForthMenuCommandList.push_back(fc);
       XtAddCallback (new_item, XmNactivateCallback, ForthCB, fc);
   }
@@ -1861,8 +1859,7 @@ int get_input ()
 {
   // stack: ^prompt -- ^resp flag
   ++GlobalSp; ++GlobalTp;
-  if (*GlobalTp == OP_ADDR)
-    {
+  if (*GlobalTp == OP_ADDR) {
       char* prompt = *((char**) GlobalSp);
       ++prompt;
       Arg al[4];
@@ -1871,7 +1868,7 @@ int get_input ()
 	       XmStringCreateLtoR(prompt, 
 	       XmSTRING_DEFAULT_CHARSET));  
       ac++;
-      XtSetArg(al[ac], XmNtextString, XmStringCreateLtoR("",
+      XtSetArg(al[ac], XmNtextString, XmStringCreateLtoR(NULL,
 			XmSTRING_DEFAULT_CHARSET));
       ac++;
       XtSetArg(al[ac], XmNdialogStyle, XmDIALOG_FULL_APPLICATION_MODAL);
@@ -1887,11 +1884,10 @@ int get_input ()
       // XtPopup(XtParent(pMainWnd->m_nInputDialog), XtGrabNone);
       InputData = FALSE;
       while (!InputData) XtAppProcessEvent(xapp, XtIMAll);
-    }
-  else
-    {
+  }
+  else {
       pMainWnd->MessageBox("Invalid parameter for get_input");
-    }
+  }
 
   return 0;
 }

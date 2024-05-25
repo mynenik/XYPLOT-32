@@ -208,8 +208,9 @@ void CPlotDisplay::DeletePlotsOf (CDataset* d)
 
 void CPlotDisplay::Draw(CDC *pDC)
 {
+  char s[16];
   CPlotView* pView = *m_qiView;
-  pView->m_pGrid->SetColor(pDC->GetColor("black"));  // set color of grid
+  pView->m_pGrid->SetColor(pDC->GetColor(strcpy(s,"black")));  // set color of grid
   pView->m_pGrid->Draw(pDC);
   pView->m_pGrid->Labels(pDC);
 

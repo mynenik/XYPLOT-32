@@ -1,6 +1,6 @@
 // CPlotWindow.cpp
 //
-// Copyright 1996--2023 Krishna Myneni 
+// Copyright 1996--2024 Krishna Myneni 
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
@@ -10,7 +10,7 @@
 #ifdef COPYRIGHT
 const char* copyright=COPYRIGHT;
 #else
-const char* copyright="1999--2023"
+const char* copyright="1999--2024"
 #endif
 
 #ifdef VERSION
@@ -126,49 +126,53 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   Display* disp = XtDisplay(TopLevel);
   m_pFileName = new char[512];
   *m_pFileName = '\0';
+  m_pDb = NULL;
+  m_pDi = NULL;
 
   CxDC* pDc = new CxDC (DEV_X_WINDOW, 800, 640);
 
   // Setup the fonts
 
-  FontEntries[0] = XmFontListEntryLoad (disp, "-*-courier-*-r-*--*-120-*", 
-					XmFONT_IS_FONT, "Courier12pt");
-  FontEntries[1] = XmFontListEntryLoad (disp, "-*-courier-bold-o-*--*-140-*", 
-					XmFONT_IS_FONT, "CourierBold14pt");
-  FontEntries[2] = XmFontListEntryLoad (disp, "-*-helvetica-*-r-*--*-120-*",
-					XmFONT_IS_FONT, "Helvetica12pt");
-  FontEntries[3] = XmFontListEntryLoad (disp, "-*-helvetica-*-r-*--*-140-*",
-					XmFONT_IS_FONT, "Helvetica14pt");
+  char s1[128], s2[128];  // generic strings for copying string constants 
+  FontEntries[0] = XmFontListEntryLoad (disp,
+		 strcpy(s1, "-*-courier-*-r-*--*-120-*"), 
+		 XmFONT_IS_FONT, 
+		 strcpy(s2, "Courier12pt"));
+  FontEntries[1] = XmFontListEntryLoad (disp,
+		 strcpy(s1, "-*-courier-bold-o-*--*-140-*"), 
+		 XmFONT_IS_FONT, 
+		 strcpy(s2, "CourierBold14pt"));
+  FontEntries[2] = XmFontListEntryLoad (disp, 
+		  strcpy(s1, "-*-helvetica-*-r-*--*-120-*"),
+		  XmFONT_IS_FONT,
+		  strcpy(s2, "Helvetica12pt"));
+  FontEntries[3] = XmFontListEntryLoad (disp, 
+		  strcpy(s1, "-*-helvetica-*-r-*--*-140-*"),
+		  XmFONT_IS_FONT, 
+		  strcpy(s2, "Helvetica14pt"));
   FontList = XmFontListAppendEntry (NULL, FontEntries[0]);
   for (ac = 1; ac < 4; ac++)
     FontList = XmFontListAppendEntry (FontList, FontEntries[ac]);
 
   for (ac = 0; ac < 4; ac++) XmFontListEntryFree (&FontEntries[ac]);
 
-  // Create a form widget
-  
-  ac = 0;
-  m_nForm = XtCreateManagedWidget("form", xmFormWidgetClass,
-    TopLevel, al, ac);
-  ac = 0;
-  XtSetArg (al[ac], XmNheight, 640);
-  ++ac;
-  XtSetArg (al[ac], XmNwidth, 800);
-  ++ac;
-  XtSetValues (TopLevel, al, ac);
+  XtVaSetValues( TopLevel,
+  	XmNheight, 640,
+	XmNwidth, 800,
+	NULL);
 
-  m_pDb = NULL;
-  m_pDi = NULL;
+  // Create a form widget
+
+  m_nForm = XtVaCreateManagedWidget( "form", 
+	xmFormWidgetClass, TopLevel, NULL );
 
   // Create a menu bar and attach it to the form.
-  ac = 0;
-  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_FORM); 
-  ac++;
-  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); 
-  ac++;
-  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM); 
-  ac++;
-  m_nMenuBar = XmCreateMenuBar(m_nForm, (char*) "Menu Bar", al, ac);
+  m_nMenuBar = XmCreateMenuBar(m_nForm, strcpy(s1,"Menu Bar"), NULL, 0);
+  XtVaSetValues( m_nMenuBar,
+	XmNtopAttachment, XmATTACH_FORM,
+	XmNrightAttachment, XmATTACH_FORM,
+	XmNleftAttachment, XmATTACH_FORM,
+	NULL);
   XtManageChild(m_nMenuBar);
 
   // Create the Forth shell dialog
@@ -182,80 +186,63 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);
   ac++;
-  XtSetArg(al[ac], XmNheight, 100);
-  ac++;
 
-  m_nForthShell = XmCreateScrolledText(m_nForm, (char*) "Forth Shell",
+  m_nForthShell = XmCreateScrolledText(m_nForm, strcpy(s1,"Forth Shell"),
     al, ac);
-  XtVaSetValues(m_nForthShell, XtVaTypedArg, XmNbackground, XmRString, 
-  		"White", 6, NULL);
+  XtVaSetValues( m_nForthShell,
+	XmNheight, 100,
+	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
+       	NULL);
   XtManageChild(m_nForthShell);
 
   // Create the status message label widget and attach it below the
   //   drawing area (plot window)
+  XmString str1;
+  str1 = XmStringCreate(strcpy(s1, " "), XmSTRING_DEFAULT_CHARSET);
 
-  ac = 0;
-  XtSetArg(al[ac], XmNlabelString,
-    XmStringCreate((char*) " ", XmSTRING_DEFAULT_CHARSET));
-  ac++;
-  XtSetArg(al[ac], XmNalignment, XmALIGNMENT_BEGINNING);
-  ac++;
-  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM);
-  ac++;
-  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);
-  ac++;
-  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);
-  ac++;
-  XtSetArg(al[ac], XmNbottomWidget, XtParent(m_nForthShell));
-  ac++;
-
-  m_nStatusBar = XtCreateManagedWidget("status_bar",
-    xmLabelWidgetClass, m_nForm, al, ac);
+  m_nStatusBar = XtVaCreateManagedWidget("status_bar",
+    xmLabelWidgetClass, m_nForm,
+    XmNlabelString, str1,
+    XmNalignment, XmALIGNMENT_BEGINNING,
+    XmNleftAttachment, XmATTACH_FORM,
+    XmNrightAttachment, XmATTACH_FORM,
+    XmNbottomAttachment, XmATTACH_WIDGET,
+    XmNbottomWidget, XtParent(m_nForthShell),
+    NULL);
+  
+  XmStringFree(str1);
 
   // Create coordinates label widget and attach it to the right of the
   //  status bar
+  str1 = XmStringCreate(strcpy(s1, " "),XmSTRING_DEFAULT_CHARSET); 
 
-  ac = 0;
-  XtSetArg(al[ac], XmNlabelString,
- 	   	 XmStringCreate((char*) " ",XmSTRING_DEFAULT_CHARSET)); 
-  ac++;
-  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);
-  ac++;
-  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);
-  ac++;
-  XtSetArg(al[ac], XmNbottomWidget, XtParent(m_nForthShell));
-  ac++;
+  m_nCoordinates = XtVaCreateManagedWidget("coordinates",
+    xmLabelWidgetClass, m_nForm,
+    XmNlabelString, str1,
+    XmNrightAttachment, XmATTACH_FORM,
+    XmNbottomAttachment, XmATTACH_WIDGET,
+    XmNbottomWidget, XtParent(m_nForthShell),
+    NULL);
 
-  m_nCoordinates = XtCreateManagedWidget("coordinates",
-    xmLabelWidgetClass, m_nForm, al, ac);
+  XmStringFree(str1);
 
   // Create the drawing area and attach it below the menu bar
   // and above the status bar
 
-  ac = 0;
-  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET); 
-  ac++;
-  XtSetArg(al[ac], XmNtopWidget, m_nMenuBar); 
-  ac++;
-  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);
-  ac++;
-  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM);
-  ac++;
-  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);
-  ac++;
-  XtSetArg(al[ac], XmNbottomWidget, m_nStatusBar);
-  ac++;
-  XtSetArg(al[ac], XmNheight, 400);
-  ac++;
-  XtSetArg(al[ac], XmNwidth, 800);
-  ac++;
-
-  m_nPlotWindow = XtCreateManagedWidget ("Plot Window",
-     xmDrawingAreaWidgetClass, m_nForm, al, ac);
+  m_nPlotWindow = XtVaCreateManagedWidget( "Plot Window",
+	xmDrawingAreaWidgetClass, m_nForm,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, m_nMenuBar,
+	XmNrightAttachment, XmATTACH_FORM,
+	XmNleftAttachment, XmATTACH_FORM,
+	XmNbottomAttachment, XmATTACH_WIDGET,
+	XmNbottomWidget, m_nStatusBar,
+	XmNheight, 400,
+	XmNwidth, 800,
+	NULL);
 
   pDc->OpenDisplay(XtDisplay(m_nPlotWindow), XtWindow(m_nPlotWindow));
   m_pDc = pDc;
-
 
   // Make the menus
 
@@ -267,106 +254,157 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
       MathWidgets[j] = 0;
       HelpWidgets[j] = 0;
     }
-  m_nFileMenu = MakeMenu (m_nMenuBar, (char*) "File", (char**) FileOptions, FileWidgets, 6);
-  m_nEditMenu = MakeMenu (m_nMenuBar, (char*) "Edit", (char**) EditOptions, EditWidgets, 3);
-  m_nPlotMenu = MakeMenu (m_nMenuBar, (char*) "Plot", (char**) PlotOptions, PlotWidgets, 7);
-  m_nMathMenu = MakeMenu (m_nMenuBar, (char*) "Math", (char**) MathOptions, MathWidgets, 1);
-  m_nHelpMenu = MakeMenu (m_nMenuBar, (char*) "Help", (char**) HelpOptions, HelpWidgets, 1);
+
+  m_nFileMenu = MakeMenu (m_nMenuBar, strcpy(s1, "File"),
+		 (char**) FileOptions, FileWidgets, 6);
+
+  m_nEditMenu = MakeMenu (m_nMenuBar, strcpy(s1, "Edit"), 
+		 (char**) EditOptions, EditWidgets, 3);
+
+  m_nPlotMenu = MakeMenu (m_nMenuBar, strcpy(s1, "Plot"),
+		 (char**) PlotOptions, PlotWidgets, 7);
+
+  m_nMathMenu = MakeMenu (m_nMenuBar, strcpy(s1, "Math"),
+		 (char**) MathOptions, MathWidgets, 1);
+
+  m_nHelpMenu = MakeMenu (m_nMenuBar, strcpy(s1, "Help"),
+		 (char**) HelpOptions, HelpWidgets, 1);
 
   // Make the submenus
 
-  //  m_nViewMenu = MakeMenu (PlotWidgets[ID_VIEW], "View", ViewOptions,
+  //  m_nViewMenu = MakeMenu (PlotWidgets[ID_VIEW], 
+  //   strcpy(s1, "View"), ViewOptions,
   //   ViewWidgets, 5); 
 
   // Create the file open dialog
 
   Widget temp;
-  ac = 0;
+
   m_nFileOpenDialog = XmCreateFileSelectionDialog(TopLevel,
-     (char*) "Open File", al, ac);
+     strcpy(s1, "Open File"), NULL, 0);
+
   temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_FILTER_TEXT);
-  XtVaSetValues(temp, XtVaTypedArg, XmNbackground, XmRString, 
-  		"White", 6, NULL);
+
+  XtVaSetValues( temp,
+	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
+       	NULL);
+
   temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_TEXT);
-  XtVaSetValues(temp, XtVaTypedArg, XmNbackground, XmRString, 
-  		"White", 6, NULL);
+
+  XtVaSetValues( temp,
+	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
+	NULL);
+
   XtUnmanageChild(XmSelectionBoxGetChild(m_nFileOpenDialog,
     XmDIALOG_HELP_BUTTON));
 
   // Create the file save dialog
 
-  ac = 0;
   m_nFileSaveDialog = XmCreateFileSelectionDialog(TopLevel,
-     (char*) "Save File", al, ac);
+     strcpy(s1, "Save File"), NULL, 0);
+
   temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_FILTER_TEXT);
-  XtVaSetValues(temp, XtVaTypedArg, XmNbackground, XmRString, 
-  		"White", 6, NULL);
+
+  XtVaSetValues( temp,
+	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
+       	NULL);
+
   temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_TEXT);
-  XtVaSetValues(temp, XtVaTypedArg, XmNbackground, XmRString, 
-  		"White", 6, NULL);
+  XtVaSetValues( temp,
+	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
+       	NULL);
     
   XtUnmanageChild(XmSelectionBoxGetChild(m_nFileSaveDialog,
     XmDIALOG_HELP_BUTTON));
 
   // Create a dual purpose About/Message box
 
-  m_nAboutBox = XmCreateInformationDialog(TopLevel, (char*) "About XYPLOT",
-    NULL, 0);
+  m_nAboutBox = XmCreateInformationDialog(TopLevel, 
+	strcpy(s1, "About XYPLOT"), NULL, 0);
+
   // XtVaSetValues(m_nAboutBox, XtVaTypedArg, XmNbackground, XmRString, 
-  //		"LightGrey", 10, NULL);
+  //	strcpy(s1, "LightGrey"), 10, NULL);
+
   temp = XmMessageBoxGetChild (m_nAboutBox, XmDIALOG_CANCEL_BUTTON);
   XtUnmanageChild(temp);
+
   temp = XmMessageBoxGetChild (m_nAboutBox, XmDIALOG_HELP_BUTTON);
   XtUnmanageChild(temp);
 
   // Create a general purpose radio box
 
-  m_nRadioBox = XmVaCreateSimpleRadioBox (TopLevel, "radio_box", 0,
-		RadioToggledCB, XmVaRADIOBUTTON,
-		XmStringCreateLocalized("one"),
-		NULL, NULL, NULL, NULL);
+  m_nRadioBox = XmVaCreateSimpleRadioBox (TopLevel, 
+	strcpy(s1, "radio_box"), 0,
+	RadioToggledCB, XmVaRADIOBUTTON,
+	XmStringCreateLocalized(strcpy(s2,"one")),
+	NULL, NULL, NULL, NULL);
+
   // XtManageChild(m_nRadioBox);
 
   // Create the input dialog
 
   ac = 0;
-  XtSetArg(al[ac], XmNselectionLabelString, XmStringCreateLtoR
-		("Enter input", "Courier12pt"));  
+  XtSetArg(al[ac], XmNselectionLabelString, 
+	XmStringCreateLtoR(strcpy(s1, "Enter input"),
+          strcpy(s2, "Courier12pt")));  
   ac++;
   XtSetArg (al[ac], XmNfontList, FontList);
   ac++;
-  m_nInputDialog = XmCreatePromptDialog(TopLevel, "Input Dialog", al, ac);
+
+  m_nInputDialog = XmCreatePromptDialog(TopLevel, 
+	strcpy(s1, "Input Dialog"), al, ac);
+
   temp = XmSelectionBoxGetChild(m_nInputDialog, XmDIALOG_TEXT);
-  XtVaSetValues(temp, XtVaTypedArg, XmNbackground, XmRString, 
-  		"White", 6, NULL);
-  XtVaSetValues(m_nInputDialog, XmNinitialFocus, temp, NULL);
+
+  XtVaSetValues( temp, 
+	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
+       	NULL);
+
+  XtVaSetValues( m_nInputDialog,
+	XmNinitialFocus, temp,
+	NULL);
+
   XtUnmanageChild(XmSelectionBoxGetChild(m_nInputDialog, 
     XmDIALOG_HELP_BUTTON));
 
+
   // Create the header view/edit dialog
-  m_nHeaderDialog = XmCreateFormDialog(TopLevel, "Dataset Header", al, ac);
-  Widget label1 = XtVaCreateManagedWidget ("Dataset Name:", xmLabelWidgetClass, 
-		  m_nHeaderDialog,
-		  XmNtopAttachment, XmATTACH_FORM,
-		  NULL);
+
+  m_nHeaderDialog = XmCreateFormDialog(TopLevel, 
+	strcpy(s1,"Dataset Header"), NULL, 0);
+
+  Widget label1 = XtVaCreateManagedWidget(
+	"Dataset Name:", 
+	xmLabelWidgetClass, m_nHeaderDialog,
+	XmNtopAttachment, XmATTACH_FORM,
+	XmNleftAttachment, XmATTACH_FORM,
+	NULL);
+
   XtManageChild(label1);
-  m_nDatasetName = XmCreateTextField(m_nHeaderDialog, "text", NULL, 0);
-  XtVaSetValues (m_nDatasetName, XmNeditable, True, 
-		 XmNmaxLength, 256, 
-		 XmNvalue, "",
-		 XmNtopAttachment, XmATTACH_WIDGET,
-		 XmNleftAttachment, XmATTACH_FORM,
-		 XmNtopWidget, label1,
-		 XmNwidth, 400,
-		 XmNfontList, FontList,
-		 NULL );
+
+  m_nDatasetName = XmCreateTextField(m_nHeaderDialog, 
+	strcpy(s1, "text"), NULL, 0);
+
+  XtVaSetValues (m_nDatasetName, 
+	XmNeditable, True, 
+	XmNmaxLength, 256, 
+	XmNvalue, "",
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, label1,
+	XmNleftAttachment, XmATTACH_FORM,
+	XmNwidth, 400,
+	XmNfontList, FontList,
+	NULL );
   XtManageChild(m_nDatasetName);
-  Widget label2 = XtVaCreateManagedWidget ("Dataset Header:", xmLabelWidgetClass,
-		  m_nHeaderDialog,
-		  XmNtopAttachment, XmATTACH_WIDGET,
-		  XmNtopWidget, m_nDatasetName,
-		  NULL );
+
+  Widget label2 = XtVaCreateManagedWidget(
+	"Dataset Header:", 
+	xmLabelWidgetClass, m_nHeaderDialog,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, m_nDatasetName,
+	NULL );
   XtManageChild(label2);
+
   ac = 0;
   XtSetArg(al[ac], XmNeditMode, XmMULTI_LINE_EDIT); 
   ac++;
@@ -384,93 +422,109 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   ac++;
   XtSetArg(al[ac], XmNfontList, FontList);
   ac++;
-  m_nHeaderText = XmCreateScrolledText(m_nHeaderDialog, "header_text",
-    al, ac);
+
+  m_nHeaderText = XmCreateScrolledText(m_nHeaderDialog,
+    strcpy(s1, "header_text"), al, ac);
+
+//  XtVaSetValues( m_nHeaderText,
+//	XmNeditMode, XmMULTI_LINE_EDIT,
+//	XmNtopAttachment, XmATTACH_WIDGET,
+//	XmNtopWidget, label2,
+//	XmNleftAttachment, XmATTACH_FORM,
+//	XmNrightAttachment, XmATTACH_FORM,
+//	XmNheight, 200,
+//	XmNwidth, 400,
+//	XmNfontList, FontList,
+//	NULL);
+
   XtManageChild(m_nHeaderText);
 
+  m_nHeaderMessage = XmCreateMessageBox (m_nHeaderDialog, 
+    strcpy(s1, "header_message"), NULL, 0);
 
-  ac = 0;
-  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET); 
-  ac++;
-  XtSetArg(al[ac], XmNtopWidget, m_nHeaderText);
-  ac++;
-  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM);
-  ac++;
-  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);
-  ac++;
-  m_nHeaderMessage = XmCreateMessageBox (m_nHeaderDialog, "header_message",
-    al, ac);
+  XtVaSetValues( m_nHeaderMessage,
+	XmNtopAttachment, XmATTACH_WIDGET,
+	XmNtopWidget, m_nHeaderText,
+	XmNleftAttachment, XmATTACH_FORM,
+	XmNrightAttachment, XmATTACH_FORM,
+	NULL);
+     
   XtUnmanageChild(XmMessageBoxGetChild(m_nHeaderMessage, 
     XmDIALOG_HELP_BUTTON));
+
   XtManageChild(m_nHeaderMessage);
 
 
   // Create the Pick dialog
-  ac = 0;
-  m_nPickDialog = XmCreateSelectionDialog (TopLevel, "Pick Dataset",
-    al, ac);
+
+  m_nPickDialog = XmCreateSelectionDialog(TopLevel, 
+    strcpy(s1, "Pick Dataset"), NULL, 0);
   temp = XmSelectionBoxGetChild(m_nPickDialog, XmDIALOG_TEXT);
-  XtVaSetValues(temp, XtVaTypedArg, XmNbackground, XmRString, 
-  		"White", 6, NULL);
+  XtVaSetValues( temp, 
+	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
+       	NULL);
   XtUnmanageChild(XmSelectionBoxGetChild(m_nPickDialog, 
     XmDIALOG_HELP_BUTTON));
 
   // Create the Symbol dialog
-  ac = 0;
-  m_nSymbolDialog = XmCreateSelectionDialog (TopLevel, "Symbols",
-    al, ac);
+
+  m_nSymbolDialog = XmCreateSelectionDialog (TopLevel, 
+    strcpy(s1, "Symbols"), NULL, 0);
   temp = XmSelectionBoxGetChild(m_nSymbolDialog, XmDIALOG_TEXT);
-  XtVaSetValues(temp, XtVaTypedArg, XmNbackground, XmRString, 
-  		"White", 6, NULL);
+  XtVaSetValues( temp, 
+	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
+       	NULL);
   XtUnmanageChild(XmSelectionBoxGetChild(m_nSymbolDialog, 
     XmDIALOG_HELP_BUTTON));
   XtUnmanageChild(XmSelectionBoxGetChild(m_nSymbolDialog,
     XmDIALOG_OK_BUTTON));
   temp = XmSelectionBoxGetChild(m_nSymbolDialog, XmDIALOG_LIST);
-  for (int i = 0; i < 7; i++)
-    {
+  for (int i = 0; i < 7; i++) {
       XmListAddItem(temp, XmStringCreate((char*) SymbolNames[i], 
 	    XmSTRING_DEFAULT_CHARSET), 0);      
-    }
+  }
 
   // Create the Color dialog
 
-  ac = 0;
-  m_nColorDialog = XmCreateSelectionDialog (TopLevel, "Colors",
-    al, ac);
+  m_nColorDialog = XmCreateSelectionDialog (TopLevel, 
+    strcpy(s1, "Colors"), NULL, 0);
   temp = XmSelectionBoxGetChild(m_nColorDialog, XmDIALOG_TEXT);
-  XtVaSetValues(temp, XtVaTypedArg, XmNbackground, XmRString, 
-  		"White", 6, NULL);
+  XtVaSetValues(temp, 
+    XtVaTypedArg, XmNbackground, XmRString, "White", 6,
+    NULL);
   XtUnmanageChild(XmSelectionBoxGetChild(m_nColorDialog, 
     XmDIALOG_HELP_BUTTON));
   XtUnmanageChild(XmSelectionBoxGetChild(m_nColorDialog,
     XmDIALOG_OK_BUTTON));
   temp = XmSelectionBoxGetChild(m_nColorDialog, XmDIALOG_LIST);
-  for (int i = 0; i < MAX_COLORS; i++)
-    {
+  for (int i = 0; i < MAX_COLORS; i++) {
       XmListAddItem(temp, XmStringCreate((char*) color_names[i], 
 	    XmSTRING_DEFAULT_CHARSET), 0);      
-    }
+  }
 
   // Create the Save Options dialog
  
-  ac = 0;
-  m_nSaveOptionsDialog = XmCreateFormDialog(TopLevel, "Save Options", al, ac); 
+  m_nSaveOptionsDialog = XmCreateFormDialog(TopLevel, 
+    strcpy(s1, "Save Options"), NULL, 0); 
   Widget rowcol, btn;
-  rowcol = XtVaCreateManagedWidget ("rowcolumn", xmRowColumnWidgetClass, m_nSaveOptionsDialog, NULL);
+  rowcol = XtVaCreateManagedWidget("rowcolumn",
+	 xmRowColumnWidgetClass, m_nSaveOptionsDialog, NULL);
 
   XmString one, two, three;
-  XtVaCreateManagedWidget("Header Style", xmLabelWidgetClass, rowcol, NULL); 
-  one = XmStringCreateLocalized("none");
-  two = XmStringCreateLocalized("xyplot");
-  three = XmStringCreateLocalized("line prefix");
-  m_nSaveHeader = XmVaCreateSimpleRadioBox (rowcol, "Header Style", 
-					 0,
-					 SaveOptionsCB,
-					 XmVaRADIOBUTTON, one, NULL, NULL, NULL,
-					 XmVaRADIOBUTTON, two, NULL, NULL, NULL,
-					 XmVaRADIOBUTTON, three, NULL, NULL, NULL,
-					 NULL);
+  XtVaCreateManagedWidget("Header Style", 
+	xmLabelWidgetClass, rowcol,
+	NULL); 
+  one = XmStringCreateLocalized(strcpy(s1,"none"));
+  two = XmStringCreateLocalized(strcpy(s1,"xyplot"));
+  three = XmStringCreateLocalized(strcpy(s1,"line prefix"));
+  m_nSaveHeader = XmVaCreateSimpleRadioBox( rowcol, 
+	strcpy(s1, "Header Style"), 
+	0,
+	SaveOptionsCB,
+	XmVaRADIOBUTTON, one, NULL, NULL, NULL,
+	XmVaRADIOBUTTON, two, NULL, NULL, NULL,
+	XmVaRADIOBUTTON, three, NULL, NULL, NULL,
+	NULL);
  
   XmStringFree(one);
   XmStringFree(two);
@@ -478,60 +532,70 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   XtVaCreateManagedWidget ("Prefix", xmLabelWidgetClass, rowcol, NULL);
 
-  m_nSavePrefix = XmCreateTextField(rowcol, "text", NULL, 0);
+  m_nSavePrefix = XmCreateTextField(rowcol, strcpy(s1,"text"), NULL, 0);
   XtVaSetValues(m_nSavePrefix, XmNeditable, False, NULL);
 
   XtVaCreateManagedWidget ("sep", xmSeparatorGadgetClass, rowcol, NULL);
 
   XtVaCreateManagedWidget ("Number Format", xmLabelWidgetClass, rowcol, NULL);
-  one = XmStringCreateLocalized("exponential");
-  two = XmStringCreateLocalized("floating point");
-  three = XmStringCreateLocalized("integer");
-  m_nSaveNumberFormat = XmVaCreateSimpleRadioBox (rowcol, "Number Format",
-						  0,
-						  SaveOptionsCB,
-						  XmVaRADIOBUTTON, one, NULL, NULL, NULL,
-						  XmVaRADIOBUTTON, two, NULL, NULL, NULL,
-						  XmVaRADIOBUTTON, three, NULL, NULL, NULL,
-						  NULL);
+  one = XmStringCreateLocalized(strcpy(s1,"exponential"));
+  two = XmStringCreateLocalized(strcpy(s1, "floating point"));
+  three = XmStringCreateLocalized(strcpy(s1, "integer"));
+  m_nSaveNumberFormat = XmVaCreateSimpleRadioBox (rowcol, 
+	strcpy(s1, "Number Format"),
+	0,
+	SaveOptionsCB,
+	XmVaRADIOBUTTON, one, NULL, NULL, NULL,
+	XmVaRADIOBUTTON, two, NULL, NULL, NULL,
+	XmVaRADIOBUTTON, three, NULL, NULL, NULL,
+	NULL);
   XmStringFree(one);
   XmStringFree(two);
   XmStringFree(three);
 
   XtVaCreateManagedWidget ("sep", xmSeparatorGadgetClass, rowcol, NULL);
-
   XtVaCreateManagedWidget ("Column Delimiter", xmLabelWidgetClass, rowcol, NULL);
-  one = XmStringCreateLocalized("space");
-  two = XmStringCreateLocalized("tab");
-  three = XmStringCreateLocalized("comma");
-  m_nSaveColumnDelimiter = XmVaCreateSimpleRadioBox (rowcol, "Column Delimiter",
-						  0,
-						  SaveOptionsCB,
-						  XmVaRADIOBUTTON, one, NULL, NULL, NULL,
-						  XmVaRADIOBUTTON, two, NULL, NULL, NULL,
-						  XmVaRADIOBUTTON, three, NULL, NULL, NULL,
-						  NULL);
+  one = XmStringCreateLocalized(strcpy(s1,"space"));
+  two = XmStringCreateLocalized(strcpy(s1,"tab"));
+  three = XmStringCreateLocalized(strcpy(s1,"comma"));
+  m_nSaveColumnDelimiter = XmVaCreateSimpleRadioBox( rowcol, 
+	strcpy(s1, "Column Delimiter"),
+	0,
+	SaveOptionsCB,
+	XmVaRADIOBUTTON, one, NULL, NULL, NULL,
+	XmVaRADIOBUTTON, two, NULL, NULL, NULL,
+	XmVaRADIOBUTTON, three, NULL, NULL, NULL,
+	NULL);
 
   XtVaCreateManagedWidget ("sep", xmSeparatorGadgetClass, rowcol, NULL);
 
   XtVaCreateManagedWidget ("End of Line", xmLabelWidgetClass, rowcol, NULL);
-  one = XmStringCreateLocalized("Unix");
-  two = XmStringCreateLocalized("DOS");
-  m_nSaveEndOfLine = XmVaCreateSimpleRadioBox (rowcol, "EOL",
-						  0,
-						  SaveOptionsCB,
-						  XmVaRADIOBUTTON, one, NULL, NULL, NULL,
-						  XmVaRADIOBUTTON, two, NULL, NULL, NULL,
-						  NULL);
+  one = XmStringCreateLocalized(strcpy(s1, "Unix"));
+  two = XmStringCreateLocalized(strcpy(s1, "DOS"));
+  m_nSaveEndOfLine = XmVaCreateSimpleRadioBox (rowcol, 
+	strcpy(s1,"EOL"),
+	0,
+	SaveOptionsCB,
+	XmVaRADIOBUTTON, one, NULL, NULL, NULL,
+	XmVaRADIOBUTTON, two, NULL, NULL, NULL,
+	NULL);
 
   XtVaCreateManagedWidget ("sep", xmSeparatorGadgetClass, rowcol, NULL);
 
-  one = XmStringCreateLocalized("Cancel");
-  btn = XtVaCreateManagedWidget("button", xmPushButtonWidgetClass, rowcol, XmNlabelString, one, NULL);
-  XtAddCallback (btn, XmNactivateCallback, SaveOptionsCB, (void*) PL_SAVE_OPTIONS_CANCEL);
-  two = XmStringCreateLocalized("Done");
-  btn = XtVaCreateManagedWidget("button", xmPushButtonWidgetClass, rowcol, XmNlabelString, two, NULL);
-  XtAddCallback (btn, XmNactivateCallback, SaveOptionsCB, (void*) PL_SAVE_OPTIONS_DONE);
+  one = XmStringCreateLocalized(strcpy(s1, "Cancel"));
+  btn = XtVaCreateManagedWidget("button", 
+	xmPushButtonWidgetClass, rowcol,
+	XmNlabelString, one,
+	NULL);
+  XtAddCallback (btn, XmNactivateCallback, SaveOptionsCB, 
+		  (void*) PL_SAVE_OPTIONS_CANCEL);
+  two = XmStringCreateLocalized(strcpy(s1,"Done"));
+  btn = XtVaCreateManagedWidget("button", 
+	xmPushButtonWidgetClass, rowcol,
+	XmNlabelString, two,
+	NULL);
+  XtAddCallback (btn, XmNactivateCallback, SaveOptionsCB, 
+		  (void*) PL_SAVE_OPTIONS_DONE);
 
   XmStringFree(one);
   XmStringFree(two);
@@ -545,35 +609,78 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   // Create the Grid dialog
  
-  m_nGridDialog = XmCreateFormDialog(TopLevel, "Grid Options", NULL, 0);
-  rowcol = XtVaCreateManagedWidget ("rowcolumn", xmRowColumnWidgetClass, m_nGridDialog,
-		 XmNnumColumns, 2,
-		 NULL);
-  m_nGridXaxis = XmCreateToggleButton(rowcol, "X Axis", NULL, 0);
-  XtVaSetValues (m_nGridXaxis, XmNset, True, NULL);
-  m_nGridYaxis = XmCreateToggleButton(rowcol, "Y Axis", NULL, 0);
-  XtVaSetValues (m_nGridYaxis, XmNset, True, NULL);
-  m_nGridYlines = XmCreateToggleButton(rowcol, "Hor grid lines", NULL, 0);
-  XtVaSetValues (m_nGridYlines, XmNset, True, NULL);
-  m_nGridXlines = XmCreateToggleButton(rowcol, "Ver grid lines", NULL, 0);
-  XtVaSetValues (m_nGridXlines, XmNset, True, NULL);
-  XtVaCreateManagedWidget ("# X Tics:", xmLabelWidgetClass, rowcol, NULL);
-  m_nGridXtics = XmCreateTextField(rowcol, "text1", NULL, 0);
-  XtVaSetValues (m_nGridXtics, XmNeditable, True, 
-		  XmNmaxLength, 4, 
-		  XmNvalue, "10",
-		  XmNwidth, 100, 
-		  NULL );
-  XtVaCreateManagedWidget ("# Y Tics:", xmLabelWidgetClass, rowcol, NULL);
-  m_nGridYtics = XmCreateTextField(rowcol, "text2", NULL, 0);
-  XtVaSetValues (m_nGridYtics, XmNeditable, True, 
-		  XmNmaxLength, 4, 
-		  XmNvalue, "10", 
-		  XmNwidth, 100,
-		  NULL );
-  one = XmStringCreateLocalized("Set Tics");
-  btn = XtVaCreateManagedWidget("button", xmPushButtonWidgetClass, rowcol, XmNlabelString, one, NULL);
-  XtAddCallback (btn, XmNactivateCallback, PlotMenuCB, (void*) PL_SET_GRID_TICS);
+  m_nGridDialog = XmCreateFormDialog(TopLevel, 
+	strcpy(s1, "Grid Options"), NULL, 0);
+
+  rowcol = XtVaCreateManagedWidget ("rowcolumn", 
+	xmRowColumnWidgetClass, m_nGridDialog,
+	XmNnumColumns, 2,
+	NULL);
+
+  m_nGridXaxis = XmCreateToggleButton(rowcol, 
+	strcpy(s1, "X Axis"), NULL, 0);
+
+  XtVaSetValues (m_nGridXaxis, 
+	XmNset, True,
+	NULL);
+
+  m_nGridYaxis = XmCreateToggleButton(rowcol, 
+	strcpy(s1, "Y Axis"), NULL, 0);
+
+  XtVaSetValues (m_nGridYaxis, 
+	XmNset, True, 
+	NULL);
+
+  m_nGridYlines = XmCreateToggleButton(rowcol, 
+	strcpy(s1, "Hor grid lines"), NULL, 0);
+
+  XtVaSetValues (m_nGridYlines, 
+	XmNset, True,
+	NULL);
+
+  m_nGridXlines = XmCreateToggleButton(rowcol, 
+	strcpy(s1, "Ver grid lines"), NULL, 0);
+
+  XtVaSetValues (m_nGridXlines, 
+	XmNset, True, 
+	NULL);
+
+  XtVaCreateManagedWidget ("# X Tics:", 
+	xmLabelWidgetClass, rowcol, 
+	NULL);
+
+  m_nGridXtics = XmCreateTextField(rowcol, 
+	strcpy(s1, "text1"), NULL, 0);
+
+  XtVaSetValues( m_nGridXtics, 
+	XmNeditable, True, 
+	XmNmaxLength, 4, 
+	XmNvalue, "10",
+	XmNwidth, 100, 
+	NULL );
+
+  XtVaCreateManagedWidget ("# Y Tics:", 
+	xmLabelWidgetClass, rowcol,
+	NULL);
+
+  m_nGridYtics = XmCreateTextField(rowcol, 
+	strcpy(s1, "text2"), NULL, 0);
+
+  XtVaSetValues( m_nGridYtics, 
+	XmNeditable, True, 
+	XmNmaxLength, 4, 
+	XmNvalue, "10", 
+	XmNwidth, 100,
+	NULL );
+
+  one = XmStringCreateLocalized(strcpy(s1, "Set Tics"));
+
+  btn = XtVaCreateManagedWidget("button", 
+	xmPushButtonWidgetClass, rowcol, 
+	XmNlabelString, one,
+	NULL);
+  
+  XtAddCallback(btn, XmNactivateCallback, PlotMenuCB, (void*) PL_SET_GRID_TICS);
   XmStringFree(one);
 
   XtManageChild(m_nGridXlines);
@@ -584,15 +691,19 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   XtManageChild(m_nGridYtics);
 
   // Create the Verify dialog
-  m_nVerifyDialog = XmCreateQuestionDialog (TopLevel, "Verify", NULL, 0);
-  XtVaSetValues (m_nVerifyDialog, XmNdialogStyle, XmDIALOG_FULL_APPLICATION_MODAL, NULL);
+  m_nVerifyDialog = XmCreateQuestionDialog(TopLevel, 
+	strcpy(s1, "Verify"), NULL, 0);
+
+  XtVaSetValues( m_nVerifyDialog, 
+	XmNdialogStyle, XmDIALOG_FULL_APPLICATION_MODAL, 
+	NULL);
 
   // Setup the plot colors
 
-//  m_pDc->SetColors((char**) color_names, MAX_COLORS);
   m_pDc->SetColors(colors_rgb_table, color_names, MAX_COLORS);
-  SetBackgroundColor("DarkGrey");
-  SetForegroundColor("black");
+  SetBackgroundColor(strcpy(s1,"DarkGrey"));
+  SetForegroundColor(strcpy(s1,"black"));
+
   OnFileNew();
 }
 //---------------------------------------------------------------
@@ -620,10 +731,11 @@ void CPlotWindow::OnPaint ()
 
 void CPlotWindow::OnPrint ()
 {
+  char s[256];
   CpsDC printDC (612, 792);
-  printDC.OpenDisplay (PRINT_TEMP_FILE);
+  printDC.OpenDisplay (strcpy(s,PRINT_TEMP_FILE));
   printDC.SetColors (color_names, MAX_COLORS);
-  printDC.SetForeground (printDC.GetColor("black"));
+  printDC.SetForeground (printDC.GetColor(strcpy(s,"black")));
 
   CRect r = printDC.GetClientRect();
   m_pDi->CreateView (CARTESIAN_INVERTED, m_pDi->GetExtrema());
@@ -689,17 +801,17 @@ void CPlotWindow::OnDeleteView ()
 Widget CPlotWindow::AddMenuItem (Widget wMenu, char* name)
 {
   // Add a new button widget in wMenu, with specified name.
-
-//  int i = 0;
-//  while (buttons[i]) i++; // Find first non-zero entry
-
-  XmString str = XmStringCreate (name, "Helvetica12pt");
-  Widget b = XtVaCreateManagedWidget(name, xmPushButtonWidgetClass, wMenu,
-				       XmNlabelString, str,
-				       XmNfontList, FontList,
-				       NULL);
-  XtVaSetValues(b, XtVaTypedArg, XmNbackground, XmRString, 
-		"LightGrey", 10, NULL);
+  char s[32];
+  XmString str = XmStringCreate(name, strcpy(s,"Helvetica12pt"));
+  Widget b = XtVaCreateManagedWidget( name, 
+	xmPushButtonWidgetClass, wMenu,
+	XmNlabelString, str,
+	XmNfontList, FontList,
+	NULL);
+  XtVaSetValues( b, 
+	XtVaTypedArg, XmNbackground,
+	XmRString, "LightGrey", 10, 
+	NULL);
   XmStringFree(str);  
   return b;
 }
@@ -709,17 +821,20 @@ Widget CPlotWindow::AddSubMenu (Widget wMenu, char* name)
 {
   // Add a new submenu widget in wMenu, with specified name.
   // Return the pulldown menu widget, not the button.
-
+  char s[64];
   Widget sMenu = XmCreatePulldownMenu(wMenu, name, NULL, 0);
-  XmString str = XmStringCreate (name, "Helvetica12pt");
-  Widget b = XtVaCreateManagedWidget(name, xmCascadeButtonWidgetClass, wMenu,
-				     XmNsubMenuId, sMenu,
-				     XmNlabelString, str,
-				     XmNfontList, FontList,
-				     XmNmnemonic, 0,
-				     NULL);
-  XtVaSetValues(b, XtVaTypedArg, XmNbackground, XmRString, 
-		"LightGrey", 10, NULL);
+  XmString str = XmStringCreate (name, strcpy(s, "Helvetica12pt"));
+  Widget b = XtVaCreateManagedWidget( name, 
+	xmCascadeButtonWidgetClass, wMenu,
+	XmNsubMenuId, sMenu,
+	XmNlabelString, str,
+	XmNfontList, FontList,
+	XmNmnemonic, 0,
+	NULL);
+  XtVaSetValues( b,
+	XtVaTypedArg, XmNbackground,
+	XmRString, "LightGrey", 10,
+	NULL);
   XmStringFree(str);  
   return sMenu;
 }
@@ -728,16 +843,16 @@ Widget CPlotWindow::AddSubMenu (Widget wMenu, char* name)
 Widget CPlotWindow::MakeMenu (Widget wAttach, char* menu_name, 
   char* options[], Widget buttons[], int n)
 {
-  char submenu_name [32];
+  char submenu_name [32], s[32];
   Widget menu, cascade;
   Arg al[10];
   int i, ac = 0;
 
-  menu = XmCreatePulldownMenu (wAttach, menu_name, al, ac);
+  menu = XmCreatePulldownMenu(wAttach, menu_name, al, ac);
 
   XtSetArg (al[ac], XmNsubMenuId, menu);  
   ac++;
-  XmString str =  XmStringCreateLtoR(menu_name, "Helvetica12pt");
+  XmString str =  XmStringCreateLtoR(menu_name, strcpy(s, "Helvetica12pt"));
   XtSetArg(al[ac], XmNlabelString, str);  
   ac++;
   XtSetArg (al[ac], XmNfontList, FontList);
@@ -751,22 +866,18 @@ Widget CPlotWindow::MakeMenu (Widget wAttach, char* menu_name,
 
   // Create the menu button widgets
 
-  for (i = 0; i < n; i++)
-    {
-      if (*options[i] == '>')
-	{
+  for (i = 0; i < n; i++) {
+      if (*options[i] == '>') {
 	  // Create a submenu cascade button
 	 
 	    strcpy (submenu_name, options[i]+1);
 	    buttons[i] = AddSubMenu (menu, submenu_name);
-	}
-      else
-	{
+      }
+      else {
 	  buttons[i] = AddMenuItem (menu, options[i]);
-	}
-    }
+      }
+  }
   return menu ;
-
 }
 //---------------------------------------------------------------
 
@@ -900,15 +1011,24 @@ void CPlotWindow::OnRButtonDown(unsigned int mf, CPoint p)
 }
 //---------------------------------------------------------------
 
-void CPlotWindow::MessageBox (char* s)
+void CPlotWindow::MessageBox (const char* msg)
 {
 // Display a message
   
-  Arg a;
-  XtSetArg(a, XmNmessageString, XmStringCreateLtoR(s, (char*)"Courier12pt"));
-  XtSetValues (m_nAboutBox, &a, 1);
-  XtManageChild(m_nAboutBox);
+  XmString Message;
+  int msg_length = strlen(msg);
+  char* s = new char[msg_length+1];
+  strncpy(s, msg, msg_length);
+  s[msg_length] = '\0';
+  char font_str[32];
 
+  Message = XmStringCreateLtoR(s, strcpy(font_str, "Courier12pt"));
+  XtVaSetValues(m_nAboutBox,
+	XmNmessageString, Message, 
+	NULL);
+  XtManageChild(m_nAboutBox);
+  delete [] s;
+  XmStringFree(Message);
 }
 //---------------------------------------------------------------
 
@@ -936,14 +1056,15 @@ void CPlotWindow::SelectPlot (int plot_index, int select_type)
 void CPlotWindow::OnExtremaInput ()
 {
   Arg al[4];
+  char s1[32], s2[32];
   int ac = 0;
-  XtSetArg(al[ac], XmNselectionLabelString, 
-  XmStringCreateLtoR("Enter xmin, ymin, xmax, ymax:", "CourierBold14pt")); 
-		     //    XmSTRING_DEFAULT_CHARSET));  
+  XtSetArg( al[ac], XmNselectionLabelString, 
+  XmStringCreateLtoR( strcpy(s1, "Enter xmin, ymin, xmax, ymax:"),
+	 strcpy(s2, "CourierBold14pt")) ); 
   ac++;
   XtSetArg(al[ac], XmNfontList, FontList);
   ac++;
-  XtSetArg(al[ac], XmNtextString, XmStringCreateLtoR("",
+  XtSetArg(al[ac], XmNtextString, XmStringCreateLtoR(NULL,
     XmSTRING_DEFAULT_CHARSET));
   ac++;
   XtSetValues(m_nInputDialog, al, ac);
@@ -986,16 +1107,15 @@ void CPlotWindow::WriteStatusMessage(char* msg)
   //   routine is generally used by the CPlotList object.
 
   Arg al[2];
-  // XtSetArg(al[0], XmNlabelString,
-  //	   XmStringCreate(msg, XmSTRING_DEFAULT_CHARSET));
-
-  XtSetArg(al[0], XmNlabelString, XmStringCreate(msg, "Helvetica14pt"));
+  char s[32];
+  XtSetArg(al[0], 
+	XmNlabelString, XmStringCreate(msg, strcpy(s, "Helvetica14pt")));
   XtSetValues (m_nStatusBar, al, 1);
   return;
 }
 //---------------------------------------------------------------
 
-void CPlotWindow::WriteConsoleMessage(char* msg)
+void CPlotWindow::WriteConsoleMessage(const char* msg)
 {
   // Write a message to the Forth console area;
 
@@ -1094,8 +1214,6 @@ void CPlotWindow::OnTemplate()
 {
     char tmpl[256], prompt[256];
 
-    MessageBox("In Template");
-    
     strcpy (prompt, "Enter x1, x2, dx:");
     if (GetInput(prompt, tmpl) == 0) return;
 
@@ -1109,32 +1227,21 @@ void CPlotWindow::OnTemplate()
     strcpy (s, tmpl);
 
     NumberParse (x, s);
-    if (x[0] > x[1])
-    {
+    if (x[0] > x[1]) {
         temp = x[1];
         x[1] = x[0];
         x[0] = temp;
     }
 
-    sprintf(s, "x1 = %f, x2 = %f, dx = %f", x[0], x[1], x[2]);
-    MessageBox(s);
+    sprintf(s, "Template: x1 = %f, x2 = %f, dx = %f", x[0], x[1], x[2]);
+    WriteConsoleMessage(s);
 
-    int npts;
+    int npts = (x[2] == 0.) ? 1 : 1 + (int)((x[1] - x[0])/x[2]) ;
 
-    if (x[2] == 0.)
-    {
-        npts = 1;
-    }
-    else
-    {
-        npts = 1 + (int)((x[1] - x[0])/x[2]) ;
-    }
+    CReal* d = new CReal (2, npts, strcpy(s,"Template"), NULL);
 
-    CReal* d = new CReal (2, npts, "Template", "\0");
-
-    if (d == NULL)
-    {
-// AfxMessageBox ("Unable to create template data set.");
+    if (d == NULL){
+        WriteConsoleMessage("Unable to create template data set.");
         return;
     }
 
@@ -1152,20 +1259,19 @@ void CPlotWindow::OnTemplate()
     m_pDi->MakePlot (d, 0);
 
     OnReset();
-
 }
 //---------------------------------------------------------------
 
 void CPlotWindow::OnExpressionInput ()
 {
   Arg al[4];
-
+  char s1[32], s2[32];
   int ac = 0;
   XtSetArg(al[ac], XmNselectionLabelString, 
-    XmStringCreateLtoR("Enter the math expression:", 
-    "Courier12pt"));  
+    XmStringCreateLtoR(strcpy(s1, "Enter the math expression:"), 
+    strcpy(s2, "Courier12pt")));  
   ac++;
-  XtSetArg(al[ac], XmNtextString, XmStringCreateLtoR("",
+  XtSetArg(al[ac], XmNtextString, XmStringCreateLtoR(NULL,
     XmSTRING_DEFAULT_CHARSET));
   ac++;
   XtSetValues(m_nInputDialog, al, ac);
@@ -1562,9 +1668,11 @@ bool CPlotWindow::OnFileSave ()
 void CPlotWindow::OnAbout()
 {
   char s[512];
-  strcpy (s, "XYPLOT "); strcat (s, ver); strcat (s, " for Linux/X Windows");
-  strcat (s, "  (kForth "); strcat (s, kfver);
-  strcat (s, ")  Build: "); strcat (s, build); strcat(s, "\n"); 
+  sprintf(s, "XYPLOT %s for Linux/X Windows  (kForth %s)\nBuild: %s\n",
+		  ver, kfver, build);
+  // strcpy (s, "XYPLOT "); strcat (s, ver); strcat (s, " for Linux/X Windows");
+  // strcat (s, "  (kForth "); strcat (s, kfver);
+  // strcat (s, ")  Build: "); strcat (s, build); strcat(s, "\n"); 
   strcat (s, "\nCopyright (c) "); strcat (s, copyright);
   strcat (s, " Krishna Myneni and John Kielkopf\n");
   strcat (s, "e-mail: krishna.myneni@ccreweb.org\n\n");
@@ -1580,7 +1688,7 @@ void CPlotWindow::SelectColumns (char* fname, int nCols)
   char s[128];
   Arg al[4];
   int ac = 0;
-  XtSetArg(al[ac], XmNtextString, XmStringCreateLtoR("",
+  XtSetArg(al[ac], XmNtextString, XmStringCreateLtoR(NULL,
     XmSTRING_DEFAULT_CHARSET));
   ac++;
   sprintf (s, "File contains %d columns.\n", nCols);
@@ -1610,15 +1718,14 @@ vector<int> CPlotWindow::ParseColumns (char* cs)
   char s[64];
   vector<int> Cols;
 
-  if (*cs)
-  {
-    strcpy (s, cs);
-    nSel = NumberParse(x, s);
-    for (i = 0; i < nSel; i++) Cols.push_back((int) x[i] - 1);
+  if (cs) {
+    if (*cs) {
+      strcpy (s, cs);
+      nSel = NumberParse(x, s);
+      for (i = 0; i < nSel; i++) Cols.push_back((int) x[i] - 1);
+    }
   }
-
   return Cols;
-
 }
 //---------------------------------------------------------------
 
@@ -1652,25 +1759,20 @@ bool CPlotWindow::LoadFile(char* fname)
     int i, ecode, ns;
     char s[128];
 
-    if (*fname)
-    {
+    if (*fname) {
         CDataset* d;
 
 	strcpy (m_pFileName, fname);   // save filename for callbacks in case of a command-line specified file
 
-       	if (strstr(fname, ".xsp"))
-       	{
+       	if (strstr(fname, ".xsp")) {
        	    CWorkspace41* pWs;
             ecode = m_pDb->LoadWorkspace (&pWs, fname);
-            if (ecode)
-            {
+            if (ecode) {
                 sprintf (s, "XSP FILE CORRUPT");
                 MessageBox (s);
             }
-            else
-            {
-                for (i = 0; i < pWs->di.nplots; i++)
-                {
+            else {
+                for (i = 0; i < pWs->di.nplots; i++) {
                     ns = pWs->pv[i].set - 1;  // array origin is now 0
                     d = m_pDb->FindInList(pWs->ds[ns].fname);
                     if (d) m_pDi->MakePlot(pWs, d, i);
@@ -1679,37 +1781,27 @@ bool CPlotWindow::LoadFile(char* fname)
    	        delete pWs;     // delete the workspace (we're done with it)
 
             }
-
         }
-        else if (strstr(fname, ".4th"))
-        {
+        else if (strstr(fname, ".4th")) {
           // Load a Forth source file into the built-in Forth environment
-
 	  ecode = LoadForthFile (fname);
         }
-        else
-        {
+        else {
 	  int nCols = m_pDb->GetColumnCount(fname);
-          if (nCols < 0)
-	    {
+          if (nCols < 0) {
 	      MessageBox ("Cannot open input file.");	    
-	    }
-	  else if (nCols == 0)
-	    {
+	  }
+	  else if (nCols == 0) {
 	      MessageBox ("Cannot find first line of data in file.");
-	    }
-	  else if (nCols <= 2)
-	    {
-	      LoadDatasetFile (fname, "");
-	    }
-	  else
-	    {
+	  }
+	  else if (nCols <= 2) {
+	      LoadDatasetFile (fname, NULL);
+	  }
+	  else {
 	      SelectColumns (fname, nCols);
-	    }
-
+	  }
         }
     }
-
     return FALSE;
 }
 //---------------------------------------------------------------
@@ -1721,38 +1813,26 @@ bool CPlotWindow::SaveFile (char* fname)
     XmString prompt, no;
 
     CDataset* d = m_pDi->GetActiveSet();
-    if (d)
-    {
-      if (strstr(fname, ".xsp"))
-	{
+    if (d) {
+      if (strstr(fname, ".xsp")) {
 	  // Create an xyplot workspace file
-
 	  success = SaveWorkspace(fname);
-	}
-      else
-	{
+      }
+      else {
 	  // Save the active data set
 
 	  vector<float> e = m_pDi->GetExtrema();
 	  int bOverlap;
 	  vector<int> lim = d->IndexLimits(e[0], e[1], bOverlap);
-	  if (bOverlap)
-	    {
+	  if (bOverlap) {
 	      sprintf (s, "Source file is %s\n", d->m_szName);
 	      AddToHeader (s, d->m_szHeader, True);
-	      // d->PrependToHeader(s);
 
-	      if ((lim[0] > 0) || (lim[1] < (d->NumberOfPoints()-1)))
-		{
-		  /*
-		    CVerifyDialog::m_szPromptString =
-                    "Save only data in window domain?";
-		    CVerifyDialog vd;
-		    int result = vd.DoModal();
-		  */
+	      if ((lim[0] > 0) || (lim[1] < (d->NumberOfPoints()-1))) {
 		    verify_answer = 0;
-		    prompt = XmStringCreateLocalized("Save only data in window domain?");
-		    no = XmStringCreateLocalized("Save All");
+		    strcpy(s, "Save only data in window domain?"); 
+		    prompt = XmStringCreateLocalized(s);
+		    no = XmStringCreateLocalized(strcpy(s,"Save All"));
 		    XtVaSetValues(m_nVerifyDialog, 
 				  XmNmessageString, prompt, 
 				  XmNhelpLabelString, no,
@@ -1763,8 +1843,7 @@ bool CPlotWindow::SaveFile (char* fname)
 		    while (verify_answer == 0) XtAppProcessEvent (xapp, XtIMAll);
 		    XtPopdown (XtParent(m_nVerifyDialog));
 		    
-		  if (verify_answer == XmCR_HELP)
-		  {
+		  if (verify_answer == XmCR_HELP) {
                     lim[0] = 0;
                     lim[1] = d->NumberOfPoints()-1;
 		  }
@@ -1774,49 +1853,48 @@ bool CPlotWindow::SaveFile (char* fname)
                     WriteConsoleMessage ("Save cancelled.");
 		    return success;
 		  }
-		}
+	      } // if ((lim[0] > 0 ...
 	      
 	      
-	  int fd;
-	  if (fd = open(fname, O_RDONLY) != -1)
-	  {
-	      close(fd);
-	      verify_answer = 0;
-	      prompt = XmStringCreateLocalized("File already exists. Overwrite?");
-	      no = XmStringCreateLocalized("No");
-	      XtVaSetValues(m_nVerifyDialog, XmNmessageString, prompt, XmNhelpLabelString, no, NULL);
-	      XtManageChild(m_nVerifyDialog);
-	      XtPopup (XtParent(m_nVerifyDialog), XtGrabNone);
-	      while (verify_answer == 0) XtAppProcessEvent (xapp, XtIMAll);
-	      XtPopdown (XtParent(m_nVerifyDialog));
+              int fd;
+	      if (fd = open(fname, O_RDONLY) != -1) {
+	        close(fd);
+	        verify_answer = 0;
+	        strcpy(s, "File already exists. Overwrite?");
+	        prompt = XmStringCreateLocalized(s);
+	        no = XmStringCreateLocalized(strcpy(s, "No"));
+	        XtVaSetValues( m_nVerifyDialog, 
+		    XmNmessageString, prompt, 
+		    XmNhelpLabelString, no, 
+		    NULL);
+    	        XmStringFree(prompt); XmStringFree(no);
+	        XtManageChild(m_nVerifyDialog);
+	        XtPopup (XtParent(m_nVerifyDialog), XtGrabNone);
+	        while (verify_answer == 0) XtAppProcessEvent (xapp, XtIMAll);
+	        XtPopdown (XtParent(m_nVerifyDialog));
 	      
-	      if (verify_answer == XmCR_OK) 
+	        if (verify_answer == XmCR_OK) 
 		  success = m_pDb->SaveDataset (d, lim, fname);
-	      else
-	      {
+	        else {
 		  WriteConsoleMessage ("Save cancelled.");
 		  return success;
-	      }
-	  }
-	  else
-	      success = m_pDb->SaveDataset (d, lim, fname);
-
-	      if (success)
-		{
-		  strcpy (d->m_szName, fname);
-		  sprintf (s, "%d points written to %s", lim[1]-lim[0]+1,
-			   fname);
-		  WriteConsoleMessage (s);
-		}
+	        }
+	      } // if (fd = open ...
 	      else
-		{
+	        success = m_pDb->SaveDataset (d, lim, fname);
+
+	      if (success) {
+                strcpy (d->m_szName, fname);
+	        sprintf (s, "%d points written to %s", lim[1]-lim[0]+1, fname);
+	        WriteConsoleMessage (s);
+	      }
+	      else {
 		  MessageBox ("Error writing output file.");
-		}
-	    }
-	  else
-	    {
+	      }
+	  } // if (bOverlap) ...
+	  else {
 	      MessageBox("Active dataset not visible in plot window.");
-	    }
+	  }
 	}
     }
     return success;
@@ -1862,10 +1940,6 @@ void CPlotWindow::SetWindowText (char* pStr)
 {
 
 }
-
-
-
-
 
 
 

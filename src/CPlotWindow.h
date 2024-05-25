@@ -166,8 +166,8 @@ public:
         void OnExtrema (char*);
 	void Invalidate ();
 	void WriteStatusMessage (char*);
-	void WriteConsoleMessage (char*);
-	void MessageBox (char*);
+	void WriteConsoleMessage (const char*);
+	void MessageBox (const char*);
 
         int GetInput (char*, char*);
         void SelectColumns (char*, int);

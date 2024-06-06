@@ -18,7 +18,7 @@
 #      before "make debug".
 #
 COPYRIGHT=1999--2024
-VERSION=2.8.1
+VERSION=2.8.2
 KFORTH_VER=1.8.0
 MODULE_DIR_VAR=XYPLOT_DIR
 BUILD_DATE=`date +%F`
@@ -41,7 +41,9 @@ LIBDIRS = /usr/lib:/usr/lib32
 
 # The macro LIBS lists the libraries needed
 
-LIBS = -lXm -lXt -lXext -lX11 -lSM -lICE -lm -ldl
+# LIBS = -lXm -lXt -lXext -lX11 -lSM -lICE -lm -ldl
+LIBS = -l:libXm.so.4 -l:libXt.so.6 -l:libXext.so.6 -l:libX11.so.6\
+       -l:libSM.so.6 -l:libICE.so.6 -lm -ldl
 
 # Specify dynamic libraries by default to make a compact
 # executable. If you wish to create a static executable,

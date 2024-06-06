@@ -1120,7 +1120,7 @@ void CPlotWindow::WriteConsoleMessage(const char* msg)
   // Write a message to the Forth console area;
 
   const int MaxMsgLength = 1024;
-  char *s = new char [MaxMsgLength+4];
+  char s[MaxMsgLength+4];
   int msgLen = strlen(msg);
   if (msgLen > MaxMsgLength) {
     strncpy(s, msg, MaxMsgLength);
@@ -1139,7 +1139,6 @@ void CPlotWindow::WriteConsoleMessage(const char* msg)
   int nPos = XmTextGetLastPosition (w);
   XmTextShowPosition(w, nPos);
   XmTextSetInsertionPosition(w, nPos);
-  delete [] s;
 }
 //---------------------------------------------------------------
 

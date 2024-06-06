@@ -39,14 +39,15 @@ variable npts
     & y{ over }malloc
     & yfit{ over }malloc
     & fit_data{{ over 2 }}malloc
+    drop
     malloc-fail?
 ;
 
 : free-mem ( -- )
-    & x{ }free
-    & y{ }free
-    & yfit{ }free
     & fit_data{{ }}free
+    & yfit{ }free
+    & y{ }free
+    & x{ }free
 ;
 
 Public:
@@ -61,20 +62,20 @@ Public:
         ds1 DatasetInfo->Npts @ npts !
         npts @ alloc-mem IF
           ." Too many points. Unable to allocate memory!" cr
-          EXIT
+          false EXIT
         THEN
-       THEN
+      THEN
 
-       npts @ 0 ?DO
-         I ds1 @xy  y{ I } f!  x{ I } f!
-       LOOP
+      npts @ 0 ?DO
+        I ds1 @xy  y{ I } f!  x{ I } f!
+      LOOP
 
-       x{ y{ yfit{ params{ increments{ sigma_par{ 3 npts @ ['] Exp-Func init-curvefit 
+      x{ y{ yfit{ params{ increments{ sigma_par{ 3 npts @ ['] Exp-Func init-curvefit 
 
-       5 0 DO  curfit chi-sqr f!  LOOP
-       true
-     ELSE false
-     THEN ;
+      5 0 DO  curfit chi-sqr f!  LOOP
+      true
+    ELSE drop false
+    THEN ;
 
 
 \ Make a dataset with the fit parameters;

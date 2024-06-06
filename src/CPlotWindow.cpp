@@ -1119,8 +1119,16 @@ void CPlotWindow::WriteConsoleMessage(const char* msg)
 {
   // Write a message to the Forth console area;
 
-  char s[256];
-  strcpy(s, msg);
+  const int MaxMsgLength = 1024;
+  char *s = new char [MaxMsgLength+4];
+  int msgLen = strlen(msg);
+  if (msgLen > MaxMsgLength) {
+    strncpy(s, msg, MaxMsgLength);
+    s[MaxMsgLength] = '\0';
+  }
+  else {
+    strcpy(s, msg);
+  }
   strcat(s, "\n ");
 
   Widget w = m_nForthShell;
@@ -1131,6 +1139,7 @@ void CPlotWindow::WriteConsoleMessage(const char* msg)
   int nPos = XmTextGetLastPosition (w);
   XmTextShowPosition(w, nPos);
   XmTextSetInsertionPosition(w, nPos);
+  delete [] s;
 }
 //---------------------------------------------------------------
 

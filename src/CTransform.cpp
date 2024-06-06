@@ -1,6 +1,6 @@
 // CTransform.cpp
 //
-// Copyright 1995--2018 Krishna Myneni
+// Copyright 1995--2024 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -25,7 +25,7 @@ void CTransform::SetLogical(vector<float> e)
 
 CPoint CTransform::Physical (double* x)
 {
-    float xx[2] = {x[0], x[1]};
+    float xx[2] = {(float)x[0], (float)x[1]};
     return Physical (xx);
 }
 //---------------------------------------------------------------

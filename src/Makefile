@@ -64,7 +64,8 @@ CPPFLAGS = -c -m32
 CFLAGS = -c -m32
 
 OBJS = xyplot.o CDataset.o CDatabase.o CDeviceContext.o CGrid.o\
-  CPlotView.o CPlotDisplay.o CPlotList.o CPlotObject.o CPlotWindow.o\
+  CPlotView.o CPlotDisplay.o CPlotList.o CPlotObject.o\
+  CSaveOptionsDialog.o CPlotWindow.o\
   CPolarGrid.o CTransform.o CWorkspace41.o CXyFile.o CXyPlot.o\
   CxDC.o CpsDC.o AlgebraCompiler.o ForthCompiler.o ForthVM.o vm32.o\
   vmc.o
@@ -113,9 +114,13 @@ CPlotObject.o: CPlotObject.cpp CPlotObject.h CTransform.h CPoint.h\
 	CRect.h CDeviceContext.h CxDC.h
 	${CPP} ${CPPFLAGS} -I${INCLUDEDIRS} ${DEBUG} CPlotObject.cpp
 
+CSaveOptionsDialog.o: CSaveOptionsDialog.cpp CSaveOptionsDialog.h\
+       	CPlotMessage.h
+	${CPP} ${CPPFLAGS} -I${INCLUDEDIRS} ${DEBUG} CSaveOptionsDialog.cpp
+
 CPlotWindow.o: CPlotWindow.cpp CPlotWindow.h CPlotDisplay.h CXyPlot.h\
 	CXyFile.h CPoint.h CRect.h CPlotMessage.h CDeviceContext.h\
-	CxDC.h CpsDC.h ColorTable.h resource.h fbc.h
+	CSaveOptionsDialog.h CxDC.h CpsDC.h ColorTable.h resource.h fbc.h
 	${CPP} ${CPPFLAGS} -DVERSION=\"${VERSION}\" \
 	                   -DKFORTH_VER=\"${KFORTH_VER}\" \
 			   -DBUILD_DATE=\"${BUILD_DATE}\" \

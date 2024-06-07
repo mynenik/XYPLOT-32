@@ -453,76 +453,36 @@ void SaveOptionsCB (Widget w, void* client_d, void* call_d)
 {
     Widget parent = XtParent(w);
     CDatabase* pDb = pMainWnd->m_pDb;
-    static SaveOptions o;
-    char *prefix;
-
+    CSaveOptionsDialog* pDialogOptions = pMainWnd->m_pSaveOptionsDialog;
+    XmToggleButtonCallbackStruct *state = 
+		(XmToggleButtonCallbackStruct *) call_d;
     int data = (int) client_d;
 
     if (data >= PL_SAVE_OPTIONS) {
 	switch (data) {
 	  case PL_SAVE_OPTIONS:
-	      o = pDb->GetSaveOptions();
-	      Widget w;
-	      WidgetList wlist;
-	      int i, nchildren, n;
-	      XtVaGetValues(pMainWnd->m_nSaveHeader, XmNnumChildren, &nchildren, NULL);
-	      XtVaGetValues(pMainWnd->m_nSaveHeader, XmNchildren, &wlist, NULL);
-	      n = o.HeaderType;
-	      for (i = 0; i < nchildren; i++) XmToggleButtonGadgetSetState(wlist[i], i==n, False);
-	      XtVaGetValues(pMainWnd->m_nSaveNumberFormat, XmNnumChildren, &nchildren, XmNchildren, &wlist, NULL);
-	      n = o.NumberFormat;
-	      for (i = 0; i < nchildren; i++) XmToggleButtonGadgetSetState(wlist[i], i==n, False);
-	      XtVaGetValues(pMainWnd->m_nSaveColumnDelimiter, XmNnumChildren, &nchildren, XmNchildren, &wlist, NULL);
-	      n = o.Delimiter;
-	      for (i = 0; i < nchildren; i++) XmToggleButtonGadgetSetState(wlist[i], i==n, False);
-	      
-	      XmTextSetString(pMainWnd->m_nSavePrefix, (char*) o.UserPrefix);
-	      if (o.HeaderType == 2) XtVaSetValues (pMainWnd->m_nSavePrefix, XmNeditable, True, NULL);
- 
-	      XtManageChild(pMainWnd->m_nSaveOptionsDialog);
+	      pDialogOptions->SetOptions( pDb->GetSaveOptions() );
+	      XtManageChild(pDialogOptions->m_nW);
 	      break;
 	  case PL_SAVE_OPTIONS_CANCEL:
-	      XtUnmanageChild(pMainWnd->m_nSaveOptionsDialog);
+	      XtUnmanageChild(pDialogOptions->m_nW);
 	      break;
 	  case PL_SAVE_OPTIONS_DONE:
-	      if (o.HeaderType == 2)
-	      {
-		  prefix = XmTextFieldGetString(pMainWnd->m_nSavePrefix);
-		  strcpy( (char*) o.UserPrefix, prefix);
-		  XtFree(prefix);
-	      }
-	      pDb->SetSaveOptions(o);
-	      XtUnmanageChild(pMainWnd->m_nSaveOptionsDialog);
+	      SaveOptions so = pDialogOptions->GetOptions();
+              // copy prefix string from text widget to so
+              char* prefix = XmTextFieldGetString(pDialogOptions->m_nSavePrefix);
+              int prefixLen = strlen(prefix);
+              prefixLen = (prefixLen > 15) ? 15 : prefixLen;
+              strncpy((char*) so.UserPrefix, prefix, prefixLen);
+              so.UserPrefix[prefixLen] = '\0';
+
+	      pDb->SetSaveOptions( so );
+	      XtUnmanageChild(pDialogOptions->m_nW);
 	      break;
 	}
     }
-    else
-    {
-
-	XmToggleButtonCallbackStruct *state = (XmToggleButtonCallbackStruct *) call_d;
-	if (parent == pMainWnd->m_nSaveHeader)
-	{
-	    if (state->set) 
-		{
-		    o.HeaderType = data;
-		    XtVaSetValues (pMainWnd->m_nSavePrefix, XmNeditable, o.HeaderType==2,  NULL);
-		}
-	}
-	else if (parent == pMainWnd->m_nSaveNumberFormat)
-	{
-	    if (state->set)  o.NumberFormat = data;
-	}
-	else if (parent == pMainWnd->m_nSaveColumnDelimiter)
-	{
-	    if (state->set) o.Delimiter = data;
-	}
-	else if (parent == pMainWnd->m_nSaveEndOfLine)
-	{
-	    if (state->set) o.CrLf = data;
-	}
-	else
-	    ;
-
+    else {
+      pDialogOptions->OnOptions(parent, state->set, data);
     }
 }
 //------------------------------------------------------------------

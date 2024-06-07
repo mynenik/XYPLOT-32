@@ -3,7 +3,7 @@ CPlotWindow.h
 
   Header file for the CPlotWindow class
 
-  Copyright (c) 1996--2020 Krishna Myneni
+  Copyright (c) 1996--2024 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the 
@@ -17,7 +17,6 @@ CPlotWindow.h
 #include "CPlotDisplay.h"
 #include "CxDC.h"
 #include "CpsDC.h"
-#include <X11/Intrinsic.h>
 #include <Xm/Xm.h>
 #include <Xm/Label.h>
 #include <Xm/Form.h>
@@ -41,9 +40,9 @@ CPlotWindow.h
 // #include "CGridDialog.h"
 // #include "CHeaderDialog.h"
 // #include "CVerifyDialog.h"
+#include "CSaveOptionsDialog.h"
 #include "CXyPlot.h"
 #include "CXyFile.h"
-// #include "SetMath.h"
 #include "resource.h"
 
 class CPlotWindow {
@@ -51,6 +50,7 @@ class CPlotWindow {
 	char m_szBackgroundColor[16];
 	char m_szForegroundColor[16];
 public:
+	CSaveOptionsDialog* m_pSaveOptionsDialog;
 	Widget m_nPlotWindow;
 	Widget m_nForm;
 	Widget m_nMenuBar;
@@ -67,12 +67,6 @@ public:
 	Widget m_nHelpMenu;
 	Widget m_nFileOpenDialog;
 	Widget m_nFileSaveDialog;
-	Widget m_nSaveOptionsDialog;
-	Widget m_nSaveHeader;
-	Widget m_nSavePrefix;
-	Widget m_nSaveNumberFormat;
-	Widget m_nSaveColumnDelimiter;
-	Widget m_nSaveEndOfLine;
 	Widget m_nAboutBox;
 	Widget m_nRadioBox;
 	Widget m_nInputDialog;

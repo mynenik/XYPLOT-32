@@ -56,7 +56,7 @@ extern void EditMenuCB (Widget, void*, void*);
 extern void PlotMenuCB (Widget, void*, void*);
 extern void MathMenuCB (Widget, void*, void*);
 extern void ForthCB (Widget, void*, void*);
-extern void SaveOptionsCB (Widget, void*, void*);
+// extern void SaveOptionsCB (Widget, void*, void*);
 extern void RadioToggledCB (Widget, void*, void*);
 
 extern Widget TopLevel;
@@ -490,7 +490,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
     strcpy(s1, "Colors"), NULL, 0);
   temp = XmSelectionBoxGetChild(m_nColorDialog, XmDIALOG_TEXT);
   XtVaSetValues(temp, 
-    XtVaTypedArg, XmNbackground, XmRString, "White", 6,
+   XtVaTypedArg, XmNbackground, XmRString, "White", 6,
     NULL);
   XtUnmanageChild(XmSelectionBoxGetChild(m_nColorDialog, 
     XmDIALOG_HELP_BUTTON));
@@ -504,111 +504,13 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   // Create the Save Options dialog
  
-  m_nSaveOptionsDialog = XmCreateFormDialog(TopLevel, 
-    strcpy(s1, "Save Options"), NULL, 0); 
-  Widget rowcol, btn;
-  rowcol = XtVaCreateManagedWidget("rowcolumn",
-	 xmRowColumnWidgetClass, m_nSaveOptionsDialog, NULL);
-
-  XmString one, two, three;
-  XtVaCreateManagedWidget("Header Style", 
-	xmLabelWidgetClass, rowcol,
-	NULL); 
-  one = XmStringCreateLocalized(strcpy(s1,"none"));
-  two = XmStringCreateLocalized(strcpy(s1,"xyplot"));
-  three = XmStringCreateLocalized(strcpy(s1,"line prefix"));
-  m_nSaveHeader = XmVaCreateSimpleRadioBox( rowcol, 
-	strcpy(s1, "Header Style"), 
-	0,
-	SaveOptionsCB,
-	XmVaRADIOBUTTON, one, NULL, NULL, NULL,
-	XmVaRADIOBUTTON, two, NULL, NULL, NULL,
-	XmVaRADIOBUTTON, three, NULL, NULL, NULL,
-	NULL);
- 
-  XmStringFree(one);
-  XmStringFree(two);
-  XmStringFree(three);
-
-  XtVaCreateManagedWidget ("Prefix", xmLabelWidgetClass, rowcol, NULL);
-
-  m_nSavePrefix = XmCreateTextField(rowcol, strcpy(s1,"text"), NULL, 0);
-  XtVaSetValues(m_nSavePrefix, XmNeditable, False, NULL);
-
-  XtVaCreateManagedWidget ("sep", xmSeparatorGadgetClass, rowcol, NULL);
-
-  XtVaCreateManagedWidget ("Number Format", xmLabelWidgetClass, rowcol, NULL);
-  one = XmStringCreateLocalized(strcpy(s1,"exponential"));
-  two = XmStringCreateLocalized(strcpy(s1, "floating point"));
-  three = XmStringCreateLocalized(strcpy(s1, "integer"));
-  m_nSaveNumberFormat = XmVaCreateSimpleRadioBox (rowcol, 
-	strcpy(s1, "Number Format"),
-	0,
-	SaveOptionsCB,
-	XmVaRADIOBUTTON, one, NULL, NULL, NULL,
-	XmVaRADIOBUTTON, two, NULL, NULL, NULL,
-	XmVaRADIOBUTTON, three, NULL, NULL, NULL,
-	NULL);
-  XmStringFree(one);
-  XmStringFree(two);
-  XmStringFree(three);
-
-  XtVaCreateManagedWidget ("sep", xmSeparatorGadgetClass, rowcol, NULL);
-  XtVaCreateManagedWidget ("Column Delimiter", xmLabelWidgetClass, rowcol, NULL);
-  one = XmStringCreateLocalized(strcpy(s1,"space"));
-  two = XmStringCreateLocalized(strcpy(s1,"tab"));
-  three = XmStringCreateLocalized(strcpy(s1,"comma"));
-  m_nSaveColumnDelimiter = XmVaCreateSimpleRadioBox( rowcol, 
-	strcpy(s1, "Column Delimiter"),
-	0,
-	SaveOptionsCB,
-	XmVaRADIOBUTTON, one, NULL, NULL, NULL,
-	XmVaRADIOBUTTON, two, NULL, NULL, NULL,
-	XmVaRADIOBUTTON, three, NULL, NULL, NULL,
-	NULL);
-
-  XtVaCreateManagedWidget ("sep", xmSeparatorGadgetClass, rowcol, NULL);
-
-  XtVaCreateManagedWidget ("End of Line", xmLabelWidgetClass, rowcol, NULL);
-  one = XmStringCreateLocalized(strcpy(s1, "Unix"));
-  two = XmStringCreateLocalized(strcpy(s1, "DOS"));
-  m_nSaveEndOfLine = XmVaCreateSimpleRadioBox (rowcol, 
-	strcpy(s1,"EOL"),
-	0,
-	SaveOptionsCB,
-	XmVaRADIOBUTTON, one, NULL, NULL, NULL,
-	XmVaRADIOBUTTON, two, NULL, NULL, NULL,
-	NULL);
-
-  XtVaCreateManagedWidget ("sep", xmSeparatorGadgetClass, rowcol, NULL);
-
-  one = XmStringCreateLocalized(strcpy(s1, "Cancel"));
-  btn = XtVaCreateManagedWidget("button", 
-	xmPushButtonWidgetClass, rowcol,
-	XmNlabelString, one,
-	NULL);
-  XtAddCallback (btn, XmNactivateCallback, SaveOptionsCB, 
-		  (void*) PL_SAVE_OPTIONS_CANCEL);
-  two = XmStringCreateLocalized(strcpy(s1,"Done"));
-  btn = XtVaCreateManagedWidget("button", 
-	xmPushButtonWidgetClass, rowcol,
-	XmNlabelString, two,
-	NULL);
-  XtAddCallback (btn, XmNactivateCallback, SaveOptionsCB, 
-		  (void*) PL_SAVE_OPTIONS_DONE);
-
-  XmStringFree(one);
-  XmStringFree(two);
-  XmStringFree(three);
-
-  XtManageChild(m_nSaveHeader);
-  XtManageChild(m_nSavePrefix);
-  XtManageChild(m_nSaveNumberFormat);
-  XtManageChild(m_nSaveColumnDelimiter);
-  XtManageChild(m_nSaveEndOfLine);
+  m_pSaveOptionsDialog = new CSaveOptionsDialog(TopLevel);
 
   // Create the Grid dialog
- 
+
+  Widget rowcol, btn;
+  XmString one;
+  
   m_nGridDialog = XmCreateFormDialog(TopLevel, 
 	strcpy(s1, "Grid Options"), NULL, 0);
 
@@ -1106,11 +1008,12 @@ void CPlotWindow::WriteStatusMessage(char* msg)
   // Write a message to the status bar. This
   //   routine is generally used by the CPlotList object.
 
-  Arg al[2];
   char s[32];
-  XtSetArg(al[0], 
-	XmNlabelString, XmStringCreate(msg, strcpy(s, "Helvetica14pt")));
-  XtSetValues (m_nStatusBar, al, 1);
+  XmString Message = XmStringCreate(msg, strcpy(s, "Helvetica14pt"));
+  XtVaSetValues(m_nStatusBar,
+	XmNlabelString, Message,
+	NULL);
+  XmStringFree(Message);
   return;
 }
 //---------------------------------------------------------------

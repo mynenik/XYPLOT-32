@@ -1121,58 +1121,6 @@ void CPlotWindow::OnSymbolToggle ()
 }
 //---------------------------------------------------------------
 
-void CPlotWindow::OnTemplate()
-{
-    char tmpl[256], prompt[256];
-
-    strcpy (prompt, "Enter x1, x2, dx:");
-    if (GetInput(prompt, tmpl) == 0) return;
-
-    float x[6], temp;
-    vector<float> e = m_pDi->GetExtrema();
-    x[0] = e[0];
-    x[1] = e[1];
-    x[2] = (x[1] - x[0])/100.f;
-
-    char s[255];
-    strcpy (s, tmpl);
-
-    NumberParse (x, s);
-    if (x[0] > x[1]) {
-        temp = x[1];
-        x[1] = x[0];
-        x[0] = temp;
-    }
-
-    sprintf(s, "Template: x1 = %f, x2 = %f, dx = %f", x[0], x[1], x[2]);
-    WriteConsoleMessage(s);
-
-    int npts = (x[2] == 0.) ? 1 : 1 + (int)((x[1] - x[0])/x[2]) ;
-
-    CReal* d = new CReal (2, npts, strcpy(s,"Template"), NULL);
-
-    if (d == NULL){
-        WriteConsoleMessage("Unable to create template data set.");
-        return;
-    }
-
-    float* data = &(*(d->begin()));
-    temp = x[0];
-    for (int i = 0; i < npts; i++)
-    {
-        *data++ = temp;
-        *data++ = temp;
-        temp += x[2];
-    }
-    d->SetExtrema();
-
-    m_pDb->AddSet(d);
-    m_pDi->MakePlot (d, 0);
-
-    OnReset();
-}
-//---------------------------------------------------------------
-
 void CPlotWindow::OnExpressionInput ()
 {
   Arg al[4];

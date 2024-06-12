@@ -113,7 +113,6 @@ public:
         bool OnFileNew ();
 	bool OnFileOpen ();
         bool OnFileSave ();
-	// void OnSaveOptions();
 	void LoadDatasetFile (char*, char*);
 	bool LoadFile (char*);
 	bool SaveFile (char*);
@@ -148,12 +147,8 @@ public:
         void OnSymbolLinePt ();
         void OnSymbolStick ();
 	void OnSymbolToggle ();
-        void OnTemplate ();
 	void OnExpressionInput ();
         void OnExpression (char*);
-        void OnArithmetic ();
-        void OnSwap ();
-        void OnSmooth ();
         void OnAbout ();
         void OnReset ();
 	void OnExtremaInput ();

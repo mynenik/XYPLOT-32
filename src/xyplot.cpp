@@ -451,37 +451,29 @@ void FileMenuCB (Widget w, void* client_d, void* call_d)
 
 void SaveOptionsCB (Widget w, void* client_d, void* call_d)
 {
-    Widget parent = XtParent(w);
-    CDatabase* pDb = pMainWnd->m_pDb;
     CSaveOptionsDialog* pDialogOptions = pMainWnd->m_pSaveOptionsDialog;
-    XmToggleButtonCallbackStruct *state = 
-		(XmToggleButtonCallbackStruct *) call_d;
     int data = (int) client_d;
 
     if (data >= PL_SAVE_OPTIONS) {
+        CDatabase* pDb = pMainWnd->m_pDb;
 	switch (data) {
 	  case PL_SAVE_OPTIONS:
 	      pDialogOptions->SetOptions( pDb->GetSaveOptions() );
 	      XtManageChild(pDialogOptions->m_nW);
 	      break;
-	  case PL_SAVE_OPTIONS_CANCEL:
-	      XtUnmanageChild(pDialogOptions->m_nW);
+	  case PL_SAVE_OPTIONS_APPLY:
+	      pDialogOptions->UpdatePrefixOption();
+	      pDb->SetSaveOptions( pDialogOptions->GetOptions());
 	      break;
-	  case PL_SAVE_OPTIONS_DONE:
-	      SaveOptions so = pDialogOptions->GetOptions();
-              // copy prefix string from text widget to so
-              char* prefix = XmTextFieldGetString(pDialogOptions->m_nSavePrefix);
-              int prefixLen = strlen(prefix);
-              prefixLen = (prefixLen > 15) ? 15 : prefixLen;
-              strncpy((char*) so.UserPrefix, prefix, prefixLen);
-              so.UserPrefix[prefixLen] = '\0';
-
-	      pDb->SetSaveOptions( so );
+	  case PL_SAVE_OPTIONS_CLOSE:
 	      XtUnmanageChild(pDialogOptions->m_nW);
 	      break;
 	}
     }
     else {
+      Widget parent = XtParent(w);
+      XmToggleButtonCallbackStruct *state = 
+        (XmToggleButtonCallbackStruct *) call_d;
       pDialogOptions->OnOptions(parent, state->set, data);
     }
 }

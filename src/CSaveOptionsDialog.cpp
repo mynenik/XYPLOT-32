@@ -136,7 +136,7 @@ CSaveOptionsDialog::CSaveOptionsDialog(Widget topLevel)
 
   XtVaCreateManagedWidget ("sep", xmSeparatorGadgetClass, rowCol, NULL);
 
-  one = XmStringCreateLocalized(strcpy(s, "Cancel"));
+  one = XmStringCreateLocalized(strcpy(s, "Apply"));
 
   btn = XtVaCreateManagedWidget("button",
         xmPushButtonWidgetClass, rowCol,
@@ -144,16 +144,16 @@ CSaveOptionsDialog::CSaveOptionsDialog(Widget topLevel)
         NULL);
 
   XtAddCallback (btn, XmNactivateCallback, SaveOptionsCB,
-                  (void*) PL_SAVE_OPTIONS_CANCEL);
+                  (void*) PL_SAVE_OPTIONS_APPLY);
 
-  two = XmStringCreateLocalized(strcpy(s,"Done"));
+  two = XmStringCreateLocalized(strcpy(s,"Close"));
 
   btn = XtVaCreateManagedWidget("button",
         xmPushButtonWidgetClass, rowCol,
         XmNlabelString, two,
         NULL);
   XtAddCallback (btn, XmNactivateCallback, SaveOptionsCB,
-                  (void*) PL_SAVE_OPTIONS_DONE);
+                  (void*) PL_SAVE_OPTIONS_CLOSE);
 
   XmStringFree(one);
   XmStringFree(two);
@@ -239,4 +239,13 @@ void CSaveOptionsDialog::OnOptions(Widget parent, int set, int data)
 }
 //---------------------------------------------------------------
 
+void CSaveOptionsDialog::UpdatePrefixOption()
+{
+    // copy prefix string from text widget to m_nSO
+    char* prefix = XmTextFieldGetString(m_nSavePrefix);
+    int prefixLen = strlen(prefix);
+    prefixLen = (prefixLen > 15) ? 15 : prefixLen;
+    strncpy((char*) m_nSO.UserPrefix, prefix, prefixLen);
+    m_nSO.UserPrefix[prefixLen] = '\0';
+}
 

@@ -1,7 +1,7 @@
 /*
 CPlotMessage.h
 
-  Copyright (c) 1990-2020 Krishna Myneni
+  Copyright (c) 1990-2024 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the 
@@ -28,33 +28,33 @@ CPlotMessage.h
 #define PL_RESIZE	21
 #define PL_REDRAW	22
 
-#define PL_NEW		32
-#define PL_OPEN		33
-#define PL_FILE_OPEN    34
-#define PL_FILE_CANCEL  35
-#define PL_FILE_LOAD    36
-#define PL_LOAD_CANCEL  37
-#define PL_SAVE	        38
-#define PL_FILE_SAVE	39
-#define PL_SAVE_CANCEL	40
-#define PL_SAVETEX	41
-#define PL_SAVEPS	42
-#define PL_SAVE_OPTIONS	43
+#define PL_NEW		        32
+#define PL_OPEN		        33
+#define PL_FILE_OPEN            34
+#define PL_FILE_CANCEL          35
+#define PL_FILE_LOAD            36
+#define PL_LOAD_CANCEL          37
+#define PL_SAVE	                38
+#define PL_FILE_SAVE	        39
+#define PL_SAVE_CANCEL	        40
+#define PL_SAVETEX	        41
+#define PL_SAVEPS	        42
+#define PL_SAVE_OPTIONS	        43
 #define PL_SAVE_OPTIONS_HEADER  44
-#define PL_SAVE_OPTIONS_CANCEL 45
-#define PL_SAVE_OPTIONS_DONE   46
-#define PL_VIEWFILE	47
-#define PL_HEADER	48
-#define PL_HEADER_OK    49
-#define PL_HEADER_CANCEL 50
-#define PL_PRINT        51
+#define PL_SAVE_OPTIONS_APPLY   45
+#define PL_SAVE_OPTIONS_CLOSE   46
+#define PL_VIEWFILE	        47
+#define PL_HEADER	        48
+#define PL_HEADER_OK            49
+#define PL_HEADER_CANCEL        50
+#define PL_PRINT                51
 
 
-#define PL_BASE		64
-#define PL_EXTREMA	65
-#define PL_EXTREMA_INPUT 66
+#define PL_BASE		  64
+#define PL_EXTREMA	  65
+#define PL_EXTREMA_INPUT  66
 #define PL_EXTREMA_CANCEL 67
-#define PL_ESCAPE	68
+#define PL_ESCAPE	  68
 
 #define PL_DROP		80
 #define PL_PICK		81

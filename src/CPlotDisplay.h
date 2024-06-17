@@ -26,10 +26,10 @@ using namespace std;
 class CPlotDisplay {
   deque<CPlotView*> m_qPV;    // double ended queue of pointers to plot views
   deque<CPlotView*>::iterator m_qiView;  // iterator to current plot view
-  CPlotList* m_pPlotList;     // the plot list
   float m_fAspect;            // plot display desired aspect ratio
 public:
   CPoint m_nMousePt;
+  CPlotList* m_pPlotList;     // the plot list
   char m_szXform[16];
   char m_szYform[16];
 
@@ -55,7 +55,7 @@ public:
   BOOL SetActivePlot (CPlot* p) {return m_pPlotList->SetActive(p);}
   BOOL SetOperandPlot (CPlot* p) {return m_pPlotList->SetOperand(p);}
   char* GetList () {return( m_pPlotList->GetList() );}
-  void DisplayList (CDC* pDC) {m_pPlotList->DisplayList(pDC);}
+//  void DisplayList (CDC* pDC) {m_pPlotList->DisplayList(pDC);}
   void Draw (CDC*);
   vector<float> Logical (CPoint p) {return (*m_qiView)->m_pCt->Logical(p);}
   vector<float> Logical (CRect r) {return (*m_qiView)->m_pCt->Logical(r);}

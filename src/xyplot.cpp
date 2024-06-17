@@ -356,23 +356,19 @@ void StatusButtonEH (Widget w, XtPointer client_data,
       XNextEvent(display, &report);
       if (report.type == ButtonRelease) {
 	// Determine the selected plot number and make it
-	//   the active plot or operand plot depending on the button 
-	int nPlot = (p.x/7 + 1)/3;
-
+	//   the active plot or operand plot depending on the button
+        int nPlot = pMainWnd->m_pDi->m_pPlotList->MapPointToPlotIndex(p);
 	if (event->xbutton.button == 1)
-	  pMainWnd->SelectPlot(nPlot, 1);
-	else
-	  pMainWnd->SelectPlot(nPlot, 2);
+	   pMainWnd->SelectPlot(nPlot, 1);
+        else
+           pMainWnd->SelectPlot(nPlot, 2);
 
-	// cout << event->xbutton.button << ' ' << ' ' << p.x << ' ' << nPlot << '\n';
 	break;
       }
-      else {	
-	;
-      }      
+      else	
+	;      
     }
 }
-
 //--------------------------------------------------------------
 
 void AboutCB (Widget w, void* client_d, void* call_d)

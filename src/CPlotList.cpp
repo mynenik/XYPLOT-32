@@ -1,6 +1,6 @@
 // CPlotList.cpp
 //
-// Copyright (c) 1996--2020 Krishna Myneni
+// Copyright (c) 1996--2024 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
@@ -9,16 +9,15 @@
 
 #include "CPlotList.h"
 #include <string.h>
-#include <stdio.h>
 
-#define MAX_COLORS 32
+//---------------------------------------------------------------
 
 CPlotList::CPlotList()
 {
     m_pHead = NULL;
     m_pActive = NULL;
     m_pOperand = NULL;
-
+    m_nCharWidth = 6;
 }
 //---------------------------------------------------------------
 
@@ -141,7 +140,7 @@ unsigned long CPlotList::NextColor()
 void CPlotList::AddPlot(CPlot* p)
 {
     if (p == NULL) return;
-    int dx = 15, i = 0;
+    int i = 0;
 
     p->SetAttributes(PS_SOLID, 1, NextColor());
 
@@ -169,8 +168,6 @@ void CPlotList::AddPlot(CPlot* p)
     }
 
     node->Plot = p;
-// node->Rgn = new CRgn();
-// node->Rgn->CreateEllipticRgn(i*dx, 0, (i+1)*dx, dx);
     node->Rgn = NULL;
     node->Next = NULL;
     m_pActive = p;
@@ -274,6 +271,27 @@ BOOL CPlotList::SetOperand (CPlot* p)
 }
 //---------------------------------------------------------------
 
+int CPlotList::MapPointToPlotIndex(CPoint p)
+{
+    int half_w = m_nCharWidth/2;
+    int nchars = 3;
+    int offset9 = nchars*m_nCharWidth*9;
+    int xeff = 0;
+    int noffs = 0;
+    if (p.x >= offset9) { 
+      ++nchars;
+      xeff = p.x - offset9;
+      noffs = 9;
+    }
+    else
+      xeff = p.x;
+
+    int idx = (xeff/m_nCharWidth)/nchars;
+    if (idx < 0) idx = 0;    
+    return( idx + noffs);
+}
+//---------------------------------------------------------------
+
 CPlot* CPlotList::Selection (CPoint p)
 {
     // Return pointer to plot if a node's region contains
@@ -293,69 +311,76 @@ CPlot* CPlotList::Selection (CPoint p)
 
 char* CPlotList::GetList ()
 {
-  // Return the current list of plots as a text string
-  //   marked to show the active and operand plots
+// Return the current list of plots as a text string
+//   marked to show the active and operand plots
 
-  static char text_plot_list [80];
-  char* cp = text_plot_list, s[16];
+    static char text_plot_list [128];
+    char* cp = text_plot_list, s[16];
+    const char* fm_a1 = "[%1d]";
+    const char* fm_o1 = "(%1d)";
+    const char* fm_u1 = " %1d ";
+    const char* fm_a2 = "[%2d]";
+    const char* fm_o2 = "(%2d)";
+    const char* fm_u2 = " %2d ";
 
-  int n = Nplots();
-  CPlot* p;
+    int n = Nplots();
+    CPlot* p;
 
-  *cp = '\0';
-
-  for (int i = 0; i < n; i++)
-    {
+    *cp = '\0';
+    char fmt[8];
+  
+    for (int i = 0; i < n; i++) {
       p = (*this)[i];
       if (p == m_pActive)
-	  sprintf(s, "[%1d]", i+1);
+	strcpy(fmt, (i < 10) ? fm_a1 : fm_a2);
       else if (p == m_pOperand)
-	sprintf(s, "(%1d)", i+1);
+	strcpy(fmt, (i < 10) ? fm_o1 : fm_o2);
       else
-	sprintf(s, " %1d ", i+1);
+	strcpy(fmt, (i < 10) ? fm_u1 : fm_u2);
 
+      sprintf(s, fmt, i+1);
       strcat(cp, s);
     }
 
-  return cp;
+    return cp;
 }
 //---------------------------------------------------------------
 
-void CPlotList::DisplayList (CDC* pDC)
-{
-    // Display the plot list as a series of colored circles
-
-    PlotListNode* node = m_pHead;
-/*
-    CBrush *pBrush, *pOldBrush, *pEraseBrush;
-
-    pEraseBrush = new CBrush (RGB(255,255,255));
-
-    while (node)
-    {
-        pBrush = new CBrush (node->Plot->GetColor());
-        pOldBrush = pDC->SelectObject(pBrush);
-
-        pDC->FillRgn(node->Rgn, pEraseBrush);
-
-        if (node->Plot == m_pActive)
-            pDC->PaintRgn(node->Rgn);
-        else if (node->Plot == m_pOperand)
-            pDC->FrameRgn(node->Rgn, pBrush, 3, 3);
-        else
-            pDC->FrameRgn(node->Rgn, pBrush, 1, 1);
-
-
-        pDC->SelectObject(pOldBrush);
-
-        delete pBrush;
-
-        node = node->Next;
-    }
-
-    delete pEraseBrush;
-*/
-}
+// void CPlotList::DisplayList (CDC* pDC)
+// {
+// Display the plot list as a series of colored circles
+//
+//    PlotListNode* node = m_pHead;
+//
+//    CBrush *pBrush, *pOldBrush, *pEraseBrush;
+//
+//    pEraseBrush = new CBrush (RGB(255,255,255));
+//
+//    while (node)
+//    {
+//        pBrush = new CBrush (node->Plot->GetColor());
+//        pOldBrush = pDC->SelectObject(pBrush);
+//
+//        pDC->FillRgn(node->Rgn, pEraseBrush);
+//
+//        if (node->Plot == m_pActive)
+//            pDC->PaintRgn(node->Rgn);
+//        else if (node->Plot == m_pOperand)
+//            pDC->FrameRgn(node->Rgn, pBrush, 3, 3);
+//        else
+//            pDC->FrameRgn(node->Rgn, pBrush, 1, 1);
+//
+//
+//        pDC->SelectObject(pOldBrush);
+//
+//        delete pBrush;
+//
+//        node = node->Next;
+//    }
+//
+//    delete pEraseBrush;
+//
+// }
 //---------------------------------------------------------------
 
 void CPlotList::Draw(CDC* pDC)

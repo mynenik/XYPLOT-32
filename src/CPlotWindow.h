@@ -129,7 +129,6 @@ public:
 // void OnView3DCartesian ();
         void OnAspect ();
 // void OnRotate ();
-        void OnRefresh ();
         void OnBack ();
         void OnForward ();
         void OnDeleteView ();

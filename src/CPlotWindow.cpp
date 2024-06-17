@@ -56,7 +56,6 @@ extern void EditMenuCB (Widget, void*, void*);
 extern void PlotMenuCB (Widget, void*, void*);
 extern void MathMenuCB (Widget, void*, void*);
 extern void ForthCB (Widget, void*, void*);
-// extern void SaveOptionsCB (Widget, void*, void*);
 extern void RadioToggledCB (Widget, void*, void*);
 
 extern Widget TopLevel;
@@ -205,7 +204,6 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
     XmNlabelString, str1,
     XmNalignment, XmALIGNMENT_BEGINNING,
     XmNleftAttachment, XmATTACH_FORM,
-    XmNrightAttachment, XmATTACH_FORM,
     XmNbottomAttachment, XmATTACH_WIDGET,
     XmNbottomWidget, XtParent(m_nForthShell),
     NULL);
@@ -243,6 +241,13 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   pDc->OpenDisplay(XtDisplay(m_nPlotWindow), XtWindow(m_nPlotWindow));
   m_pDc = pDc;
+
+  // Setup the plot colors
+
+  m_pDc->SetColors(colors_rgb_table, color_names, MAX_COLORS);
+  SetBackgroundColor(strcpy(s1,"DarkGrey"));
+  SetForegroundColor(strcpy(s1,"black"));
+
 
   // Make the menus
 
@@ -600,12 +605,6 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 	XmNdialogStyle, XmDIALOG_FULL_APPLICATION_MODAL, 
 	NULL);
 
-  // Setup the plot colors
-
-  m_pDc->SetColors(colors_rgb_table, color_names, MAX_COLORS);
-  SetBackgroundColor(strcpy(s1,"DarkGrey"));
-  SetForegroundColor(strcpy(s1,"black"));
-
   OnFileNew();
 }
 //---------------------------------------------------------------
@@ -671,14 +670,10 @@ void CPlotWindow::OnReset ()
     Invalidate ();
 }
 //--------------------------------------------------------------
-void CPlotWindow::OnRefresh()
-{
-    Invalidate();
-}
 
 void CPlotWindow::Invalidate()
 {
-  m_pDc->ClearDisplay();
+    m_pDc->ClearDisplay();
 }
 
 void CPlotWindow::OnBack ()
@@ -943,12 +938,12 @@ void CPlotWindow::SelectPlot (int plot_index, int select_type)
   if (plot_index >= 0 && plot_index < m_pDi->Nplots())
     {
       CPlot* p = (*m_pDi)[plot_index];
-
-      if (select_type == 1)
+      if (select_type == 1) {
 	m_pDi->SetActivePlot(p);
-      else
+      }
+      else {
 	m_pDi->SetOperandPlot(p);
-
+      }
       WriteStatusMessage(m_pDi->GetList());
     }
   return ;
@@ -1007,7 +1002,6 @@ void CPlotWindow::WriteStatusMessage(char* msg)
 {
   // Write a message to the status bar. This
   //   routine is generally used by the CPlotList object.
-
   char s[32];
   XmString Message = XmStringCreate(msg, strcpy(s, "Helvetica14pt"));
   XtVaSetValues(m_nStatusBar,
@@ -1302,8 +1296,6 @@ void CPlotWindow::OnDelete()
         m_pDi->ResetExtrema();
         Invalidate();
     }
-
-
 }
 //---------------------------------------------------------------
 
@@ -1331,14 +1323,11 @@ void CPlotWindow::OnDuplicate()
 
 void CPlotWindow::OnPick()
 {
-
   int nsets = m_pDb->Nsets();
-  if (nsets == 0)
-    {
+  if (nsets == 0) {
       MessageBox ("There are no datasets in the database.");
-    }
-  else
-    {
+  }
+  else {
       char** sp = new char* [nsets];
       int i;
 
@@ -1389,9 +1378,9 @@ void CPlotWindow::OnPickData()
 
 void CPlotWindow::OnDrop()
 {
-	m_pDi->DeletePlot();
-	m_pDi->ResetExtrema();
-	Invalidate();
+    m_pDi->DeletePlot();
+    m_pDi->ResetExtrema();
+    Invalidate();
 }
 //---------------------------------------------------------------
 

@@ -2,7 +2,7 @@
 \
 \ String utility words for kForth
 \
-\ Copyright (c) 1999--2022 Krishna Myneni
+\ Copyright (c) 1999--2024 Krishna Myneni
 \
 \ This software is provided under the terms of the
 \ GNU General Public License.
@@ -11,40 +11,84 @@
 \
 \ Glossary:
 \
-\  	SCAN        ( a1 u1 c -- a2 u2 )
-\ 	SKIP        ( a1 u1 c -- a2 u2 )
-\       REPLACE-CHAR ( a u c1 c2 -- a u )
+\  Create a string constant
+\       $CONSTANT ( a1 u1 "name" -- )
 \
-\ 	PARSE_TOKEN ( a u -- a2 u2 a3 u3 )
-\ 	PARSE_LINE  ( a u -- a1 u1 a2 u2 ... an un n )
-\ 	PARSE_ARGS  ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
-\       PARSE_CSV   ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
+\  Character tests and conversions
 \ 	IS_LC_ALPHA ( c -- b )
 \ 	ISDIGIT     ( c -- b )
 \ 	UCASE       ( c1 -- c2 )
 \
+\  String search and replace primitives
+\  	SCAN        ( a1 u1 c -- a2 u2 )
+\ 	SKIP        ( a1 u1 c -- a2 u2 )
+\       REPLACE-CHAR ( a u c1 c2 -- a u )
+\
+\  Copy a string to a counted string
+\       PACK        ( a u a2 -- )
+\       PLACE       ( a u a2 -- )  same as PACK
+\
 \ 	STRCPY      ( ^str a -- )
 \ 	STRLEN      ( a -- u )
-\
 \ 	STRBUFCPY   ( ^str1 -- ^str2 )
+
+\  LMI Forth STRx words
 \ 	STRCAT      ( a1 u1 a2 u2 -- a3 u3 )
 \ 	STRPCK      ( a u -- ^str )
 \
-\ 	U>STRING    ( u -- ^str )
-\ 	UD>STRING   ( ud -- ^str )
-\ 	S>STRING    ( n -- ^str )
-\ 	D>STRING    ( d -- ^str )
-\ 	STRING>UD   ( ^str -- ud )
+\  String parsing primitives
+\ 	PARSE_TOKEN ( a u -- a2 u2 a3 u3 )
+\ 	PARSE_LINE  ( a u -- a1 u1 a2 u2 ... an un n )
+\
+\  Counted string to Base 10 single and double integer conversions
 \ 	STRING>S    ( ^str -- n )
+\ 	STRING>UD   ( ^str -- ud )
 \ 	STRING>D    ( ^str -- d )
 \
+\  Single and double integer to Base 10 counted string conversions
+\ 	U>STRING    ( u -- ^str )
+\ 	S>STRING    ( n -- ^str )
+\ 	UD>STRING   ( ud -- ^str )
+\ 	D>STRING    ( d -- ^str )
+\
+\  Floating point number to scientific and fixed point string conversion
 \ 	F>STRING    ( n -- ^str ) ( F: r -- ) | ( r n -- ^str )
 \ 	F>FPSTR     ( n -- a u )  ( F: r -- ) | ( r n -- a u )
-\ 	F.RD        ( w n -- )    ( F: r -- ) | ( r w n -- )
+\
+\  Counted string to floating point number conversion
 \ 	STRING>F    ( ^str -- )   ( F: -- r ) | ( ^str -- r )
+\
+\  Formatted floating point output
+\ 	F.RD        ( w n -- )    ( F: r -- ) | ( r w n -- )
+\
+\  String parsing and conversion to multiple floating point values
+\ 	PARSE_ARGS  ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
+\       PARSE_CSV   ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
+\
 \ 	
 BASE @
 DECIMAL
+
+\ Create a new allocated and initialized fixed string
+\ from an existing string which may be transient in 
+\ memory or mutable.
+: $constant  ( a u <name> -- )
+    dup allocate IF -59 throw THEN
+    swap 2dup 2>r cmove 2r> 2constant ;
+
+
+\ Return true if c is a lower case alphabetical character
+: is_lc_alpha ( c -- b )
+	[char] a [ char z 1+ ] literal within ;	
+
+\ Return true if c is ascii value of '0' through '9'	
+: isdigit ( c -- b )
+	[char] 0 [ char 9 1+ ] literal within ;
+
+\ Change alphabet character to upper case
+: ucase ( c1 -- c2 )
+	dup [CHAR] a [ CHAR z 1+ ] literal within
+	IF 95 and THEN ;
 
 \ Search for first occurrence of character c in a string:
 \   a1 u1 is the string to be searched
@@ -73,95 +117,85 @@ DECIMAL
     LOOP
     drop 2drop ;
 
-\ Parse next token from the string separated by a blank:
-\   a2 u2 is the remaining substring
-\   a3 u3 is the token string
-: parse_token ( a u -- a2 u2 a3 u3)
-	BL SKIP 2DUP BL SCAN 2>R R@ - 2R> 2SWAP ;
+\ Copy string to counted string at a2
+: pack ( a u a2 -- )
+    2dup c! char+ swap cmove ;
 
-: parse_line ( a u -- a1 u1 a2 u2 ... n )
-	( -trailing)
-	0 >r
-	BEGIN
-	  parse_token
-	  dup
-	WHILE
-	  r> 1+ >r
-	  2swap
-	REPEAT  
-	2drop 2drop r> ;
+synonym place pack
 
-\ Return true if c is a lower case alphabetical character
-: is_lc_alpha ( c -- b )
-	[char] a [ char z 1+ ] literal within ;	
-
-\ Return true if c is ascii value of '0' through '9'	
-: isdigit ( c -- b )
-	[char] 0 [ char 9 1+ ] literal within ;
-
-\ Change alphabet character to upper case
-: ucase ( c1 -- c2 )
-	dup [CHAR] a [ CHAR z 1+ ] literal within
-	IF 95 and THEN ;
-
-\ Copy a counted string to address a
+\ Copy a counted string to address a.
+\ Does not append null terminator.
 : strcpy ( ^str a -- )
-	>r dup c@ 1+ r> swap cmove ;
+    over c@ 1+ cmove ;
 
 \ Length of a null-terminated string
 : strlen ( addr -- u )
-	0
-	BEGIN over c@
-	WHILE 1+ >r 1+ r>
-	REPEAT
-	nip ;
+    0
+    BEGIN over c@
+    WHILE 1+ swap 1+ swap
+    REPEAT
+    nip ;
 
 \ Circular String Buffer
 
 16384 constant STR_BUF_SIZE
 create string_buf STR_BUF_SIZE allot
+string_buf STR_BUF_SIZE + constant STR_BUF_PTR_MAX
 variable str_buf_ptr
 string_buf str_buf_ptr !
 
 \ Adjust current pointer to accomodate u bytes.
 \ This word is for internal use only.
 : adjust_str_buf_ptr ( u -- )
-	str_buf_ptr a@ swap +
-	string_buf STR_BUF_SIZE + >=
-	IF
-	  string_buf str_buf_ptr !	\ wrap pointer
-	THEN ;
-
-\ Copy a counted string to the circular string buffer
-: strbufcpy ( ^str1 -- ^str2 )
-	dup c@ 1+ dup adjust_str_buf_ptr
-	swap str_buf_ptr a@ strcpy
-	str_buf_ptr a@ dup rot + str_buf_ptr ! ;
+   dup STR_BUF_SIZE >= IF -9 throw  \ string buffer not big enough
+   ELSE
+     str_buf_ptr a@ + STR_BUF_PTR_MAX >=
+     IF  string_buf str_buf_ptr !  THEN    \ wrap pointer
+   THEN ;
 
 \ Concatenate two strings. Return the concatenated string
 \ which is stored in the circular buffer and has limited
-\ persistence.
+\ persistence. Input strings are not modified.
 : strcat ( a1 u1 a2 u2 -- a3 u3 )
-	rot 2dup + 1+ adjust_str_buf_ptr 
-	-rot
-	2swap dup >r
-	str_buf_ptr a@ swap cmove
-	str_buf_ptr a@ r@ +
-	swap dup r> + >r
-	cmove 
-	str_buf_ptr a@
-	dup r@ + 0 swap c!
-	dup r@ + 1+ str_buf_ptr !
-	r> ;
+   2 pick 2dup + 1+ adjust_str_buf_ptr drop
+   2over  str_buf_ptr a@   swap cmove  \ a1 u2 a2 u2
+   tuck                                \ a1 u1 u2 a2 u2
+   3 pick str_buf_ptr a@ + swap cmove  \ a1 u1 u2 
+   + nip  str_buf_ptr a@   swap        \ abuf u1+u2  
+   2dup + 0 over c!                    \ ( null terminate )
+   1+ str_buf_ptr ! ;
 
-\ Make a counted string in the circular buffer from a string
+\ Make a counted string in the circular buffer from a string.
+\ Input string is not modified.
 : strpck ( a u -- ^str )
-	255 min dup 1+ adjust_str_buf_ptr 
-	dup str_buf_ptr a@ c!
-	tuck str_buf_ptr a@ 1+ swap cmove
-	str_buf_ptr a@ over + 1+ 0 swap c!
-	str_buf_ptr a@
-	dup rot 1+ + str_buf_ptr ! ;
+   255 min dup 2+ adjust_str_buf_ptr   \ a ulim
+   2dup str_buf_ptr a@ 2dup c!         \ a ulim a ulim abuf
+   1+ swap cmove nip                   \ ulim 
+   str_buf_ptr a@ tuck + 1+            \ abuf abuf2 
+   0 over c!                           \ ( null terminate )
+   1+ str_buf_ptr ! ;
+
+\ Copy a counted string to the circular string buffer.
+\ Return address of the copied cs. Input cs is not modified. 
+: strbufcpy ( ^str1 -- ^str2 )  count strpck ;
+
+\ Parse next token from the string separated by a blank:
+\   a2 u2 is the remaining substring
+\   a3 u3 is the token string
+: parse_token ( a u -- a2 u2 a3 u3)
+   bl skip 2dup bl scan 2>r r@ - 2r> 2swap ;
+
+: parse_line ( a u -- a1 u1 a2 u2 ... n )
+   ( -trailing)
+   0 >r
+   BEGIN
+     parse_token
+     dup
+   WHILE
+     r> 1+ >r
+     2swap
+   REPEAT  
+   2drop 2drop r> ;
 
 \ Base 10 number to string conversions and vice-versa
 

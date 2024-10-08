@@ -2,7 +2,7 @@
 //
 //  Forth Byte Codes (FBC) for kForth
 //
-//  Copyright (c) 1996--2022 Krishna Myneni,
+//  Copyright (c) 1996--2024 Krishna Myneni,
 //    <krishna.myneni@ccreweb.org>
 //
 //  This software is provided under the terms of the GNU
@@ -121,7 +121,7 @@
 #define OP_J                    106
 #define OP_BRACKETTICK          107
 #define OP_FVARIABLE            108
-#define OP_2STORE               109
+#define OP_2STORE		109
 #define OP_FIND                 110
 #define OP_CONSTANT             111
 #define OP_IMMEDIATE            112
@@ -133,8 +133,8 @@
 #define OP_VARIABLE             118
 #define OP_WORDS                119
 #define OP_DOES                 120
-#define OP_2VAL                 121
-#define OP_2FETCH               122
+#define OP_2VAL			121
+#define OP_2FETCH		122
 #define OP_SEARCH               123
 #define OP_OR                   124
 #define OP_COMPARE              125
@@ -312,10 +312,10 @@
 #define OP_TONUMBER             297
 #define OP_NUMBERQUERY          298
 #define OP_SLITERAL             299
-#define OP_FLITERAL             300
-#define OP_2VARIABLE            301
-#define OP_2CONSTANT            302
-
+#define OP_FLITERAL		300
+#define OP_2VARIABLE		301
+#define OP_2CONSTANT		302
+#define OP_SYNONYM              303
 #define OP_TOFILE               304
 #define OP_CONSOLE              305
 #define OP_LOOP                 306
@@ -358,10 +358,10 @@
 #define OP_PREVIOUS             343
 #define OP_FORTH                344
 #define OP_ASSEMBLER            345
-#define OP_TRAVERSE_WORDLIST    346
-#define OP_NAME2STRING          347
-#define OP_NAME2INTERPRET       348
-#define OP_NAME2COMPILE         349
+#define OP_TRAVERSE_WORDLIST	346
+#define OP_NAME2STRING		347
+#define OP_NAME2INTERPRET	348
+#define OP_NAME2COMPILE		349
 #define OP_DEFINED              350
 #define OP_UNDEFINED            351
 #define OP_BRACKET_IF           352
@@ -405,9 +405,11 @@
 #define OP_XSIZE                390
 #define OP_XCSIZE               391
 #define OP_XCHARPLUS            392
-#define OP_XCFETCHPLUS          393
+#define OP_XCFETCHPLUS          393  
 #define OP_XCSTOREPLUS          394
 #define OP_XCSTOREPLUSQUERY     395
+#define OP_FIND_NAME_IN         396
+#define OP_FIND_NAME            397
 
 #define OP_BOOL_NOT             400
 #define OP_BOOL_AND             401
@@ -433,6 +435,13 @@
 #define OP_SFLOATPLUS           421
 #define OP_FLOATS               422
 #define OP_FLOATPLUS            423
+#define OP_FPLUSSTORE           424
+#define OP_PI                   425
+#define OP_FSQUARE              426
+#define OP_STARPLUS             427
+#define OP_FSTARPLUS            428
+
+#define OP_FSL_MAT_ADDR         430   // row ordered indexing
 
 // Windows specific opcodes
 #define OP_VALLOC               450
@@ -440,4 +449,3 @@
 #define OP_VPROTECT             452
 
 #endif
-

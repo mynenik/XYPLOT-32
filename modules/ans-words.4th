@@ -2,7 +2,7 @@
 \
 \ Some ANS Forth words which are not a part of the intrinsic
 \ dictionary of kForth are implemented here in source code.
-\ Use with kForth version 1.4.x or higher.
+\ Use with kForth version 2.4.x or higher.
 \
 \ Some other words, which are not part of the ANS specification,
 \ but which are so commonly used that they are effectively
@@ -17,7 +17,7 @@
 \     ansi.4th 
 \     dump.4th
 \
-\ Copyright (c) 2002--2022 Krishna Myneni
+\ Copyright (c) 2002--2024 Krishna Myneni
 \
 \ Provided under the GNU Lesser General Public License (LGPL)
 \
@@ -53,6 +53,9 @@
 \   2021-08-14  km  fix of FP@ required change to F~
 \   2021-09-18  km  replace instances of ?ALLOT with ALLOT?
 \   2022-01-02  km  use VMTHROW as default exception handler.
+\   2022-01-12  km  add quotation words, [: and ;]
+\   2022-09-26  km  updated TO and VALUE ; added FVALUE and 2VALUE
+\   2024-08-06  km  removed source def of SYNONYM; now intrinsic  
 BASE @
 DECIMAL
 
@@ -65,8 +68,45 @@ DECIMAL
 
 CREATE PAD 512 ALLOT
 
-: TO ' >BODY STATE @ IF POSTPONE LITERAL POSTPONE ! ELSE ! THEN ; IMMEDIATE
-: VALUE CREATE 1 CELLS allot? ! IMMEDIATE DOES> POSTPONE LITERAL POSTPONE @ ;
+\ Implementation of TO and VALUE defining words
+\ are kForth-specific.
+
+: TO ( i*x "name" -- ) \ or ( F: i*r -- ) ( "name" -- )
+    ' >body
+    dup a@ swap cell+
+    state @ IF
+      postpone literal
+      name>compile execute
+    ELSE
+      swap name>interpret execute
+    THEN ; immediate
+
+: xVALUE ( i*x nt-put usize -- ) ( F: j*r -- )
+    create 1 cells + allot?  \ -- i*x nt-put a
+    2dup ! cell+ swap name>interpret execute immediate nondeferred
+;
+
+: VALUE ( n "name" -- )
+    [ s" !" find-name ] literal 1 cells xVALUE
+    does> cell+ state @ if postpone literal postpone @ 
+      else @ then ;
+
+: 2VALUE ( x1 x2 "name" -- )
+    [ s" 2!" find-name ] literal 2 cells xVALUE
+    does> cell+ state @ if postpone literal postpone 2@ 
+      else 2@ then ;
+
+: FVALUE ( F: r -- ) ( "name" -- )
+    [ s" F!" find-name ] literal 1 floats xVALUE
+    does> cell+ state @ if postpone literal postpone f@ 
+      else f@ then ;
+
+\ PTR is a nonstandard word commonly used by kForth programs.
+: PTR ( a "name" -- )
+    [ s" !" find-name ] literal 1 cells xVALUE
+    does> cell+ state @ if postpone literal postpone a@ 
+      else a@ then ;
+
 
 \ ============== Alignment words: from CORE and Extended Wordsets
 : UNITS-ALIGNED ( a xt -- a' )
@@ -119,10 +159,6 @@ CREATE PAD 512 ALLOT
    0= IF POSTPONE [ELSE] THEN ;  IMMEDIATE
 
 : [THEN]  ( -- )  ;  IMMEDIATE
-
-\ Forth-2012 Programming Tools 15.6.2.2264
-: SYNONYM ( "<newname>" "<oldname>" -- )
-   CREATE ' 1 CELLS allot? ! DOES> a@ EXECUTE ; 
 
 \ ============ From the FLOATING EXT wordset
 
@@ -224,8 +260,9 @@ variable excpt-frames
     ELSE
       ' DEFER@
     THEN ; IMMEDIATE
- 
-\ === Non-standard words commonly needed for kForth programs ===
-: PTR ( a "name" -- ) CREATE 1 CELLS allot? ! DOES> a@ ;
 
+: [: postpone [ :noname ; immediate
+
+: ;] postpone ; ] postpone literal ; immediate
+ 
 BASE !

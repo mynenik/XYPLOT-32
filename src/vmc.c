@@ -3,7 +3,7 @@ vmc.c
 
   C portion of the kForth Virtual Machine
 
-  Copyright (c) 1998--2022 Krishna Myneni, 
+  Copyright (c) 1998--2024 Krishna Myneni, 
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the GNU
@@ -11,9 +11,7 @@ vmc.c
 
 */
 
-#ifndef _WIN32_
 #define _GNU_SOURCE
-#endif
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -31,6 +29,7 @@ vmc.c
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <malloc.h>
 #include <math.h>
 #include "fbc.h"
 #include "VMerrors.h"
@@ -42,12 +41,12 @@ vmc.c
 
 #define byte unsigned char
 
-/*  Provided by ForthVM.cpp  */
-extern int* GlobalSp;
+//  Provided by ForthVM.cpp
+extern long int* GlobalSp;
 extern byte* GlobalIp;
-extern int* GlobalRp;
-extern int* BottomOfStack;
-extern int* BottomOfReturnStack;
+extern long int* GlobalRp;
+extern long int* BottomOfStack;
+extern long int* BottomOfReturnStack;
 #ifndef __FAST__
 extern byte* GlobalTp;
 extern byte* GlobalRtp;
@@ -57,40 +56,37 @@ extern byte* BottomOfReturnTypeStack;
 extern int CPP_bye();
 
 // Provided by vmxx-common.s
-extern int Base;
-extern int State;
+extern long int Base;
+extern long int State;
 extern char* pTIB;
-extern int NumberCount;
-extern int  JumpTable[];
+extern long int NumberCount;
+extern long int JumpTable[];
 extern char WordBuf[];
 extern char TIB[];
 extern char NumberBuf[];
 
-/*  Provided by vmxx.s/vmxx-fast.s  */
-extern int L_dnegate();
-extern int L_dplus();
-extern int L_dminus();
-extern int L_udmstar();
-extern int L_utmslash();
-extern int L_uddivmod();
-extern int L_quit();
-extern int L_abort();
-extern int vm(byte*);
+//  Provided by vmxx.s/vmxx-fast.s
+int L_dnegate();
+int L_dplus();
+int L_dminus();
+int L_udmstar();
+int L_uddivmod();
+int L_utmslash();
+int L_quit();
+int L_abort();
+int vm(byte*);
 
-#ifdef _WIN32_
-unsigned long int ForthStartTime;
-#else
 struct timeval ForthStartTime;
 struct termios tios0;
-char key_query_char = 0;
-#endif
+struct mallinfo ForthStartMem;
 double* pf;
 double f;
 char temp_str[256];
+char key_query_char = 0;
 
 /*  signal dispatch table  */
 
-void* signal_xtmap [32] =
+void** signal_xtmap [32] =
 {
     NULL,              //  1  SIGHUP, Hangup
     NULL,              //  2  SIGINT, Interrupt
@@ -128,35 +124,6 @@ void* signal_xtmap [32] =
 
 static void forth_signal_handler (int, siginfo_t*, void*); 
 
-#define DOUBLE_FUNC(x)   pf = (double*)(GlobalSp+1); *pf=x(*pf);
-  
-int C_ftan  () { DOUBLE_FUNC(tan)  return 0; }
-int C_facos () { DOUBLE_FUNC(acos) return 0; }
-int C_fasin () { DOUBLE_FUNC(asin) return 0; }
-int C_fatan () { DOUBLE_FUNC(atan) return 0; }
-int C_fsinh () { DOUBLE_FUNC(sinh) return 0; }
-int C_fcosh () { DOUBLE_FUNC(cosh) return 0; }
-int C_ftanh () { DOUBLE_FUNC(tanh) return 0; }
-int C_fasinh () { DOUBLE_FUNC(asinh) return 0; }
-int C_facosh () { DOUBLE_FUNC(acosh) return 0; }
-int C_fatanh () { DOUBLE_FUNC(atanh) return 0; }
-int C_fexp  () { DOUBLE_FUNC(exp)   return 0; }
-int C_fexpm1() { DOUBLE_FUNC(expm1) return 0; }
-int C_fln   () { DOUBLE_FUNC(log)   return 0; }
-int C_flnp1 () { DOUBLE_FUNC(log1p) return 0; }
-int C_flog  () { DOUBLE_FUNC(log10) return 0; }
-#ifndef _WIN32_
-int C_falog () { DOUBLE_FUNC(exp10) return 0; }
-#else
-int C_falog ()
-{
-     pf = (double*)(GlobalSp + 1);
-     f = *pf;
-     *pf = pow(10., f);
-     return 0;
-}
-#endif
-
 // powA  is copied from the source of the function pow() in paranoia.c,
 //   at  http://www.math.utah.edu/~beebe/software/ieee/ 
 double powA(double x, double y) /* return x ^ y (exponentiation) */
@@ -185,6 +152,25 @@ double powA(double x, double y) /* return x ^ y (exponentiation) */
     if (flip) { xy = 1. / xy; ey = -ey; }
     return ldexp(xy, ey);
 } 
+
+#define DOUBLE_FUNC(x)   pf = (double*)(GlobalSp+1); *pf=x(*pf);
+  
+int C_ftan  () { DOUBLE_FUNC(tan)  return 0; }
+int C_facos () { DOUBLE_FUNC(acos) return 0; }
+int C_fasin () { DOUBLE_FUNC(asin) return 0; }
+int C_fatan () { DOUBLE_FUNC(atan) return 0; }
+int C_fsinh () { DOUBLE_FUNC(sinh) return 0; }
+int C_fcosh () { DOUBLE_FUNC(cosh) return 0; }
+int C_ftanh () { DOUBLE_FUNC(tanh) return 0; }
+int C_fasinh () { DOUBLE_FUNC(asinh) return 0; }
+int C_facosh () { DOUBLE_FUNC(acosh) return 0; }
+int C_fatanh () { DOUBLE_FUNC(atanh) return 0; }
+int C_fexp  () { DOUBLE_FUNC(exp)   return 0; }
+int C_fexpm1() { DOUBLE_FUNC(expm1) return 0; }
+int C_fln   () { DOUBLE_FUNC(log)   return 0; }
+int C_flnp1 () { DOUBLE_FUNC(log1p) return 0; }
+int C_flog  () { DOUBLE_FUNC(log10) return 0; }
+int C_falog () { DOUBLE_FUNC(exp10) return 0; }
 
 int C_fpow ()
 {
@@ -243,7 +229,8 @@ int C_lseek ()
 {
   /* stack: ( fd offset mode -- error | set file position in fd ) */
 
-  int fd, offset, mode;
+  int fd, mode;
+  unsigned long int offset;
   DROP
   mode = TOS;
   DROP
@@ -275,12 +262,12 @@ int C_read ()
   void* buf;
 
   DROP
-  count = TOS;
+  count = (int)(TOS);
   DROP
   CHK_ADDR
   buf = *((void**)GlobalSp);
   DROP
-  fd = TOS;
+  fd = (int)(TOS);
   PUSH_IVAL( read (fd, buf, count) )
   return 0;
 }
@@ -314,7 +301,7 @@ int C_fsync ()
   PUSH_IVAL( fsync(fd) )
   return 0;
 }
-
+ 
 int C_ioctl ()
 {
   /* stack: ( fd request addr -- err | device control function ) */
@@ -336,8 +323,8 @@ int C_ioctl ()
 int C_dlopen ()
 {
    /* stack: ( azLibName flag -- handle | NULL) */
-   unsigned flags;
-   int handle;
+   unsigned long flags;
+   long int handle;
    char *pLibName;
 
    DROP
@@ -346,7 +333,7 @@ int C_dlopen ()
    CHK_ADDR
    pLibName = *((char**) GlobalSp);  // pointer to a null-terminated string
 
-   handle = (int) dlopen((const char*) pLibName, flags);
+   handle = (long int) dlopen((const char*) pLibName, flags);
    PUSH_IVAL(handle)
    return 0;
 }
@@ -356,14 +343,14 @@ int C_dlerror ()
    /* stack: ( -- addrz) ; Returns address of null-terminated string*/
    char *errMsg;
    errMsg = dlerror();
-   PUSH_ADDR((int) errMsg)
+   PUSH_ADDR((long int) errMsg)
    return 0;
 }
 
 int C_dlsym ()
 {
     /* stack: ( handle azsymbol -- addr ) */
-    int handle;
+    long int handle;
     char *pSymbol;
     void *pSymAddr;
 
@@ -374,14 +361,14 @@ int C_dlsym ()
     handle = TOS;
 
     pSymAddr = dlsym((void*)handle, (const char*) pSymbol);
-    PUSH_ADDR((int) pSymAddr)
+    PUSH_ADDR((long int) pSymAddr)
     return 0;
 }
 
 int C_dlclose ()
 {
     /* stack: ( handle -- error | 0) */
-    int handle;
+    long int handle;
     INC_DSP
     handle = TOS;
     TOS = dlclose((void*)handle);
@@ -489,7 +476,7 @@ int C_accept ()
   /* stack: ( a n1 -- n2 | wait for n characters to be received ) */
 
   char *cp, *cpstart, *bksp = "\010 \010";
-  int n1, n2, nr;
+  long int n1, n2, nr;
   struct termios t1, t2;
 
   DROP
@@ -537,14 +524,15 @@ int C_accept ()
   return 0;
 }
 /*----------------------------------------------------------*/
-
+#ifndef _WIN32_
 char* strupr (char* p)
 {
 /* convert string to upper case  */
-  char* p0 = p;
-  while (*p) {*p = toupper(*p); ++p;}
-  return p0;
+  char* cp = p;
+  while (*cp) {*cp = toupper(*cp); ++cp;}
+  return p;
 }
+#endif
 
 char* ExtractName (char* str, char* name)
 {
@@ -579,7 +567,12 @@ Check the string token to see if it is an LMI style floating point
 number; if so set the value of *p and return True, otherwise
 return False.
 */
-    char *pStr = token;
+    char s[256];
+    char *pStr = &s[0];
+    char *pEnd;
+    int f = FALSE;
+
+    strcpy(s, token);
 
     if (strchr(pStr, 'E'))
     {
@@ -593,13 +586,19 @@ return False.
             /* LMI Forth style */
 
             --pStr;
-            if (*pStr == 'E') *pStr = '\0';
-            *p = atof(token);
-            return TRUE;
-        }
+            if ((*pStr == '+') || (*pStr == '-')) {
+              *pStr = '\0';
+              --pStr;
+            }
+            if (pStr > &s[0]) {
+              if (*pStr == 'E') *pStr = '\0';
+            }
+            *p = strtod(s, &pEnd);
+             if (*pEnd == 0) f = TRUE;
+	}
     }
 
-    return FALSE;
+    return f;
 }
 /*----------------------------------------------------------*/
 
@@ -612,18 +611,17 @@ int isBaseDigit (int c)
 }
 /*---------------------------------------------------------*/
 
-int IsInt (char* token, int* p)
+int IsInt (char* token, long int* p)
 {
 /* Check the string token to see if it is an integer number;
    if so set the value of *p and return True, otherwise return False. */
 
-  int b = FALSE, sign = FALSE;
-  unsigned u = 0;
+  int b = FALSE;
+  unsigned long u = 0;
   char *pStr = token, *endp;
 
   if ((*pStr == '-') || isBaseDigit(*pStr))
     {
-      if (*pStr == '-') {sign = TRUE;}
       ++pStr;
       while (isBaseDigit(*pStr))	    
 	{
@@ -657,7 +655,7 @@ int C_word ()
     }
   if (*pTIB)
     {
-      int count = 0;
+      long int count = 0;
       while (*pTIB)
 	{
 	  if (*pTIB == delim) break;
@@ -672,19 +670,19 @@ int C_word ()
     {
       *WordBuf = 0;
     }
-  PUSH_ADDR((int) WordBuf)
+  PUSH_ADDR((long int) WordBuf)
   return 0;
 }
 
 // PARSE  ( char "ccc<char>" -- c-addr u )
 // Parse text delimited by char; return string address and count.
-// Forth-94 Core Extensions wordset 6.2.2008
+// Forth 2012 Core Extensions wordset 6.2.2008
 int C_parse ()
 {
   DROP
   char delim = TOS;
   char *cp = pTIB;
-  int count = 0;
+  long int count = 0;
   if (*pTIB)
     {
 
@@ -700,12 +698,34 @@ int C_parse ()
   PUSH_IVAL(count)
   return 0;
 }
+
+// PARSE-NAME  ( "<spaces>name<space>" -- c-addr u )
+// Skip leading spaces and parse name delimited by space;
+//   return string address and count.
+// Forth 2012 Core Extensions wordset 6.2.2020
+int C_parsename ()
+{
+  long int count = 0;
+  char *cp = pTIB;
+  const char* delim = "\t ";
+  // Skip leading delimiters
+  while (*pTIB && strchr(delim, *pTIB)) ++pTIB;
+  cp = pTIB;
+  while (*pTIB && (strchr(delim, *pTIB) == NULL)) {
+    ++pTIB;
+    ++count;
+  }  
+  PUSH_ADDR((long int) cp)
+  PUSH_IVAL(count)
+  return 0;
+}
+
 /*----------------------------------------------------------*/
 
 int C_trailing ()
 {
   /* stack: ( a n1 -- a n2 | adjust count n1 to remove trailing spaces ) */
-  int n1;
+  long int n1;
   char *cp;
   DROP
   n1 = TOS;
@@ -755,7 +775,7 @@ int C_sharp()
   DEC_DSP
   TOS = uq1;
   DEC_DSP
-	
+
   ch = (urem < 10) ? (urem + 48) : (urem + 55);
   ++NumberCount;
   NumberBuf[255 - NumberCount] = ch;
@@ -768,7 +788,7 @@ int C_sharps()
 {
   /* stack: ( ud -- 0 0 | finish converting all digits of ud ) */
 
-  unsigned int u1=1, u2=0;
+  unsigned long int u1=1, u2=0;
 
   while (u1 | u2)
     {
@@ -795,7 +815,7 @@ int C_sign()
 {
   /* stack: ( n -- | insert sign into number string if n < 0 ) */
   DROP
-  int n = TOS;
+  long int n = TOS;
   if (n < 0)
     {
       ++NumberCount;
@@ -811,7 +831,7 @@ int C_sharpbracket()
 
   DROP
   DROP
-  PUSH_ADDR( (int) (NumberBuf + 255 - NumberCount) )
+  PUSH_ADDR( (long int) (NumberBuf + 255 - NumberCount) )
   PUSH_IVAL(NumberCount)
   return 0;
 }
@@ -821,10 +841,10 @@ int C_tonumber ()
 {
   /* stack: ( ud1 a1 u1 -- ud2 a2 u2 | translate characters into ud number ) */
 
-  unsigned i, ulen, uc;
+  unsigned long i, ulen, uc;
   int c;
   char *cp;
-  ulen = (unsigned) *(GlobalSp + 1);
+  ulen = (unsigned long) *(GlobalSp + 1);
   if (ulen == 0) return 0;
   uc = ulen;
   DROP
@@ -856,7 +876,7 @@ int C_tonumber ()
         --uc; ++cp;
   }
 
-  TOS = (int) cp;
+  TOS = (long int) cp;
   DEC_DSP
   TOS = uc;
   DEC_DSP
@@ -867,53 +887,14 @@ int C_tonumber ()
 }
 /*-----------------------------------------------------------*/
  
-int C_numberquery ()
-{
-  /* stack: ( ^str -- d b | translate characters into number using current base ) */
-
-  char *pStr;
-  int b, sign, nc;
-
-  b = FALSE;
-  sign = FALSE;
-
-  DROP
-  if (GlobalSp > BottomOfStack) return E_V_STK_UNDERFLOW;
-  CHK_ADDR
-  pStr = *((char**)GlobalSp);
-  PUSH_IVAL(0)
-  PUSH_IVAL(0)
-  nc = *pStr;
-  ++pStr;
-
-  if (*pStr == '-') {
-    sign = TRUE; ++pStr; --nc;
-  }
-  if (nc > 0) {
-        PUSH_ADDR((int) pStr)
-        PUSH_IVAL(nc)
-        C_tonumber();
-	DROP
-        b = TOS;
-	DROP
-	b = (b == 0) ? TRUE : FALSE ;
-  }
-
-  if (sign) L_dnegate();
-
-  PUSH_IVAL(b)
-  return 0;
-}
-/*----------------------------------------------------------*/
-
 int C_tofloat ()
 {
   /* stack: ( a u -- f true | false ; convert string to floating point number ) */
 
   char s[256], *cp;
   double f;
-  unsigned nc, u;
-  int b;
+  unsigned long nc, u;
+  long int b;
 
   DROP
   nc = TOS;
@@ -986,13 +967,51 @@ int C_tofloat ()
 }
 /*-------------------------------------------------------------*/
 
+int C_numberquery ()
+{
+  /* stack: ( ^str -- d b | translate characters into number using current base ) */
+
+  char *pStr;
+  long int b, sign, nc;
+
+  b = FALSE;
+  sign = FALSE;
+
+  DROP
+  if (GlobalSp > BottomOfStack) return E_V_STK_UNDERFLOW;
+  CHK_ADDR
+  pStr = *((char**)GlobalSp);
+  PUSH_IVAL(0)
+  PUSH_IVAL(0)
+  nc = *pStr;
+  ++pStr;
+
+  if (*pStr == '-') {
+    sign = TRUE; ++pStr; --nc;
+  }
+  if (nc > 0) {
+        PUSH_ADDR((long int) pStr)
+        PUSH_IVAL(nc)
+        C_tonumber();
+	DROP
+        b = TOS;
+	DROP
+	b = (b == 0) ? TRUE : FALSE ;
+  }
+
+  if (sign) L_dnegate();
+
+  PUSH_IVAL(b)
+  return 0;
+}
+/*----------------------------------------------------------*/
 
 int C_syscall ()
 {
     /* stack: ( arg1 ... arg_n nargs nsyscall -- err | 0 <= n <= 6) */
 
-    int nargs, nsyscall, i, args[6];
-
+    long int nargs, nsyscall, args[6];
+    int i;
     DROP
     nsyscall = TOS; 
     DROP
@@ -1042,7 +1061,7 @@ int C_system ()
   /* stack: ( ^str -- n | n is the return code for the command in ^str ) */
 
   char* cp;
-  int nc, nr;
+  long int nc, nr;
 
   DROP
   CHK_ADDR
@@ -1068,7 +1087,7 @@ int C_chdir ()
   DROP
   CHK_ADDR
   cp = (char*) TOS;
-  nc = *cp;
+  nc = (int) (*cp);
   strncpy (temp_str, cp+1, nc);
   temp_str[nc] = 0;
   PUSH_IVAL( chdir(temp_str) )
@@ -1101,7 +1120,7 @@ int C_usec ()
   /* stack: ( u -- | delay for u microseconds ) */
 
   struct timeval tv1, tv2;
-  unsigned int usec;
+  unsigned long int usec;
 
   DROP
   usec = TOS;
@@ -1132,6 +1151,25 @@ void set_start_time ()
   gettimeofday (&ForthStartTime, NULL);
 }
 
+void set_start_mem ()
+{
+  /* initialize starting memory usage */
+  ForthStartMem = mallinfo();
+}
+
+int C_used ()
+{
+  /* stack: ( -- u | return bytes used since start of Forth ) */
+  unsigned long u0, u1;
+  struct mallinfo mi = mallinfo();
+  u0 = ForthStartMem.arena + ForthStartMem.hblkhd;
+  u1 = mi.arena + mi.hblkhd;
+  TOS = (u1 - u0);
+  DEC_DSP
+  STD_IVAL
+  return 0;
+}
+
 int C_msfetch ()
 {
   /* stack: ( -- msec | return msec elapsed since start of Forth ) */
@@ -1154,9 +1192,13 @@ int C_us2fetch ()
   unsigned long long int usec;
   usec = (tv.tv_sec - ForthStartTime.tv_sec)*1000000ULL+
      (tv.tv_usec - ForthStartTime.tv_usec);
-  TOS = *((int*)&usec);
+  TOS = *((long int*)&usec);
   DEC_DSP
-  TOS = *((int*)&usec + 1);
+#if WSIZE == 4
+  TOS = *((long int*)&usec + 1);
+#else
+  TOS = 0;
+#endif
   DEC_DSP
   STD_IVAL
   STD_IVAL
@@ -1171,7 +1213,7 @@ int C_search ()
   /* stack: ( a1 u1 a2 u2 -- a3 u3 flag ) */
 
   char *str1, *str2, *cp, *cp2;
-  unsigned int n, n_needle, n_haystack, n_off, n_rem;
+  unsigned long int n, n_needle, n_haystack, n_off, n_rem;
   DROP
   n = TOS;
   DROP
@@ -1218,7 +1260,7 @@ int C_search ()
     ;
 
   if (cp2 == NULL) n_off = 0;
-  TOS = (int)(str1 + n_off);
+  TOS = (long int)(str1 + n_off);
   DEC_DSP
   TOS = n_haystack - n_off;
   DEC_DSP
@@ -1237,7 +1279,7 @@ int C_compare ()
   /* stack: ( a1 u1 a2 u2 -- n ) */
 
   char *str1, *str2;
-  int n1, n2, n, ncmp, nmin;
+  long int n1, n2, n, ncmp, nmin;
   DROP
   n2 = TOS;
   DROP
@@ -1269,7 +1311,7 @@ int C_setitimer ()
 {
     /* stack: ( timer-type avalue aoldvalue -- flag ) */
     
-    int type;
+    long int type;
     struct itimerval *v1, *v2;
 
     DROP
@@ -1288,7 +1330,7 @@ int C_getitimer ()
 {
     /* stack: ( timer-type  avalue -- flag )  */
     
-    int type;
+    long int type;
     struct itimerval *v;
 
     DROP
@@ -1317,7 +1359,7 @@ int C_forth_signal ()
 
     int signum;
     struct sigaction action;
-    void *xt, *oldxt;
+    void **xt, **oldxt;
 
     DROP
     signum = TOS;
@@ -1325,32 +1367,32 @@ int C_forth_signal ()
     {
 	DROP
 	oldxt = signal_xtmap[signum-1];
-        memset( &action, 0, sizeof(struct sigaction));
-        action.sa_flags = SA_SIGINFO;
-	xt = (void *) TOS;
-	switch ((int) xt)
+	memset( &action, 0, sizeof(struct sigaction));
+	action.sa_flags = SA_SIGINFO;
+	xt = (void**) TOS;
+	switch ((long int) xt)
 	{
-	    case (int) SIG_DFL:
+	    case (long int) SIG_DFL:
 		// Reset the default signal handler if xt = 0
-                action.sa_sigaction = (void*) SIG_DFL;
-                sigaction( signum, &action, NULL );
+	        action.sa_sigaction = (void*) SIG_DFL;
+		sigaction( signum, &action, NULL );
 		xt = 0;
 		break;
-	    case (int) SIG_IGN:
+	    case (long int) SIG_IGN:
 		// Ignore the signal if xt = 1
-                action.sa_sigaction = (void*) SIG_IGN;
-                sigaction( signum, &action, NULL );
+	        action.sa_sigaction = (void*) SIG_IGN;
+		sigaction( signum, &action, NULL );
 		xt = 0;
 		break;
 	    default:
 		// All other xt s must be valid addresses to opcodes
 		CHK_ADDR
-                action.sa_sigaction = forth_signal_handler;
-                sigaction( signum, &action, NULL );
+	        action.sa_sigaction = forth_signal_handler;
+		sigaction( signum, &action, NULL );
 		break;
 	}
         signal_xtmap[signum-1] = xt;
-        PUSH_ADDR( (int) oldxt )
+        PUSH_ADDR( (long int) oldxt )
     }
     else
 	return E_V_BAD_OPCODE;
@@ -1372,7 +1414,7 @@ static void forth_signal_handler (int signum, siginfo_t* si, void* vcontext)
        already takes care of preserving and restoring the virtual
        instruction ptr (GlobalIp).
     */
-    int e, *sp = GlobalSp, *rp = GlobalRp;
+    long int e, *sp = GlobalSp, *rp = GlobalRp;
 #ifndef __FAST__ 
     unsigned char* tp = GlobalTp, *rtp = GlobalRtp;
 #endif
@@ -1382,10 +1424,10 @@ static void forth_signal_handler (int signum, siginfo_t* si, void* vcontext)
     ucontext_t* context = (ucontext_t*) vcontext;
 
     // Lookup the execution token of Forth word for this signal.
-    void* xt = signal_xtmap[signum-1];
+    void** xt = signal_xtmap[signum-1];
     if (xt == 0) return;
 
-    opcode = *((byte*) xt);
+    opcode = *((byte*) (*xt));
     if ((opcode == OP_QUIT) || (opcode == OP_ABORT) || (opcode == OP_BYE)) {
       // Handle special signals requiring immediate exit from the VM,
       // without execution of Forth handler, e.g. SIGSEGV
@@ -1393,11 +1435,11 @@ static void forth_signal_handler (int signum, siginfo_t* si, void* vcontext)
       switch (signum) {
         case SIGSEGV:
           msg = "Segmentation fault\n";
-          write(1, msg, 19);
+	  write(1, msg, 19);
           context->uc_mcontext.gregs[REG_EIP] = (unsigned long int) pCode;
           return;
         case SIGINT:
-          msg = "Interrupted by user\n";
+	  msg = "Interrupted by user\n";
           write(1, msg, 20);
           context->uc_mcontext.gregs[REG_EIP] = (unsigned long int) pCode;
           return;
@@ -1431,11 +1473,11 @@ static void forth_signal_handler (int signum, siginfo_t* si, void* vcontext)
           write(1, msg, 16);
           context->uc_mcontext.gregs[REG_EIP] = (unsigned long int) pCode;
           return;
-          break;
+	  break;
        }
     }
 
-    // We must also offset the stack pointers so the handler will not
+    // We must offset the stack pointers so the Forth handler will not
     //   overwrite intermediate stack values in the primary vm(). An offset 
     //   of 16 elements should be safe (worst case is L_utmslash, which
     //   uses about 12 elements above the current stack position for 
@@ -1445,7 +1487,7 @@ static void forth_signal_handler (int signum, siginfo_t* si, void* vcontext)
     GlobalTp -= 16; GlobalRtp -= 16;
 #endif
     PUSH_IVAL(signum);
-    e = vm((byte*) xt);
+    e = vm((byte*) *xt);
     if (e == E_V_QUIT) {
       context->uc_mcontext.gregs[REG_EIP] = (unsigned long int) L_quit;
     }

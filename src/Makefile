@@ -18,8 +18,8 @@
 #      before "make debug".
 #
 COPYRIGHT=1999--2024
-VERSION=2.8.3
-KFORTH_VER=1.8.0
+VERSION=2.9.0
+KFORTH_VER=2.5.0
 MODULE_DIR_VAR=XYPLOT_DIR
 BUILD_DATE=`date +%F`
 DEBUG = 
@@ -62,7 +62,7 @@ CPP = ${GCCDIR}/g++
 CC  = ${GCCDIR}/gcc
 CPPFLAGS = -c -m32
 CFLAGS = -c -m32
-
+NOFPSTACK = -D__NO_FPSTACK__
 OBJS = xyplot.o CDataset.o CDatabase.o CDeviceContext.o CGrid.o\
   CPlotView.o CPlotDisplay.o CPlotList.o CPlotObject.o\
   CSaveOptionsDialog.o CPlotWindow.o\
@@ -156,18 +156,19 @@ AlgebraCompiler.o: fbc.h AlgebraCompiler.cpp
 
 ForthCompiler.o: fbc.h ForthCompiler.h ForthCompiler.cpp ForthWords.h \
 	VMerrors.h kfmacros.h
-	${CPP} ${CPPFLAGS} -I${INCLUDEDIRS} ${DEBUG} ForthCompiler.cpp
+	${CPP} ${CPPFLAGS} -I${INCLUDEDIRS} ${DEBUG} ${NOFPSTACK} \
+	ForthCompiler.cpp
 
 ForthVM.o: fbc.h ForthCompiler.h ForthVM.h ForthVM.cpp VMerrors.h \
 	kfmacros.h 
 	${CPP} ${CPPFLAGS} -DDIR_ENV_VAR=\"${MODULE_DIR_VAR}\" \
-        -I${INCLUDEDIRS} ${DEBUG} ForthVM.cpp
+        -I${INCLUDEDIRS} ${DEBUG} ${NOFPSTACK} ForthVM.cpp
 
 vm32.o: vm32.s vm32-common.s
 	as --32 -o vm32.o vm32.s
 
 vmc.o: vmc.c kfmacros.h
-	${CC} ${CFLAGS} ${DEBUG} vmc.c
+	${CC} ${CFLAGS} ${DEBUG} ${NOFPSTACK} vmc.c
 
 # end of makefile
 

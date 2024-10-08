@@ -3,7 +3,7 @@
 // A compiler to generate kForth Byte Code (FBC) from expressions
 //   or programs
 //
-// Copyright (c) 1998--2022 Krishna Myneni, 
+// Copyright (c) 1998--2024 Krishna Myneni, 
 // <krishna.myneni@ccreweb.org>
 //
 // Contributors:
@@ -35,6 +35,8 @@ const int NONDEFERRED = PRECEDENCE_NON_DEFERRED;
 
 size_t NUMBER_OF_INTRINSIC_WORDS =
    sizeof(ForthWords) / sizeof(ForthWords[0]);
+size_t NUMBER_OF_ROOT_WORDS =
+   sizeof(RootWords) / sizeof(RootWords[0]);
 
 extern bool debug;
 
@@ -60,6 +62,7 @@ extern "C" {
   int CPP_nondeferred();
   int CPP_source();
   int CPP_refill();
+  int CPP_compile_to_current();
 
   // Provided by vmc.c
   char* strupr (char*);
@@ -72,10 +75,19 @@ extern "C" {
 // Provided by ForthVM.cpp
 extern "C"  long int* GlobalSp;
 extern "C"  long int* GlobalRp;
+#ifndef __NO_FPSTACK__
+extern "C"  void* GlobalFsp;
+#endif
 extern "C"  long int Base;
 extern "C"  long int State;  // TRUE = compile, FALSE = interpret
+#ifndef __NO_FPSTACK__
+extern "C"  long int FpSize;
+#endif
 extern "C"  char* pTIB; 
 extern "C"  char TIB[];  // contains current line of input
+#ifndef __FAST__
+extern "C"  byte*     GlobalTp;
+#endif
 
 // Provided by vm-common.s
 extern "C"  long int JumpTable[];
@@ -93,7 +105,9 @@ stack<int> recursestack; // stack for recursion
 stack<int> casestack;  // stack for case jumps
 stack<int> ofstack;   // stack for of...endof constructs
 
-WordListEntry NewWord;     // current definition (word or anonymous)
+stack<WordListEntry*> PendingDefStack;
+stack<vector<byte>*> PendingOps;
+WordListEntry* pNewWord;   // current definition (word or anonymous)
 vector<byte>* pCurrentOps; // current opcode vector
 
 long int linecount;
@@ -105,14 +119,14 @@ ostream* pOutStream ;
 
 //---------------------------------------------------------------
 
-bool IsForthWord (char* name, WordListEntry* pE)
+WordListEntry* IsForthWord (char* name)
 {
 // Locate and Return a copy of the dictionary entry
 //   with the specified name.  Return True if found,
 //   False otherwise. A copy of the entry is returned
 //   in *pE.
-
-    return( SearchOrder.LocateWord (name, pE) );
+    WordListEntry* pWord = SearchOrder.LocateWord (name);
+    return( pWord );
 }
 //---------------------------------------------------------------
 
@@ -152,70 +166,31 @@ void SetForthOutputStream (ostream& OutStream)
 }
 //---------------------------------------------------------------
 
-void CompileWord (WordListEntry d)
-{
-  // Compile a word into the current opcode vector
-
-  byte* bp;
-  int wc = (d.WordCode >> 8) ? OP_CALLADDR : d.WordCode;
-  pCurrentOps->push_back(wc);
-  switch (wc) 
-    {
-    case OP_CALLADDR:
-      bp = (byte*) d.Cfa;
-      OpsPushInt(*((long int*)(bp+1)));
-      break;
-
-    case OP_PTR:
-    case OP_ADDR:
-      OpsPushInt((long int) d.Pfa);
-      break;
-	  
-    case OP_DEFINITION:
-      OpsPushInt((long int) d.Cfa);
-      break;
-
-    case OP_IVAL:
-      OpsPushInt(*((long int*)d.Pfa));			
-      break;
-
-    case OP_2VAL:
-      OpsPushInt(*((long int*)d.Pfa));
-      OpsPushInt(*((long int*)d.Pfa + 1));
-      break;
-
-    case OP_FVAL:
-      OpsPushDouble(*((double*) d.Pfa));
-      break;
-
-    default:
-      ;
-    }
-}
-//----------------------------------------------------------------
-
 int ExecutionMethod (int Precedence)
 {
-  int ex = EXECUTE_NONE;
+    // Return execution method for a word, based on its Precedence and STATE
 
-  switch (Precedence)
-  {
-    case IMMEDIATE:
-      ex = EXECUTE_CURRENT_ONLY;
-      break;
-    case NONDEFERRED:
-      if (State)
-        NewWord.Precedence |= NONDEFERRED ;
-      else
-        ex = EXECUTE_UP_TO;
-      break;
-    case (NONDEFERRED + IMMEDIATE):
-      ex = State ? EXECUTE_CURRENT_ONLY : EXECUTE_UP_TO;
-      break;
-    default:
-      ;
-  }
-  return( ex );
+    int ex = EXECUTE_NONE;
+
+    switch (Precedence)
+    {
+      case IMMEDIATE:
+        ex = EXECUTE_CURRENT_ONLY;
+	break;
+      case NONDEFERRED:
+        if (State) {
+          if (pNewWord) pNewWord->Precedence |= NONDEFERRED ;
+        }
+	else
+          ex = EXECUTE_UP_TO;
+        break;
+      case (NONDEFERRED + IMMEDIATE):
+        ex = State ? EXECUTE_CURRENT_ONLY : EXECUTE_UP_TO;
+        break;
+      default:
+        ;
+    }
+    return( ex );
 }
 //----------------------------------------------------------------
 
@@ -237,12 +212,10 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
   int i, j;
   long int ival, *sp;
   vector<byte>::iterator ib1, ib2;
-  WordListEntry d;
-  byte opval, *ip, *tp;
+  WordListEntry* pWord;
+  byte *tp;
 
   if (debug) cout << ">Compiler Sp: " << GlobalSp << " Rp: " << GlobalRp << endl;
-
-  ip = (byte *) &ival;
 
   linecount = *pLc;
   pCurrentOps = pOpCodes;
@@ -275,31 +248,31 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 	      pTIB = ExtractName (pTIB, WordToken);
 	      if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
 	      strupr(WordToken);
-
-	      if (IsForthWord(WordToken, &d))
+              pWord = SearchOrder.LocateWord(WordToken);
+	      if (pWord)
 		{
-		  CompileWord(d);
+                  PUSH_ADDR((long int) pWord)
+		  CPP_compile_to_current();		  
 
-		  int ex_meth = ExecutionMethod((int) d.Precedence);
+		  int ex_meth = ExecutionMethod((int) pWord->Precedence);
 		  vector<byte> SingleOp;
-		   
+		  
 		  switch (ex_meth)
 		    {
 		    case EXECUTE_UP_TO:
 		      // Execute the opcode vector immediately up to and
 		      //   including the current opcode
-
 		      pOpCodes->push_back(OP_RET);
 		      if (debug) OutputForthByteCode (pOpCodes);
 		      ecode = ForthVM (pOpCodes, &sp, &tp);
 		      pOpCodes->erase(pOpCodes->begin(), pOpCodes->end());
 		      if (ecode) goto endcompile;
-		      pOpCodes = pCurrentOps;
+                      pOpCodes = pCurrentOps;
 		      break;
 
 		    case EXECUTE_CURRENT_ONLY:
-		      i = ((d.WordCode == OP_DEFINITION) || (d.WordCode == OP_IVAL) || 
-                           (d.WordCode == OP_ADDR) || (d.WordCode >> 8)) ? WSIZE+1 : 1; 
+		      i = ((pWord->WordCode == OP_DEFINITION) || (pWord->WordCode == OP_IVAL) || 
+			   (pWord->WordCode == OP_ADDR) || (pWord->WordCode >> 8)) ? WSIZE+1 : 1; 
 		      ib1 = pOpCodes->end() - i;
 		      for (j = 0; j < i; j++) SingleOp.push_back(*(ib1+j));
 		      SingleOp.push_back(OP_RET);
@@ -329,7 +302,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 	      else
 		{
 		  *pOutStream << endl << WordToken << endl;
-		  ecode = E_V_UNDEFINED_WORD;  // unknown keyword
+		  ecode = E_V_UNDEFINED_WORD;
 		  goto endcompile;
 		}
 	     }

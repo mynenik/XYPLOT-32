@@ -2,7 +2,7 @@
 //
 // Common declarations and data for kForth 32-bit Virtual Machine
 //
-// Copyright (c) 1998--2022 Krishna Myneni,
+// Copyright (c) 1998--2024 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -17,21 +17,20 @@
 .equ OP_IVAL,	73
 .equ OP_RET,	238
 .equ SIGN_MASK,	0x80000000
+.equ MAX_SHIFT_COUNT, WSIZE*8-1
 	
 // Error Codes must be same as those in VMerrors.h
 
-.equ E_DIV_ZERO,          -10
+.equ E_DIV_ZERO,	  -10
 .equ E_ARG_TYPE_MISMATCH, -12
 .equ E_QUIT,              -56
-.equ E_NOT_ADDR,          -256
-.equ E_RET_STK_CORRUPT,   -258
-.equ E_BAD_OPCODE,        -259
+.equ E_NOT_ADDR,	  -256
+.equ E_RET_STK_CORRUPT,	  -258
+.equ E_BAD_OPCODE,	  -259
 .equ E_DIV_OVERFLOW,      -270
-
-// .equ E_UNKNOWN_OP,	6
 	
 .data
-NDPcw: .int 0
+NDPcw: .long 0
 FCONST_180: .double 180.
 
 // Jump table is read-only
@@ -43,7 +42,7 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .long C_close, C_read, C_write, C_ioctl # 12 -- 15
            .long L_usleep, L_ms, C_msfetch, C_syscall  # 16 -- 19
            .long L_fill, L_cmove, L_cmovefrom, CPP_dotparen # 20 -- 23
-           .long C_bracketsharp, L_nop, C_fsync, C_sharpbracket  # 24 -- 27
+           .long C_bracketsharp, L_execute_bc, C_fsync, C_sharpbracket  # 24 -- 27
            .long C_sharps, CPP_squote, CPP_cr, L_bl    # 28 -- 31
            .long CPP_spaces, L_store, CPP_cquote, C_sharp # 32 -- 35
            .long C_sign, L_mod, L_and, CPP_tick    # 36 -- 39
@@ -55,7 +54,7 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .long L_lt, L_eq, L_gt, L_question      # 60 -- 63
            .long L_fetch, L_addr, L_base, L_call   # 64 -- 67
            .long L_definition, L_erase, L_fval, L_calladdr # 68 -- 71
-           .long L_tobody, L_ival, CPP_evaluate, C_key     # 72 -- 75
+           .long CPP_tobody, L_ival, CPP_evaluate, C_key   # 72 -- 75
            .long L_lshift, L_slashmod, L_ptr, CPP_dotr     # 76 -- 79
            .long CPP_ddot, C_keyquery, L_rshift, CPP_dots  # 80 -- 83
            .long C_accept, CPP_char, CPP_bracketchar, C_word  # 84 -- 87
@@ -95,8 +94,8 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .long L_push_r, L_pop_r, L_puship, L_rfetch # 220 -- 223
            .long L_rpfetch, L_afetch, CPP_do, CPP_leave # 224 -- 227
            .long CPP_querydo, CPP_abortquote, L_jz, L_jnz  # 228 -- 231
-           .long L_jmp, L_rtloop, L_rtplusloop, L_rtunloop  # 232 -- 235
-           .long L_execute, CPP_recurse, L_ret, L_abort  # 236 -- 239
+           .long L_jmp, L_rtloop, L_rtplusloop, L_rtunloop # 232 -- 235
+           .long L_execute, CPP_recurse, L_ret, L_abort    # 236 -- 239
            .long L_quit, L_ge, L_le, L_ne          # 240 -- 243
            .long L_zeroeq, L_zerone, L_zerolt, L_zerogt # 244 -- 247
            .long L_ult, L_ugt, CPP_begin, CPP_while    # 248 -- 251
@@ -104,94 +103,116 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	   .long L_utmslash, L_utsslashmod, L_stsslashrem, L_udmstar   # 256 -- 259
 	   .long CPP_included, CPP_include, CPP_source, CPP_refill # 260--263
 	   .long CPP_state, CPP_allocate, CPP_free, CPP_resize  # 264--267
-	   .long L_cputest, L_dsstar, CPP_compilecomma, L_nop   # 268--271
+	   .long L_cputest, L_dsstar, CPP_compilecomma, CPP_compilename   # 268--271
 	   .long CPP_postpone, CPP_nondeferred, CPP_forget, C_forth_signal # 272--275
 	   .long C_raise, C_setitimer, C_getitimer, C_us2fetch  # 276--279
 	   .long C_tofloat, L_fsincos, C_facosh, C_fasinh # 280--283
 	   .long C_fatanh, C_fcosh, C_fsinh, C_ftanh   # 284--287
 	   .long C_falog, L_dzerolt, L_dmax, L_dmin    # 288--291
 	   .long L_dtwostar, L_dtwodiv, CPP_uddot, L_within  # 292--295
-	   .long CPP_twoliteral, C_tonumber, C_numberquery, CPP_sliteral   # 296--299
-           .long CPP_fliteral, CPP_twovariable, CPP_twoconstant, L_nop     # 300--303
-           .long CPP_tofile, CPP_console, CPP_loop, CPP_plusloop           # 304--307
-           .long CPP_unloop, CPP_noname, L_nop, L_blank     # 308--311
-           .long L_slashstring, C_trailing, C_parse, L_nop  # 312--315
+	   .long CPP_twoliteral, C_tonumber, C_numberquery, CPP_sliteral  # 296--299
+           .long CPP_fliteral, CPP_twovariable, CPP_twoconstant, CPP_synonym  # 300--303
+           .long CPP_tofile, CPP_console, CPP_loop, CPP_plusloop              # 304--307
+           .long CPP_unloop, CPP_noname, L_nop, L_blank           # 308--311
+           .long L_slashstring, C_trailing, C_parse, C_parsename  # 312--315
 	   .long L_nop, L_nop, L_nop, L_nop            # 316--319
            .long C_dlopen, C_dlerror, C_dlsym, C_dlclose # 320--323
 	   .long C_usec, CPP_alias, C_system, C_chdir    # 324--327
-           .long C_timeanddate, L_nop, CPP_wordlist, CPP_forthwordlist  # 328--331
+           .long C_timeanddate, L_nop, CPP_wordlist, CPP_forthwordlist       # 328--331
            .long CPP_getcurrent, CPP_setcurrent, CPP_getorder, CPP_setorder  # 332--335
            .long CPP_searchwordlist, CPP_definitions, CPP_vocabulary, L_nop  # 336--339
            .long CPP_only, CPP_also, CPP_order, CPP_previous                 # 340--343
-           .long CPP_forth, CPP_assembler, L_nop, L_nop        # 344--347
-           .long L_nop, L_nop, CPP_defined, CPP_undefined      # 348--351
-           .long L_nop, L_nop, L_nop, L_nop           # 352--355
-           .long L_nop, L_nop, L_nop, L_vmthrow       # 356--359
+           .long CPP_forth, CPP_assembler, CPP_traverse_wordlist, CPP_name_to_string # 344--347
+           .long CPP_name_to_interpret, CPP_name_to_compile, CPP_defined, CPP_undefined # 348--351
+           .long L_nop, L_nop, L_nop, CPP_myname            # 352--355
+           .long L_nop, L_nop, C_used, L_vmthrow            # 356--359
            .long L_precision, L_setprecision, L_nop, CPP_fsdot   # 360--363
-	   .long L_nop, L_nop, C_fexpm1, C_flnp1      # 364--367
-	   .long CPP_uddotr, CPP_ddotr, L_f2drop, L_f2dup  # 368--371
+	   .long L_nop, L_nop, C_fexpm1, C_flnp1	    # 364--367
+	   .long CPP_uddotr, CPP_ddotr, L_f2drop, L_f2dup   # 368--371
            .long L_nop, L_nop, L_nop, L_nop           # 372--375
            .long L_nop, L_nop, L_nop, L_nop           # 376--379
            .long L_nop, L_nop, L_nop, L_nop           # 380--383
            .long L_nop, L_nop, L_nop, L_nop           # 384--387
            .long L_nop, L_nop, L_nop, L_nop           # 388--391
            .long L_nop, L_nop, L_nop, L_nop           # 392--395
-           .long L_nop, L_nop, L_nop, L_nop           # 396--399
-           .long L_nop, L_nop, L_nop, L_nop           # 400--403   
-           .long L_nop, L_uwfetch, L_ulfetch, L_slfetch  # 404--407
+           .long CPP_find_name_in, CPP_find_name, L_nop, L_nop  # 396--399
+           .long L_bool_not, L_bool_and, L_bool_or, L_bool_xor  # 400--403   
+           .long L_boolean_query, L_uwfetch, L_ulfetch, L_slfetch  # 404--407
            .long L_lstore, L_nop, L_nop, L_nop        # 408--411
            .long L_nop, L_nop, L_nop, L_nop           # 412--415
            .long L_nop, L_udivmod, L_uddivmod, L_nop  # 416--419
+           .long L_nop, L_nop, L_nop, L_nop           # 420--423
+           .long L_fplusstore, L_pi, L_fsquare, L_starplus # 424--427
+	   .long L_nop, L_nop, L_fsl_mat_addr, L_nop  # 428--431
 
 .text
-	.align 4
+	.align WSIZE
 .global JumpTable
 .global L_initfpu, L_depth, L_quit, L_abort, L_ret
 .global L_dabs, L_dplus, L_dminus, L_dnegate
 .global L_mstarslash, L_udmstar, L_uddivmod, L_utmslash
 
-.macro LDSP                      # load stack ptr into ebx reg
+// Regs: ebx
+// In: none
+// Out: ebx = DSP
+.macro LDSP
   .ifndef __FAST__
         movl GlobalSp, %ebx
   .endif
 .endm
 
+// Regs: ebx
+// In/Out: ebx = DSP
 .macro STSP
   .ifndef __FAST__
 	movl %ebx, GlobalSp
   .endif
 .endm
 
+// Regs: ebx
+// In/Out: ebx = DSP
 .macro INC_DSP
 	addl $WSIZE, %ebx
 .endm
 
-.macro DEC_DSP            # decrement DSP by 1 cell; assume DSP in ebx reg
+// Regs: ebx
+// In/Out: ebx = DSP
+.macro DEC_DSP            # decrement DSP by 1 cell
 	subl $WSIZE, %ebx
 .endm
 
-.macro INC2_DSP           # increment DSP by 2 cells; assume DSP in ebx reg
+// Regs: ebx
+// In/Out: ebx = DSP
+.macro INC2_DSP           # increment DSP by 2 cells
 	addl $2*WSIZE, %ebx
 .endm
 
+// Regs: none
+// In/Out: none
 .macro INC_DTSP
   .ifndef __FAST__
        incl GlobalTp
   .endif
 .endm
 
+// Regs: none
+// In/Out: none
 .macro DEC_DTSP
   .ifndef __FAST__
 	decl GlobalTp
   .endif
 .endm
 
+// Regs: none
+// In/Out: none
 .macro INC2_DTSP
   .ifndef __FAST__
 	addl $2, GlobalTp
   .endif
 .endm
 
+// Regs: edx
+// In/Out: none
 .macro STD_IVAL
   .ifndef __FAST__
 	movl GlobalTp, %edx
@@ -200,6 +221,8 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
   .endif
 .endm
 
+// Regs: edx
+// In/Out: none
 .macro STD_ADDR
   .ifndef __FAST__
 	movl GlobalTp, %edx
@@ -208,6 +231,8 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
   .endif
 .endm
 
+// Regs: none
+// In/Out: none
 .macro UNLOOP
 	addl $3*WSIZE, GlobalRp  # terminal count reached, discard top 3 items
   .ifndef __FAST__
@@ -215,11 +240,14 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
   .endif
 .endm
 
-.macro NEXT
+// Regs: eax, ebx, ecx, ebp
+// In: eax = 0; ebx = DSP, ebp = Ip
+// Out: eax = 0, ebx = DSP, ecx = next word address, ebp = Ip;
+.macro NEXT                      # eax reg assumed to be 0
 	incl %ebp		 # increment the Forth instruction ptr
 	movl %ebp, GlobalIp
-  .ifdef  __FAST__
-	movl %ebx, GlobalSp
+  .ifdef __FAST__
+        movl %ebx, GlobalSp
   .endif
 	movb (%ebp), %al         # get the opcode
 	movl JumpTable(,%eax,4), %ecx	# machine code address of word
@@ -227,15 +255,17 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	jmpl *%ecx		# jump to next word
 .endm
 
-
-.macro DROP                     # increment DSP by 1 cell; assume DSP in ebx reg
+// Regs: ebx
+// In/Out: ebx = DSP
+.macro DROP                     # increment DSP by 1 cell
         INC_DSP
 	STSP
 	INC_DTSP
 .endm
 
-
-.macro DUP                      # assume DSP in ebx reg
+// Regs: eax, ebx, ecx
+// In/Out: ebx = DSP
+.macro DUP                      
         movl WSIZE(%ebx), %ecx
         movl %ecx, (%ebx)
 	DEC_DSP
@@ -249,8 +279,9 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
         DEC_DTSP
 .endm
 
-
-.macro _NOT                   # assume DSP in ebx reg
+// Regs: none
+// In/Out: ebx = DSP
+.macro _NOT
 	notl WSIZE(%ebx)
 .endm
 
@@ -271,6 +302,9 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
         xorl %eax, %eax
 .endm
 
+// Regs: eax, ebx, ecx, edx
+// In: none
+// Out: eax = 0, ebx = DSP
 .macro STOD
 	LDSP
 	movl $WSIZE, %ecx
@@ -283,7 +317,9 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	xorl %eax, %eax
 .endm
 
-
+// Regs: eax, ebx
+// In: none
+// Out: eax = 0, ebx = DSP
 .macro DPLUS
 	LDSP
 	INC2_DSP
@@ -299,6 +335,9 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	xor %eax, %eax
 .endm
 
+// Regs: eax, ebx
+// In: none
+// Out: eax = 0, ebx = DSP
 .macro DMINUS
 	LDSP
 	INC2_DSP
@@ -382,7 +421,7 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 // In: ebx = DSP
 // Out: eax = 0, ebx = DSP
 .macro TNEG
-        push %ebx
+        pushl %ebx
         movl $WSIZE, %eax
         addl %eax, %ebx
         movl (%ebx), %edx
@@ -403,7 +442,7 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
         movl %ecx, (%ebx)
         subl %eax, %ebx
         movl %edx, (%ebx)
-        pop %ebx
+        popl %ebx
         xor %eax, %eax
 .endm
 
@@ -424,6 +463,10 @@ E_div_overflow:
 	movl $E_DIV_OVERFLOW, %eax
 	ret
 
+E_arg_type_mismatch:
+	movl $E_ARG_TYPE_MISMATCH, %eax
+	ret
+
 L_vmthrow:      # throw VM error (used as default exception handler)
         LDSP
         INC_DSP
@@ -434,6 +477,7 @@ L_vmthrow:      # throw VM error (used as default exception handler)
 
 L_cputest:
 	ret
+
 
 # set kForth's default fpu settings
 L_initfpu:
@@ -457,7 +501,7 @@ L_quit:
 	movl BottomOfReturnTypeStack, %eax
 	movl %eax, GlobalRtp
   .endif
-	movl $E_QUIT, %eax		# exit the virtual machine
+	movl $E_QUIT, %eax	# exit the virtual machine
 	ret
 L_abort:
 	movl BottomOfStack, %eax
@@ -502,9 +546,12 @@ L_jmp:
 L_calladdr:
 	incl %ebp
 	movl %ebp, %ecx # address to execute (intrinsic Forth word or other)
-	addl $3, %ebp
+	addl $WSIZE-1, %ebp
 	movl %ebp, GlobalIp
+#	call *(%ecx)
         jmpl *(%ecx)
+#	movl GlobalIp, %ebp
+#	ret
 
 L_binary:
 	movl $Base, %ecx
@@ -545,7 +592,7 @@ L_setprecision:
 
 L_false:
 	LDSP
-	movl $0, (%ebx)
+	movl $FALSE, (%ebx)
 	DEC_DSP
 	STSP
 	STD_IVAL
@@ -553,7 +600,7 @@ L_false:
 
 L_true:
 	LDSP
-	movl $-1, (%ebx)
+	movl $TRUE, (%ebx)
 	DEC_DSP
 	STSP
 	STD_IVAL
@@ -616,6 +663,11 @@ L_lshift:
 	LDSP
 	DROP
 	movl (%ebx), %ecx
+	cmp $MAX_SHIFT_COUNT, %ecx
+        jbe lshift1
+        movl $0, WSIZE(%ebx)
+        NEXT 
+lshift1:
 	shll %cl, WSIZE(%ebx)
 	NEXT
 
@@ -623,6 +675,11 @@ L_rshift:
 	LDSP
 	DROP
 	movl (%ebx), %ecx
+	cmp $MAX_SHIFT_COUNT, %ecx
+	jbe rshift1
+	movl $0, WSIZE(%ebx)
+	NEXT
+rshift1:
 	shrl %cl, WSIZE(%ebx)
 	NEXT
 
@@ -695,6 +752,13 @@ L_fsqrt:
 	fsqrt
 	fstpl WSIZE(%ebx)
 	NEXT
+
+L_fsquare: 
+        LDSP
+        fldl WSIZE(%ebx)
+        fmul %st 
+        fstpl WSIZE(%ebx)
+        NEXT
 
 L_degtorad:
 	LDSP
@@ -890,7 +954,6 @@ L_backslash:
         movb $0, (%ecx)
         NEXT
 
-
 	.comm GlobalSp,4,4
 	.comm GlobalIp,4,4
 	.comm GlobalRp,4,4
@@ -905,5 +968,6 @@ L_backslash:
 	.comm WordBuf,256,1
 	.comm NumberCount,4,4
 	.comm NumberBuf,256,1
+        .comm MemUsed,4,4
 
 	

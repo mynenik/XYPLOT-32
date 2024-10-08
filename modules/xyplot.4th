@@ -62,7 +62,7 @@ include ans-words.4th
 include strings.4th
 include files.4th
 include utils.4th
-include modules.fs
+include modules.4th
 include struct-200x.4th
 [UNDEFINED] _WIN32_ [IF] include signal.4th [THEN]
 

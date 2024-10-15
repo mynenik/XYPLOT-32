@@ -25,7 +25,7 @@ Public:
 	xlim2 f@ f>$ strcat
 	s"  ] = " strcat
 	2>r f>$ 2r> 2swap strcat
-	type cr ;
+	type ;
 
 \ Trapezoidal Area Calculation
 \ (non-uniform abscissa spacing allowed)

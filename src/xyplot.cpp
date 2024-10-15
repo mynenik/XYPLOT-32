@@ -654,42 +654,30 @@ void ForthCB (Widget wSrc, void* client_d,
   nPos = XmTextGetLastPosition(w);
   static bool ignore = False;
 
-//  if (ignore)
-//    {
-//      ignore = False;
-//      return;
-//    }
-
   char* fs = XmTextGetString(w); 
 
-  if (client_data)
-    {
+  if (client_data) {
       strcpy (s, (char*) client_data);
+  }
+  else {
+    if (nPos) {
+      --nPos;
+      if (fs[nPos] == '\n') {  // was Enter pressed?
+        char* cp = fs + nPos;
+        while (nPos) {         // find the beginning of this line
+          --cp; --nPos;
+          if (*cp == '\n') break;	      
+        }
+        strcpy (s, cp);        // copy the last line and execute
+      }
+      else {
+        return;
+      }
     }
-  else
-    {
-      if (nPos)
-	{
-	  --nPos;
-	  if (fs[nPos] == '\n')  // was Enter pressed?
-	    {
-	      char* cp = fs + nPos;
-	      while (nPos)              // find the beginning of this line
-		{
-		  --cp; --nPos;
-		  if (*cp == '\n') break;	      
-		}
-	      strcpy (s, cp);           // copy the last line and execute
-	    }
-	  else
-	    {
-	      return;
-	    }
-	}
-      else
-	return;
-    }
-
+    else
+      return;
+  }
+  
   long int nLine;
   stringstream* pForthMessages = new stringstream();
 
@@ -700,7 +688,7 @@ void ForthCB (Widget wSrc, void* client_d,
 
   int msgLength = pForthMessages->str().size();
   int msgDisplayLength;
-
+  
   if (nError) {
 
     // if (nError & 0x100)
@@ -708,7 +696,7 @@ void ForthCB (Widget wSrc, void* client_d,
     // else
       sprintf (ErrorStr, "VM Error: %d", nError);
 
-    msgDisplayLength = min(msgLength, 511);
+    msgDisplayLength = min(msgLength+1, 511);
     pForthMessages->getline(Msg, msgDisplayLength, 0);
     Msg[msgDisplayLength] = '\0';
 
@@ -719,21 +707,14 @@ void ForthCB (Widget wSrc, void* client_d,
     pMainWnd->MessageBox(out_s);
   }
   else {
-    msgDisplayLength = min(msgLength, 1023);
+    msgDisplayLength = min(msgLength+1, 1023);
     pForthMessages->getline(Msg, msgDisplayLength, 0);
     Msg[msgDisplayLength] = '\0';
-
+    
     sprintf (out_s, "%s\n  ok\n", Msg);
     pMainWnd->WriteConsoleMessage(out_s);
 
-    // nLen = strlen(out_s);
     ignore = True;
-
-    // XmTextInsert (w, nLen, out_s);
-
-    // nPos = XmTextGetLastPosition (w);
-    // XmTextShowPosition(w, nPos);
-    // XmTextSetInsertionPosition(w, nPos);
   }
 
   XtFree(fs);
@@ -1022,7 +1003,7 @@ void InitForthInterface ()
 		    &lnum);
       if (nError) {
         nCount = ForthMessages.str().size();
-        nDisplay = min(nCount, 255);
+        nDisplay = min(nCount+1, 255);
 	ForthMessages.getline(out_s, nDisplay, 0);
 	out_s[nDisplay] = '\0';
 	pMainWnd->MessageBox(out_s);
@@ -1046,7 +1027,7 @@ void InitForthInterface ()
                  &lnum);
       if (nError) {
         nCount = ForthMessages.str().size();
-	nDisplay = min(nCount, 255);
+	nDisplay = min(nCount+1, 255);
 	ForthMessages.getline(out_s, nDisplay, 0);
 	out_s[nDisplay] = '\0';
 	pMainWnd->MessageBox(out_s);
@@ -1068,7 +1049,7 @@ int LoadForthFile(char* fname)
 
     if (nError) {
       int nCount = ForthMessages.str().size();
-      int nDisplay = min(nCount, 1023);
+      int nDisplay = min(nCount+1, 1023);
       ForthMessages.getline(out_s, nDisplay, 0);
       out_s[nDisplay] = '\0';
       pMainWnd->MessageBox (out_s);

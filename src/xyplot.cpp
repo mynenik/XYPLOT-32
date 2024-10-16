@@ -231,6 +231,11 @@ int main(int argc, char* argv[])
     // XtSetSensitive (EditWidgets[ID_EDIT_COPY], False);
     XtAppMainLoop(xapp);
 
+    delete pMainWnd;
+    CloseForth();
+    vector<char*>* v = &ForthMenuCommandList;
+    v->erase(v->begin(), v->end());
+
     return 0;
 }
 //------------------------------------------------------------------------
@@ -240,13 +245,14 @@ void ExitCB (Widget w, void* client_d, void* call_d)
     caddr_t client_data = (caddr_t) client_d;
     XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
 
-    delete pMainWnd;
-    CloseForth();
+//    delete pMainWnd;
+//    CloseForth();
 
-    vector<char*>* v = &ForthMenuCommandList;
-    v->erase(v->begin(), v->end());
+//    vector<char*>* v = &ForthMenuCommandList;
+//    v->erase(v->begin(), v->end());
 
-    exit(0);
+    // exit(0);
+    XtAppSetExitFlag(xapp);
 }
 
 void ReDrawCB (Widget w, void* client_d, void* call_d)

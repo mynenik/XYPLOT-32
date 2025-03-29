@@ -1,7 +1,7 @@
 /*
 CDeviceContext.cpp
 
-  Copyright (c) 1998--2020 Krishna Myneni
+  Copyright (c) 1998--2023 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the 
@@ -60,8 +60,8 @@ unsigned long CDeviceContext::GetColor (COLORREF cr)
   r1 = cr & 0xff;
   g1 = (cr >> 8) & 0xff;
   b1 = (cr >> 16) & 0xff;
-  float dist = 255.*sqrt(3);
-  float new_dist;
+  double dist = 255.0*sqrt(3.0);
+  double new_dist;
   COLORREF map_cr;
   unsigned long imin = 0;
 
@@ -71,7 +71,7 @@ unsigned long CDeviceContext::GetColor (COLORREF cr)
       g2 = (map_cr >> 8) & 0xff;
       b2 = (map_cr >> 16) & 0xff;
       u = r1-r2; v = g1-g2; w = b1-b2;
-      new_dist = (float) sqrt( (double) (u*u + v*v + w*w) );
+      new_dist = sqrt( (double) (u*u + v*v + w*w) );
       if (new_dist < dist) {
         dist = new_dist;
         imin = i;

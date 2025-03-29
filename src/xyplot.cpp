@@ -740,9 +740,10 @@ int BlankLine (char* s)
 }
 //---------------------------------------------------------------
 
-int NumberParse (float* nums, char* s)
+int NumberParse (double* nums, char* s)
 {
-// Parse a string into array of floats; Return number of values
+// Parse a string into array of double-precision floats;
+// Return number of values.
 
     const char d1 = 44; // comma
     const char d2 = 9;  // tab
@@ -805,26 +806,26 @@ void SortRect (CRect* prect)
 }
 //---------------------------------------------------------------------
 
-char* LabelFormat (float x1, float x2, char axis)
+char* LabelFormat (double x1, double x2, char axis)
 {
 // Determine label output format for range of numbers between x1 and x2.
 
     static char format[16];
 
-    float diff = fabs (x2 - x1);
-    int j = (x1 < 0.) || (x2 < 0.);
+    double diff = fabs (x2 - x1);
+    int j = (x1 < 0.0) || (x2 < 0.0);
 
     switch (axis) {
       case 'Y':
-        if ((diff < .001f) || (diff >= 100000.f))
+        if ((diff < .001) || (diff >= 100000.0))
           strcpy (format, "%9.1e");
-        else if ((diff >= .001f) && (diff < 1.f))
+        else if ((diff >= .001) && (diff < 1.0))
           strcpy (format, "%6.4f");
-        else if ((diff >= 1.f) && (diff < 10.f))
+        else if ((diff >= 1.0) && (diff < 10.0))
           strcpy (format, "%6.3f");
-        else if ((diff >= 10.f) && (diff < 100.f))
+        else if ((diff >= 10.0) && (diff < 100.0))
           strcpy (format, "%6.2f");
-        else if ((diff >= 100.f) && (diff < 1000.f))
+        else if ((diff >= 100.0) && (diff < 1000.0))
           strcpy (format, "%6.1f");
         else
           strcpy (format, "%6.0f");
@@ -839,29 +840,29 @@ char* LabelFormat (float x1, float x2, char axis)
 }
 //----------------------------------------------------------------
 
-char* DisplayFormat (float x1, float x2)
+char* DisplayFormat (double x1, double x2)
 {
 // Determine display format for range of numbers between x1 and x2.
 
     static char format[16];
-    float diff = fabs ((x2 - x1));
-    float a1 = fabs (x1);
-    float a2 = fabs (x2);
-    float vmax = (a2 > a1) ? a2 : a1;
+    double diff = fabs ((x2 - x1));
+    double a1 = fabs (x1);
+    double a2 = fabs (x2);
+    double vmax = (a2 > a1) ? a2 : a1;
     int field_width = 6;
     int precision = 4;
 
-    if ((diff < .01f) || (diff >= 100000.f))
+    if ((diff < 0.01) || (diff >= 100000.0))
       field_width += 6;
-    else if ((diff >= .01f) && (diff < .1f))
+    else if ((diff >= 0.01) && (diff < 0.1))
       ++precision;
-    else if ((diff >= .1f) && (diff < 1.f))
+    else if ((diff >= 0.1) && (diff < 1.0))
       ;
-    else if ((diff >= 1.f) && (diff < 10.f))
+    else if ((diff >= 1.0) && (diff < 10.0))
       --precision;
-    else if ((diff >= 10.f) && (diff < 100.f))
+    else if ((diff >= 10.0) && (diff < 100.0))
       precision -= 2;
-    else if ((diff >= 100.f) && (diff < 1000.f))
+    else if ((diff >= 100.0) && (diff < 1000.0))
       precision -= 3;
     else {
       field_width = 8;
@@ -869,10 +870,10 @@ char* DisplayFormat (float x1, float x2)
     }
 
     if (diff != 0.) {
-      float a3 = vmax/diff;
-      if (a3 >= 10. && a3 <= 1.e6) {
-        int i = (int) (log(a3)/log(10.)) - 1;
-        if ((x1 < 0.) || (x2 < 0.)) i++;
+      double a3 = vmax/diff;
+      if (a3 >= 10.0 && a3 <= 1.0e6) {
+        int i = (int) (log(a3)/log(10.0)) - 1;
+        if ((x1 < 0.0) || (x2 < 0.0)) i++;
         if (i < 10) field_width += i;;
       }
     }
@@ -1555,19 +1556,19 @@ int get_window_limits ()
 
   // Return x1, y1, x2, y2 on top of the stack
 
-  vector<float> e = pMainWnd->m_pDi->GetExtrema();
+  vector<double> e = pMainWnd->m_pDi->GetExtrema();
 
   --GlobalSp; --GlobalTp;
-  *((double*)GlobalSp) = (double) e[0];
+  *((double*)GlobalSp) = e[0];
   *GlobalTp = OP_FVAL;
   GlobalSp -= 2; GlobalTp -= 2;
-  *((double*)GlobalSp) = (double) e[2];
+  *((double*)GlobalSp) = e[2];
   *GlobalTp = OP_FVAL;
   GlobalSp -= 2; GlobalTp -= 2;
-  *((double*)GlobalSp) = (double) e[1];
+  *((double*)GlobalSp) = e[1];
   *GlobalTp = OP_FVAL;
   GlobalSp -= 2; GlobalTp -= 2;
-  *((double*)GlobalSp) = (double) e[3];
+  *((double*)GlobalSp) = e[3];
   *GlobalTp = OP_FVAL;
   --GlobalSp; --GlobalTp;
 
@@ -1579,7 +1580,7 @@ int set_window_limits ()
 {
   // Set the plot window limits
 
-  vector<float> e(4);
+  vector<double> e(4);
   ++GlobalSp;
   e[3] = *((double*)GlobalSp);
   GlobalSp += 2;

@@ -3,7 +3,7 @@ xyplot.h
 
   Header file for XYPLOT (C++/Linux/X Windows version)
 
-  Copyright (c) 1995--2020 Krishna Myneni 
+  Copyright (c) 1995--2023 Krishna Myneni 
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the 
@@ -18,10 +18,10 @@ xyplot.h
 // Function prototypes:
 
 int BlankLine (char*);
-int NumberParse (float*, char*);
+int NumberParse (double*, char*);
 void SortRect (CRect*);
-char* LabelFormat (float, float, char);
-char* DisplayFormat (float x1, float x2);
+char* LabelFormat (double, double, char);
+char* DisplayFormat (double x1, double x2);
 int AddToHeader (char*, char*, bool);
 void LoadInitializationFile();
 vector<char*> GetStartupFileList (int, char**);

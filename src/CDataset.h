@@ -2,7 +2,7 @@
 //
 // Abstract base class CDataset
 //
-// Copyright (c) 1995--2021 Krishna Myneni
+// Copyright (c) 1995--2025 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -18,10 +18,10 @@ using std::vector;
 const int HEADER_LENGTH = 4096;
 const int NAME_LENGTH = 256;
 
-class CDataset : public vector<float>
+class CDataset : public vector<double>
 {
 protected:
-	vector<float> m_vEx;		// the extrema vector
+	vector<double> m_vEx;		// the extrema vector
 	int m_nDatumSize;
 	int m_nOrdering;
 	int m_nEquallySpaced;
@@ -33,18 +33,19 @@ public:
 	int NumberOfPoints() {return size()/m_nDatumSize;}
 	int SizeOfDatum() {return m_nDatumSize;}
 	void SetExtrema();
-	vector<float> GetExtrema() {return m_vEx;}
-	void CopyData (float*, int);
-	void CopyData (vector<float>::iterator, int);
-	void CopyData (float*, int, int);
+	vector<double> GetExtrema() {return m_vEx;}
+	void CopyData (double*, int);
+	void CopyData (vector<double>::iterator, int);
+	void CopyData (double*, int, int);
+	void CopyFromXY (double*, double*, int);
 	void CopyFromXY (float*, float*, int);
-	void CopyFromXY (float*, float*, int, int);
-	void CopyToBuffer (float*);
+	void CopyFromXY (double*, double*, int, int);
+	void CopyToBuffer (double*);
 	bool AppendToHeader (char*);
-	vector<float>::iterator Find(float);
-	int IsOverlapping (float, float);
-	vector<vector<float>::iterator> Limits (float, float, int&);
-	vector<int> IndexLimits (float, float, int&);
+	vector<double>::iterator Find(double);
+	int IsOverlapping (double, double);
+	vector<vector<double>::iterator> Limits (double, double, int&);
+	vector<int> IndexLimits (double, double, int&);
 	virtual CDataset* Duplicate() = 0;
 };
 

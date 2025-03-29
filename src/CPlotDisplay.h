@@ -2,7 +2,7 @@
 //
 // class CPlotDisplay 
 //
-// Copyright 1996-2020 Krishna Myneni
+// Copyright 1996-2023 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -26,7 +26,7 @@ using namespace std;
 class CPlotDisplay {
   deque<CPlotView*> m_qPV;    // double ended queue of pointers to plot views
   deque<CPlotView*>::iterator m_qiView;  // iterator to current plot view
-  float m_fAspect;            // plot display desired aspect ratio
+  double m_fAspect;           // plot display desired aspect ratio
 public:
   CPoint m_nMousePt;
   CPlotList* m_pPlotList;     // the plot list
@@ -36,15 +36,15 @@ public:
   CPlotDisplay ();
   ~CPlotDisplay ();
   CPlotView* GetCurrentView() { return (*m_qiView); }
-  void CreateView (COORDINATE_SYSTEM, vector<float>);
+  void CreateView (COORDINATE_SYSTEM, vector<double>);
   void ApplyCurrentView();
   void DeleteView ();
   void GoBack();
   void GoForward();
   void GoHome() {m_qiView = m_qPV.begin(); ApplyCurrentView();}
   int Nplots() {return m_pPlotList->Nplots();}
-  void SetAspect (float aspect) {m_fAspect = aspect;}
-  float GetAspect ();
+  void SetAspect (double aspect) {m_fAspect = aspect;}
+  double GetAspect ();
   void SetPlotRect (CRect, CDC*);
   CRect GetPlotRect () {return (*m_qiView)->m_pCt->GetPhysical();}
   CPlot* SelectedPlot (CPoint p) {return m_pPlotList->Selection(p);}
@@ -57,11 +57,11 @@ public:
   char* GetList () {return( m_pPlotList->GetList() );}
 //  void DisplayList (CDC* pDC) {m_pPlotList->DisplayList(pDC);}
   void Draw (CDC*);
-  vector<float> Logical (CPoint p) {return (*m_qiView)->m_pCt->Logical(p);}
-  vector<float> Logical (CRect r) {return (*m_qiView)->m_pCt->Logical(r);}
-  void SetCoordinateDisplayFormat (vector<float> x);
-  void SetExtrema (vector<float> x) {(*m_qiView)->SetExtrema(x);}
-  vector<float> GetExtrema () {return (*m_qiView)->GetExtrema();}
+  vector<double> Logical (CPoint p) {return (*m_qiView)->m_pCt->Logical(p);}
+  vector<double> Logical (CRect r) {return (*m_qiView)->m_pCt->Logical(r);}
+  void SetCoordinateDisplayFormat (vector<double> x);
+  void SetExtrema (vector<double> x) {(*m_qiView)->SetExtrema(x);}
+  vector<double> GetExtrema () {return (*m_qiView)->GetExtrema();}
   void ResetExtrema();
   void Reset();
   CPlot* MakePlot(CDataset*, int) ;

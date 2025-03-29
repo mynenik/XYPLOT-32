@@ -1,6 +1,6 @@
 // AlgebraCompiler.cpp
 //
-// Copyright (c) 1998--2020 Krishna Myneni
+// Copyright (c) 1998--2023 Krishna Myneni
 //
 // This software is provided under the terms of the
 // GNU Affero General Public License (AGPL) v 3.0 or later.
@@ -41,7 +41,7 @@ int HoldOperator( byte, stack<byte>*, deque<byte>*, int );
 //      addr  nsize  npts
 //
 // where addr is the starting address of the data, nsize is the
-// number of elements (floats) in a datum, and npts is the number
+// number of elements (doubles) in a datum, and npts is the number
 // of points.
 //
 // The stack diagram for an expression evaluation is:
@@ -85,11 +85,11 @@ int CompileAE (vector<byte>* pOpCodes, char* exp)
     // Set up the loop parameters
     op.push_back(OP_SWAP);      // bring nsize to top
     op.push_back(OP_IVAL);
-    ival = sizeof(float);
+    ival = sizeof(double);
     bp = (byte*)&ival;
     for (i = 0; i < sizeof(int); i++)
         op.push_back(*(bp + i));
-    op.push_back(OP_MUL);       // multiply nsize by sizeof(float)
+    op.push_back(OP_MUL);       // multiply nsize by sizeof(double)
     op.push_back(OP_SWAP);      // bring npts to top
     op.push_back(OP_IVAL);
     for (i = 0; i < sizeof(int); i++) op.push_back(0);

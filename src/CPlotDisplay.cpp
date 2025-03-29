@@ -1,6 +1,6 @@
 // CPlotDisplay.cpp
 //
-// Copyright 1996--2020 Krishna Myneni 
+// Copyright 1996--2023 Krishna Myneni 
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -9,7 +9,7 @@
 
 #include "CPlotDisplay.h"
 #include <string.h>
-extern char* DisplayFormat (float, float);
+extern char* DisplayFormat (double, double);
 
 //---------------------------------------------------------------
 
@@ -17,7 +17,7 @@ CPlotDisplay::CPlotDisplay()
 {
     m_fAspect = 1.;
     m_pPlotList = new CPlotList();
-    vector<float> x(4);
+    vector<double> x(4);
     x[0] = -1.;
     x[1] = 1.;
     x[2] = -1.;
@@ -33,14 +33,14 @@ CPlotDisplay::~CPlotDisplay()
 }
 //---------------------------------------------------------------
 
-void CPlotDisplay::SetCoordinateDisplayFormat(vector<float> x)
+void CPlotDisplay::SetCoordinateDisplayFormat(vector<double> x)
 {
     strcpy (m_szXform, DisplayFormat(x[0],x[1]));
     strcpy (m_szYform, DisplayFormat(x[2],x[3]));
 }
 //---------------------------------------------------------------
 
-void CPlotDisplay::CreateView(COORDINATE_SYSTEM cdns, vector<float> x)
+void CPlotDisplay::CreateView(COORDINATE_SYSTEM cdns, vector<double> x)
 {
     CPlotView* pv = new CPlotView(cdns, x);
     if (pv) {
@@ -59,9 +59,9 @@ void CPlotDisplay::CreateView(COORDINATE_SYSTEM cdns, vector<float> x)
 }
 //---------------------------------------------------------------
 /*
-void CPlotDisplay::SetViewAngles(float theta, float phi)
+void CPlotDisplay::SetViewAngles(double theta, double phi)
 {
-	float angles[2] = {theta, phi};
+	double angles[2] = {theta, phi};
 	m_pCt->SetView(angles);
 }
 */
@@ -105,12 +105,12 @@ void CPlotDisplay::SetPlotRect (CRect wRect, CDC* pDC)
 }
 //---------------------------------------------------------------
 
-float CPlotDisplay::GetAspect()
+double CPlotDisplay::GetAspect()
 {
 // Return aspect ratio of current display
 
     CRect wRect = (*m_qiView)->m_pCt->GetPhysical();
-    return (((float) wRect.Width())/wRect.Height());
+    return (((double) wRect.Width())/wRect.Height());
 }
 //---------------------------------------------------------------
 
@@ -226,7 +226,7 @@ void CPlotDisplay::ResetExtrema()
 // Set display extrema to encompass all data sets for
 //   which there are plots
 
-  vector<float> x = m_pPlotList->GetExtrema();
+  vector<double> x = m_pPlotList->GetExtrema();
   (*m_qPV.begin())->SetExtrema(x);
   this->SetCoordinateDisplayFormat(x);
 }
@@ -237,7 +237,7 @@ void CPlotDisplay::ApplyCurrentView()
    CTransform* pT = (*m_qiView)->m_pCt;
    if (pT) {
      (*m_qiView)->m_pGrid->SetTransform(pT);
-     vector<float> x = this->GetExtrema();
+     vector<double> x = this->GetExtrema();
      this->SetCoordinateDisplayFormat(x);
    }
 }

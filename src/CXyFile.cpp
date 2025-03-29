@@ -18,7 +18,7 @@ CXyFile::CXyFile (char* name, int open_mode)
     m_szName = new char [256];
     m_szHeader = new char [HEADER_LENGTH];
     m_szFirstLine = new char [MAX_LINE_LENGTH];
-    m_pValues = new float [MAX_DATA_COLUMNS];
+    m_pValues = new double [MAX_DATA_COLUMNS];
 
 // Default output format
 
@@ -250,7 +250,7 @@ int CXyFile::Columns()
     return m_nCols;
 }
 //---------------------------------------------------------------
-int CXyFile::ReadData(float* data, int nSel, int ColumnSelections[])
+int CXyFile::ReadData(double* data, int nSel, int ColumnSelections[])
 {
 /*
 Reads data from the data file.
@@ -264,7 +264,7 @@ Arguments:
 Return the number of points read from the file.
 */
 
-    float* d = data;
+    double* d = data;
     int nPts = 0, i, *cp;
     char s [MAX_LINE_LENGTH];
 
@@ -309,11 +309,11 @@ Return the number of points read from the file.
 }
 //---------------------------------------------------------------
 
-int CXyFile::WriteData(float* data, int nrows, int ncols)
+int CXyFile::WriteData(double* data, int nrows, int ncols)
 {
 // Write data to file
 
-    float* d = data;
+    double* d = data;
     char szDatum [32], szDelimiter[4], szFormat[16], szEOL[4];
     int i, j;
 

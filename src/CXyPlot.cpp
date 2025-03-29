@@ -1,6 +1,6 @@
 // CXyPlot.cpp
 //
-// Copyright 1995--2018 Krishna Myneni
+// Copyright 1995--2023 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -80,20 +80,20 @@ void CXyPlot::DrawPointPlot (CDC* pDc, int pt_width)
     y1 = plot_rect.TopLeft().y;
     x2 = plot_rect.BottomRight().x;
     y2 = plot_rect.BottomRight().y;
-    vector<float> e = m_pT->GetLogical();
-    vector<vector<float>::iterator> lim = m_pSet->Limits(e[0], e[1], bOverlap);
+    vector<double> e = m_pT->GetLogical();
+    vector<vector<double>::iterator> lim = m_pSet->Limits(e[0], e[1], bOverlap);
 
     if (bOverlap)
       {
 
-        vector<float>::iterator data = lim[0];
+        vector<double>::iterator data = lim[0];
         int step = m_pSet->SizeOfDatum();
 	if (m_pSet->begin() < data) data -= step;
 	if (lim[1] < (m_pSet->end() - step)) lim[1] += step;
 
         while (data <= lim[1])
 	  {
-	    p = m_pT->Physical ((float*) &data[0]);
+	    p = m_pT->Physical ((double*) &data[0]);
             if ((p.x <= x2) && (p.x >= x1) && (p.y <= y2) && (p.y >= y1))
 	      {
 		for (k = -pt_width2; k <= pt_width2; k++)
@@ -109,23 +109,23 @@ void CXyPlot::DrawPointPlot (CDC* pDc, int pt_width)
 void CXyPlot::DrawLinePlot (CDC* pDc)
 {
     BOOL b_last, b_current;
-	CPoint p, last_p;
-	int bOverlap;
+    CPoint p, last_p;
+    int bOverlap;
 
-   	int npts = m_pSet->NumberOfPoints();
+    int npts = m_pSet->NumberOfPoints();
     if (! npts) return;
 
-	CRect plot_rect = m_pT->GetPhysical();
-    vector<float> e = m_pT->GetLogical();
-    vector<vector<float>::iterator> lim = m_pSet->Limits(e[0], e[1], bOverlap);
+    CRect plot_rect = m_pT->GetPhysical();
+    vector<double> e = m_pT->GetLogical();
+    vector<vector<double>::iterator> lim = m_pSet->Limits(e[0], e[1], bOverlap);
 
     if (bOverlap)
     {
-        vector<float>::iterator vis_data_start = lim[0];
-        vector<float>::iterator vis_data_end = lim[1];
+        vector<double>::iterator vis_data_start = lim[0];
+        vector<double>::iterator vis_data_end = lim[1];
 
         int step = m_pSet->SizeOfDatum();
-        vector<float>::iterator data = vis_data_start;
+        vector<double>::iterator data = vis_data_start;
 
         // Start at points just outside interval so line will be
         //   continuous to edge of plot area.
@@ -133,105 +133,94 @@ void CXyPlot::DrawLinePlot (CDC* pDc)
         if (m_pSet->begin() < data) data -= step;
         if (vis_data_end < (m_pSet->end() - step)) vis_data_end += step;
 
-	    p = m_pT->Physical ((float*) &data[0]);
-	    pDc->MoveTo (p.x, p.y);
+        p = m_pT->Physical ((double*) &data[0]);
+        pDc->MoveTo (p.x, p.y);
 
         data += step;
 
-	    while (data <= vis_data_end)
-	    {
-	        last_p = p;
-	        p = m_pT->Physical ((float*) &data[0]);
+        while (data <= vis_data_end) {
+          last_p = p;
+          p = m_pT->Physical ((double*) &data[0]);
 
-                if (p.x != last_p.x || p.y != last_p.y)
-            {
-                b_last = plot_rect.PtInRect(last_p);
-                b_current = plot_rect.PtInRect(p);
+          if (p.x != last_p.x || p.y != last_p.y) {
+            b_last = plot_rect.PtInRect(last_p);
+            b_current = plot_rect.PtInRect(p);
 
-		// if (b_last || b_current)
-	            {
-	                if (! b_last) pDc->MoveTo(last_p.x, last_p.y);
-	                pDc->LineTo (p.x, p.y);
-	            }
-	        }
-	        data += step;
-	    }
+            // if (b_last || b_current) {
+            if (! b_last) pDc->MoveTo(last_p.x, last_p.y);
+            pDc->LineTo (p.x, p.y);
+            // }
+          }
+          data += step;
 	}
+    }
 }
 //---------------------------------------------------------------
 
 void CXyPlot::DrawStickPlot (CDC* pDc)
 {
-	CPoint p1, p2;
-	float x[2];
+    CPoint p1, p2;
+    double x[2];
     int bOverlap;
 
-   	int npts = m_pSet->NumberOfPoints();
+    int npts = m_pSet->NumberOfPoints();
     if (! npts) return;
 
-    vector<float> e = m_pT->GetLogical();
-    vector<vector<float>::iterator> lim = m_pSet->Limits(e[0], e[1], bOverlap);
+    vector<double> e = m_pT->GetLogical();
+    vector<vector<double>::iterator> lim = m_pSet->Limits(e[0], e[1], bOverlap);
 
-    if (bOverlap)
-    {
+    if (bOverlap) {
+      vector<double>::iterator data = lim[0];
+      int step = m_pSet->SizeOfDatum();
 
-        vector<float>::iterator data = lim[0];
-        int step = m_pSet->SizeOfDatum();
-
-        while (data <= lim[1])
-	    {
-
-	        x[0] = *data;
-	        x[1] = 0.;
-	        p1 = m_pT->Physical (x);
-	        p2 = m_pT->Physical ((float*) &data[0]);
-	        pDc->MoveTo (p1.x, p1.y);
-	        pDc->LineTo (p2.x, p2.y);
-	        data += step;
-	    }
-	}
-
+      while (data <= lim[1]) {
+	x[0] = *data;
+	x[1] = 0.;
+	p1 = m_pT->Physical (x);
+	p2 = m_pT->Physical ((double*) &data[0]);
+	pDc->MoveTo (p1.x, p1.y);
+	pDc->LineTo (p2.x, p2.y);
+	data += step;
+      }
+    }
 }
 //---------------------------------------------------------------
 
 void CXyPlot::DrawHistogram (CDC* pDc)
 {
+    int bOverlap;
+    int npts = m_pSet->NumberOfPoints();
+    if (! npts) return;
+    vector<double> e = m_pT->GetLogical();
+    vector<vector<double>::iterator> lim = m_pSet->Limits(e[0], e[1], bOverlap);
 
-  int bOverlap;
-  int npts = m_pSet->NumberOfPoints();
-  if (! npts) return;
-  vector<float> e = m_pT->GetLogical();
-  vector<vector<float>::iterator> lim = m_pSet->Limits(e[0], e[1], bOverlap);
-
-  if (bOverlap)
-    {
+    if (bOverlap) {
       CPoint p;
-      float x[2], xc;
-      vector<float>::iterator data = lim[0];
+      double x[2], xc;
+      vector<double>::iterator data = lim[0];
       int step = m_pSet->SizeOfDatum();
         
       if (m_pSet->begin() < data) data -= step;
       if (lim[1] < (m_pSet->end() - step)) lim[1] += step;
 
-      float bw2 = (*(data+step) - *data)/2.;
+      double bw2 = (*(data+step) - *data)/2.;
 
       x[0] = *data - bw2; x[1] = *(data + 1);
 
       p = m_pT->Physical (x);
       pDc->MoveTo (p.x, p.y);
      
-      while (true)
-	{
-	  xc = *data;
-	  x[0] = xc + bw2;
-	  p = m_pT->Physical (x);
-	  pDc->LineTo (p.x, p.y);  // horizontal portion
-	  data += step;
-	  if (data > lim[1]) break;
-	  x[1] = *(data + 1);
-	  p = m_pT->Physical (x);
-	  pDc->LineTo (p.x, p.y);  // vertical portion
-	}
+      while (true) {
+        xc = *data;
+	x[0] = xc + bw2;
+	p = m_pT->Physical (x);
+	pDc->LineTo (p.x, p.y);  // horizontal portion
+	data += step;
+	if (data > lim[1]) break;
+	x[1] = *(data + 1);
+	p = m_pT->Physical (x);
+	pDc->LineTo (p.x, p.y);  // vertical portion
+      }
     }
 }
 // --------------------------------------------------------------

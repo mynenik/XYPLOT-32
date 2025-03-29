@@ -395,12 +395,12 @@ void CPlotList::Draw(CDC* pDC)
 }
 //---------------------------------------------------------------
 
-vector<float> CPlotList::GetExtrema()
+vector<double> CPlotList::GetExtrema()
 {
 // Return extrema vector for the datasets which are plotted
 
     CDataset* d;
-    vector<float> e(4), ex(4);
+    vector<double> e(4), ex(4);
     int i;
 
     PlotListNode* node = m_pHead;

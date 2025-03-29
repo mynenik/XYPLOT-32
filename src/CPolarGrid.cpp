@@ -1,6 +1,6 @@
 // CPolarGrid.cpp
 //
-// Copyright 1996--2018 Krishna Myneni
+// Copyright 1996--2023 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -9,7 +9,7 @@
 
 #include "CPolarGrid.h"
 #include <math.h>
-extern char* LabelFormat (float, float, char);
+extern char* LabelFormat (double, double, char);
 
 //---------------------------------------------------------------
 
@@ -30,8 +30,8 @@ void CPolarGrid::Draw(CDC* pDc)
 	int x1, x2, y1, y2;
 	int xL, yL;
 	int k;
-	float r1, r2, rmax;
-	vector<float> x;
+	double r1, r2, rmax;
+	vector<double> x;
 	CPoint p1, p2;
 	CRect rect = m_pT->GetPhysical();
 // CPen FramePen(m_nStyle, m_nWidth, m_nColor);

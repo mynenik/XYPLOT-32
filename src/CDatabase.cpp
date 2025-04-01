@@ -1,6 +1,6 @@
 // CDatabase.cpp
 //
-// Copyright 1995--2024 Krishna Myneni
+// Copyright 1995--2025 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -230,7 +230,6 @@ int CDatabase::LoadDataset (CDataset** pd, char* name,
         }
     }
 
-
     return total_nPts;
 }
 //---------------------------------------------------------------
@@ -268,7 +267,7 @@ CDataset* CDatabase::MakeDataset (vector<double*> LoadBuffers, int nPts,
   int nDim;
 
   switch (nType) {
-    case 256:
+    case REAL_DOUBLE:
       nDim = (nCols > 2) ? nCols : 2;
       d = new CReal(nDim, nPts, name, hdr);	// construct n-D real set
       break;
@@ -416,7 +415,7 @@ CDataset* CDatabase::MakeDataset (int* ds_info)
     }
     while (nRem > 0) ;
 
-    CDataset* d = MakeDataset(LoadBuffers, npts, ncols, data_type, name, hdr);
+    CDataset* d = MakeDataset(LoadBuffers, npts, ncols, ntype, name, hdr);
     if (d) AddSet(d);
 
     return d;

@@ -15,13 +15,17 @@
 #include<vector>
 using std::vector;
 
+// Data set types
+const int REAL_SINGLE = 0;    // real, single-precision float
+const int REAL_DOUBLE = 256;  // real, double-precision float
+
 const int HEADER_LENGTH = 4096;
 const int NAME_LENGTH = 256;
 
 class CDataset : public vector<double>
 {
 protected:
-	vector<double> m_vEx;		// the extrema vector
+	vector<double> m_vEx;  // the extrema vector
 	int m_nDatumSize;
 	int m_nOrdering;
 	int m_nEquallySpaced;

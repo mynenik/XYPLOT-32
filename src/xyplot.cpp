@@ -1212,7 +1212,7 @@ int get_ds ()
 	  CDataset* d = (*pDb)[nSet];
 	  *ds_info++ = (unsigned int) d->m_szName;
 	  *ds_info++ = (unsigned int) d->m_szHeader;
-	  *ds_info++ = 0;  // set zero for the dataset type (REAL SINGLE)
+	  *ds_info++ = REAL_DOUBLE;  // dataset type
 	  *ds_info++ = d->NumberOfPoints();
 	  *ds_info++ = d->SizeOfDatum();
 	  *ds_info = (unsigned int) &(*d)[0]; // ->begin();

@@ -1,6 +1,6 @@
 // CXyFile.cpp
 //
-// Copyright 1995--2024 Krishna Myneni
+// Copyright 1995--2025 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -163,13 +163,13 @@ void CXyFile::GetFormatStrings(char* prefix, char* delim, char* numFmt, char* eo
       switch (m_nSave.NumberFormat)
       {
         case 1:
-            strcpy (numFmt, "%f");
+            strcpy (numFmt, "%lf");
             break;
         case 2:
             strcpy (numFmt, "%d");
             break;
         default:
-            strcpy (numFmt, "%14e");
+            strcpy (numFmt, "%19.12e");
             break;
       }
     }

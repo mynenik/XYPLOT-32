@@ -1585,7 +1585,8 @@ void CPlotWindow::LoadDatasetFile (char* fname, char* col_spec)
   char s[512];
   CDataset* d;
 
-  int ecode = m_pDb->LoadDataset(&d, fname, ParseColumns(col_spec), 0);
+  int ecode = 0;
+  ecode = m_pDb->LoadDataset(&d, fname, ParseColumns(col_spec), REAL_DOUBLE);
   if (ecode <= 0)
     {
       MessageBox ("Error reading file.");
@@ -1594,7 +1595,7 @@ void CPlotWindow::LoadDatasetFile (char* fname, char* col_spec)
     {
       sprintf (s, "%d points read from %s", ecode, fname);
       WriteConsoleMessage(s);
-      m_pDi->MakePlot(d, 0);
+      m_pDi->MakePlot(d, sym_LINE);
       OnReset();
     }
   *m_pFileName = '\0';

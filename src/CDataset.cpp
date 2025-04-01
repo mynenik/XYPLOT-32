@@ -1,6 +1,6 @@
 // CDataset.cpp
 //
-// Copyright (c) 1995--2023 Krishna Myneni
+// Copyright (c) 1995--2025 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -11,14 +11,14 @@
 #include <math.h>
 #include "CDataset.h"
 
-CDataset::CDataset(int nLength, int nPoints, char* name, char* hdr) :
-  vector<double> (nLength*nPoints)
+CDataset::CDataset(int nSize, int nPoints, char* name, char* hdr) :
+  vector<double> (nSize*nPoints)
 {
-  m_nDatumSize = nLength;
+  m_nDatumSize = nSize;
   
   // Initialize the extrema vector
 
-  for (int i = 0; i < 2*nLength; i++) m_vEx.push_back(0.0);
+  for (int i = 0; i < 2*m_nDatumSize; i++) m_vEx.push_back(0.0);
 
   m_nOrdering = 0;
   m_nEquallySpaced = 0;
@@ -320,8 +320,8 @@ bool CDataset::AppendToHeader (char* szNewText)
 }
 //---------------------------------------------------------------
 
-CReal::CReal(int ndim, int npts, char* name, char* hdr)
-	: CDataset(ndim, npts, name, hdr)
+CReal::CReal(int nsize, int npts, char* name, char* hdr)
+	: CDataset(nsize, npts, name, hdr)
 {
     ;
 }
@@ -340,8 +340,8 @@ CDataset* CReal::Duplicate()
 }
 //---------------------------------------------------------------
 
-CComplex::CComplex(int ndim, int npts, char* name, char* hdr)
-	: CDataset(ndim*2, npts, name, hdr)
+CComplex::CComplex(int nsize, int npts, char* name, char* hdr)
+	: CDataset(nsize*2, npts, name, hdr)
 {
     ;
 }

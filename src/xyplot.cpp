@@ -494,7 +494,7 @@ void EditMenuCB (Widget w, void* client_d, void* call_d)
       pMainWnd->OnHeader();
       break;
     case PL_HEADER_OK:
-      XtUnmanageChild(pMainWnd->m_nHeaderDialog);
+      // XtUnmanageChild(pMainWnd->m_nHeaderDialog);
       pMainWnd->OnSetHeader(XmTextGetString(pMainWnd->m_nHeaderText));
       pMainWnd->OnSetDatasetName(XmTextGetString(pMainWnd->m_nDatasetName));
       break;

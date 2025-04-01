@@ -940,6 +940,7 @@ void CPlotWindow::SelectPlot (int plot_index, int select_type)
       CPlot* p = (*m_pDi)[plot_index];
       if (select_type == 1) {
 	m_pDi->SetActivePlot(p);
+	if ( XtIsManaged(m_nHeaderDialog) ) OnHeader();
       }
       else {
 	m_pDi->SetOperandPlot(p);

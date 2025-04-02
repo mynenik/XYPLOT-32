@@ -30,7 +30,7 @@ Public:
 \ (uses words from strings.4th ).
 : u>$ ( u1 -- a u2 ) u>string count  ;
 : $>s ( a u -- n )   strpck string>s ;
-: f>$ ( r -- a u )   f>string count  ;
+: f>$ ( r n -- a u ) f>string count  ;
 : $>f ( a u -- r )   strpck string>f ;
 
 : dos2unix-line ( a u -- a u2 )
@@ -565,8 +565,8 @@ variable nplots
       s" @type xy" >grfile
       ds1 DatasetInfo->Npts @ 0 ?DO
 	I ds1 @xy 2>r 
-	8 f>$ s"  " strcat 2r>
-	8 f>$ strcat >grfile
+	15 f>$ s"  " strcat 2r>
+	15 f>$ strcat >grfile
       LOOP
       s" &" >grfile
     LOOP

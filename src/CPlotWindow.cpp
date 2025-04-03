@@ -668,6 +668,7 @@ void CPlotWindow::OnReset ()
     m_pDi->ResetExtrema();
     m_pDi->GoHome();
     Invalidate ();
+    if ( XtIsManaged(m_nHeaderDialog) ) OnHeader();
 }
 //--------------------------------------------------------------
 
@@ -1382,6 +1383,7 @@ void CPlotWindow::OnDrop()
     m_pDi->DeletePlot();
     m_pDi->ResetExtrema();
     Invalidate();
+    if ( XtIsManaged(m_nHeaderDialog) ) OnHeader();
 }
 //---------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 // AlgebraCompiler.cpp
 //
-// Copyright (c) 1998--2023 Krishna Myneni
+// Copyright (c) 1998--2025 Krishna Myneni
 //
 // This software is provided under the terms of the
 // GNU Affero General Public License (AGPL) v 3.0 or later.
@@ -116,15 +116,15 @@ int CompileAE (vector<byte>* pOpCodes, char* exp)
         if (*cp == 'X') {    // fetch x
           // cout << "Push X" << endl;
           op.push_back(OP_RFETCH);
-          op.push_back(OP_SFFETCH);
+          op.push_back(OP_DFFETCH);
           if (! final_op) final_op = 1;
           ++operands_pending;
         }
         else if (*cp == 'Y') {  // fetch
 	  // cout << "Push Y" << endl;
           op.push_back(OP_RFETCH);
-	  op.push_back(OP_CELLPLUS);
-          op.push_back(OP_SFFETCH);
+	  op.push_back(OP_DFLOATPLUS);
+          op.push_back(OP_DFFETCH);
           if (! final_op) final_op = 2;
           ++operands_pending;
         }
@@ -179,11 +179,11 @@ int CompileAE (vector<byte>* pOpCodes, char* exp)
             ;
       }
       else if (final_op == 2) {
-	op.push_back(OP_CELLPLUS);
+	op.push_back(OP_DFLOATPLUS);
       }
       else
         ;
-      op.push_back(OP_SFSTORE);
+      op.push_back(OP_DFSTORE);
       op.push_back(OP_RFETCH);
       op.push_back(OP_ADD);   // advance data ptr by nbytes
       op.push_back(OP_POP);

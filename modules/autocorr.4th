@@ -2,7 +2,7 @@
 \
 \ Auto-correlation function for xyplot
 \
-\ Copyright (c) 2000--2012 Krishna Myneni
+\ Copyright (c) 2000--2025 Krishna Myneni
 \ Provided under the GNU Lesser General Public License (LGPL)
 \
 \ Revisions:
@@ -10,6 +10,7 @@
 \    2005-01-14  updated use of DatasetInfo structure  km
 \    2009-10-29  updated data structure field names  km
 \    2012-06-26  convert to unnamed module  km
+\    2025-04-04  updated to create a REAL_DOUBLE dataset  km
 
 Begin-Module
 
@@ -62,16 +63,16 @@ Public:
 	      fcorrnorm f@ f/	\ normalize the integral 
 	      fcorrsum f!
 	      i np @ - 1+ s>f
-	      acorrbuf i 2* sfloats + sf!
+	      acorrbuf i 2* dfloats + df!
 	      fcorrsum f@
-	      acorrbuf i 2* sfloats + sfloat+ sf!
+	      acorrbuf i 2* dfloats + dfloat+ df!
 	    loop
 	          
 	    \ setup the autocorrelation data structure
 
 	    c" autocorrelation" 1+ ds_acorr DatasetInfo->Name !
 	    c"  " 1+ ds_acorr DatasetInfo->Header !
-	    ds1 DatasetInfo->Type @ ds_acorr DatasetInfo->Type !
+	    REAL_DOUBLE ds_acorr DatasetInfo->Type !
 	    npcorr @ ds_acorr DatasetInfo->Npts !
 	    2 ds_acorr DatasetInfo->Size !
 	    acorrbuf ds_acorr DatasetInfo->Data !

@@ -3,7 +3,7 @@ CpsDC.cpp
 
   The Postscript device context
 
-  Copyright (c) 1999--2020 Krishna Myneni
+  Copyright (c) 1999--2023 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the 
@@ -63,59 +63,59 @@ void CpsDC::SetColors (const char* color_list[], int nColors)
 
   for (int i = 0; i < nc; i++)
     {
-      float fRed = 0.;
-      float fGreen = 0.;
-      float fBlue = 0.;
+      double fRed = 0.0;
+      double fGreen = 0.0;
+      double fBlue = 0.0;
 
       const char* cname = color_list[i];
 
       if (strcmp(cname, "red") == 0)
 	{
-	  fRed = 1.;
+	  fRed = 1.0;
 	}
       else if (strcmp(cname, "green") == 0)
 	{
-	  fGreen = 1.;
+	  fGreen = 1.0;
 	}
       else if (strcmp(cname, "blue") == 0)
 	{
-	  fBlue = 1.;
+	  fBlue = 1.0;
 	}
       else if (strcmp(cname, "dark green") == 0)
 	{
-	  fGreen = 1.;
+	  fGreen = 1.0;
 	  fBlue = 0.2;
 	}
       else if (strcmp(cname, "cyan") == 0)
 	{
-	  fGreen = 1.;
-	  fBlue = 1.;
+	  fGreen = 1.0;
+	  fBlue = 1.0;
 	}
       else if (strcmp(cname, "magenta") == 0)
 	{
-	  fRed = 1.;
-	  fBlue = 1.;
+	  fRed = 1.0;
+	  fBlue = 1.0;
 	}
       else if (strcmp(cname, "brown") == 0)
 	{
-	  fRed = 1.;
+	  fRed = 1.0;
 	  fGreen = 0.2;
 	}
       else if (strcmp(cname, "yellow") == 0)
 	{
-	  fRed = 1.;
-	  fGreen = 1.;
+	  fRed = 1.0;
+	  fGreen = 1.0;
 	}
       else if (strcmp(cname, "grey") == 0)
 	{
-	  fBlue = 1.;
-	  fGreen = .5;
+	  fBlue = 1.0;
+	  fGreen = 0.5;
 	}
       else if (strcmp(cname, "white") == 0)
 	{
-	  fRed = 1.;
-	  fGreen = 1.;
-	  fBlue = 1.;
+	  fRed = 1.0;
+	  fGreen = 1.0;
+	  fBlue = 1.0;
 	}
       else
 	;  // black if color name not known
@@ -138,7 +138,7 @@ void CpsDC::SetColors (COLORREF rgb_table[], const char* color_list[], int nColo
   m_nColors = nc;
   m_pColors = new unsigned [nc];
   m_pColorNames = new char* [nc];
-  float fRed, fGreen, fBlue;
+  double fRed, fGreen, fBlue;
   COLORREF cr;
   unsigned short int r, g, b;
 
@@ -147,9 +147,9 @@ void CpsDC::SetColors (COLORREF rgb_table[], const char* color_list[], int nColo
     r = cr & 0xff;
     g = (cr >> 8) & 0xff;
     b = (cr >> 16) & 0xff;
-    fRed = ((float) r)/255.;
-    fGreen = ((float) g)/255.;
-    fBlue = ((float) b)/255.;
+    fRed = ((double) r)/255.;
+    fGreen = ((double) g)/255.;
+    fBlue = ((double) b)/255.;
     m_fRGB [i][0] = fRed;
     m_fRGB [i][1] = fGreen;
     m_fRGB [i][2] = fBlue;

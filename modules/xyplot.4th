@@ -212,8 +212,6 @@ prec_DOUBLE  8 LSHIFT  data_REAL  OR  constant  REAL_DOUBLE
 
 [THEN]
 
-1 SFLOATS constant SFLOAT      \ size in bytes of single precision float
-
 \ Save Options structure
 \   HeaderType: 0=none, 1=xyplot format, 2=user-defined line prefix
 \   Delimiter:  0=space, 1=tab, 2=comma, other=space
@@ -265,12 +263,14 @@ end-structure
 \ test1 and test2, contained in test.4th.
 
 : @xy ( i addr -- fx fy | retrieve the i^th x, y pair )
-	dup DatasetInfo->Size @ SFLOAT * rot * swap DatasetInfo->Data a@
-	swap + dup >r sf@ r> SFLOAT + sf@ ; 
+	dup DatasetInfo->Size @ floats rot * 
+        swap DatasetInfo->Data a@ +
+	dup >r f@ r> float+ f@ ; 
 
 : !xy ( fx fy i addr -- | store the i^th x, y pair )
-	dup DatasetInfo->Size @ SFLOAT * rot * swap DatasetInfo->Data a@
-	swap + dup >r SFLOAT + sf! r> sf! ; 
+	dup DatasetInfo->Size @ floats rot * 
+        swap DatasetInfo->Data a@ +
+	dup >r float+ f! r> f! ; 
 
 
 \ see the file test.4th for examples of usage

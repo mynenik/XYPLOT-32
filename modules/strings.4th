@@ -30,15 +30,18 @@
 \
 \ 	STRCPY      ( ^str a -- )
 \ 	STRLEN      ( a -- u )
+\
+\  STRx words using circular buffer
 \ 	STRBUFCPY   ( ^str1 -- ^str2 )
-
-\  LMI Forth STRx words
-\ 	STRCAT      ( a1 u1 a2 u2 -- a3 u3 )
-\ 	STRPCK      ( a u -- ^str )
+\ 	STRCAT      ( a1 u1 a2 u2 -- a3 u3 )  \ LMI Forth
+\ 	STRPCK      ( a u -- ^str )           \ LMI Forth
 \
 \  String parsing primitives
-\ 	PARSE_TOKEN ( a u -- a2 u2 a3 u3 )
-\ 	PARSE_LINE  ( a u -- a1 u1 a2 u2 ... an un n )
+\ 	PARSE-TOKEN ( a u -- a2 u2 a3 u3 ) 
+\ 	PARSE-LINE  ( a u -- a1 u1 a2 u2 ... an un n )
+\
+\  * PARSE_TOKEN and PARSE_LINE are deprecated names for PARSE-TOKEN
+\    and PARSE-LINE
 \
 \  Counted string to Base 10 single and double integer conversions
 \ 	STRING>S    ( ^str -- n )
@@ -62,10 +65,12 @@
 \ 	F.RD        ( w n -- )    ( F: r -- ) | ( r w n -- )
 \
 \  String parsing and conversion to multiple floating point values
-\ 	PARSE_ARGS  ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
-\       PARSE_CSV   ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
+\ 	PARSE-FLOATS     ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
+\       PARSE-CSV-FLOATS ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
 \
-\ 	
+\  * PARSE_ARGS and PARSE_CSV are deprecated names for PARSE-FLOATS
+\    and PARSE-CSV-FLOATS
+ 	
 BASE @
 DECIMAL
 
@@ -179,37 +184,42 @@ string_buf str_buf_ptr !
 \ Return address of the copied cs. Input cs is not modified. 
 : strbufcpy ( ^str1 -- ^str2 )  count strpck ;
 
-\ Parse next token from the string separated by a blank:
+\ Parse next token from a string separated by a blank:
 \   a2 u2 is the remaining substring
 \   a3 u3 is the token string
-: parse_token ( a u -- a2 u2 a3 u3)
+: parse-token ( a u -- a2 u2 a3 u3)
    bl skip 2dup bl scan 2>r r@ - 2r> 2swap ;
 
-: parse_line ( a u -- a1 u1 a2 u2 ... n )
-   ( -trailing)
+\ Parse a line into substrings which are separated by one
+\ or more spaces
+: parse-line ( a u -- a1 u1 a2 u2 ... n )
    0 >r
    BEGIN
-     parse_token
+     parse-token
      dup
    WHILE
-     r> 1+ >r
+     1 rp@ +!  \ r> 1+ >r
      2swap
    REPEAT  
    2drop 2drop r> ;
+
+\ Older word names PARSE_TOKEN and PARSE_LINE are deprecated 
+synonym parse_token parse-token
+synonym parse_line  parse-line
 
 \ Base 10 number to string conversions and vice-versa
 
 \ Return counted string representing u in base 10
 : u>string ( u -- ^str )
-    base @ swap decimal 0 <# #s #> strpck swap base ! ;
+    base @ swap 10 base ! 0 <# #s #> strpck swap base ! ;
 
 \ Return counted string representing ud in base 10
 : ud>string ( ud -- ^str )
-    base @ >r decimal <# #s #> strpck r> base ! ;
+    base @ >r 10 base ! <# #s #> strpck r> base ! ;
 
 \ Convert counted string to unsigned double in base 10
 : string>ud ( ^str -- ud )
-    count base @ >r decimal 0 0 2swap >number 2drop r> base ! ;
+    count base @ >r 10 base ! 0 0 2swap >number 2drop r> base ! ;
 
 \ Return counted string representing d in base 10
 : d>string ( d -- ^str )
@@ -218,7 +228,7 @@ string_buf str_buf_ptr !
 
 \ Convert counted string to signed double in base 10
 : string>d ( ^str -- d )
-    base @ >r decimal number? drop r> base ! ;
+    base @ >r 10 base ! number? drop r> base ! ;
 
 \ Return counted string representing n in  base 10
 : s>string ( n -- ^str )
@@ -323,48 +333,57 @@ variable  fnumber_digits
 0e 0e f/ fconstant NAN
 	 
 : string>f ( ^str -- ) ( F: -- r ) \ ( ^str -- r )
-    count bl skip base @ >r decimal >float 
+    count bl skip base @ >r 10 base ! >float 
     0= IF NAN THEN r> base ! ;
 
 \ Parse a string delimited by spaces into fp numbers
 
 [DEFINED] FDEPTH [IF]
-: parse_args ( a u -- n ) ( F: -- r1 ... rn )
+: parse-floats ( a u -- n ) ( F: -- r1 ... rn )
 	0 >r  
 	BEGIN
 	  dup 0>
 	WHILE
-	  bl skip 
-	  2dup 
-	  bl scan 2>r
-	  r@ - dup 0= 
-	  IF drop r> 0 >r THEN
-	  strpck string>f
-	  2r> r> 
-	  1+ >r
+	  bl skip dup
+        WHILE
+	  2dup bl scan 
+          dup IF 
+            2>r  r@ - strpck string>f 2r>
+          ELSE
+            2drop strpck string>f 0 dup
+          THEN
+	  1 rp@ +!   \ r> 1+ >r
 	REPEAT
+        THEN
 	2drop r> ;
 [ELSE]
-: parse_args ( a u -- r1 ... rn n )
-	0 >r 
-	2>r
+: parse-floats ( a u -- r1 ... rn n )
+	0 >r  2>r
 	BEGIN
 	  r@ 0>
 	WHILE
-	  2r> bl skip 
-	  2dup 
-	  bl scan 2>r
-	  r@ - dup 0= 
-	  IF drop r> 0 >r THEN
-	  strpck string>f
-	  2r> r> 
-	  1+ >r 2>r
+	  2r> bl skip 2>r 
+          r@
+        WHILE 
+	  2r> 2dup bl scan
+          dup IF 
+            2>r  r@ - strpck string>f 2r>
+          ELSE 
+	    2drop strpck string>f 0 dup
+          THEN
+	  1 rp@ +!   \ r> 1+ >r 
+          2>r
 	REPEAT
+        THEN
 	2r> 2drop r> ;
 [THEN]
 
-: parse_csv ( a u -- n ) ( F: -- r1 ... rn ) \ ( a u -- r1 ... rn n )
-    [char] , bl replace-char parse_args ;
+: parse-csv-floats ( a u -- n ) ( F: -- r1 ... rn ) \ ( a u -- r1 ... rn n )
+    [char] , bl replace-char parse-floats ;
+
+\ Older names PARSE_ARGS and PARSE_CSV are deprecated
+synonym parse_args parse-floats
+synonym parse_csv  parse-csv-floats
 
 BASE !
 

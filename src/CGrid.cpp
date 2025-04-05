@@ -1,6 +1,6 @@
 // CGrid.cpp
 //
-// Copyright 1995--2020 Krishna Myneni
+// Copyright 1995--2023 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
@@ -14,7 +14,7 @@ using namespace std;
 #include <stdlib.h>
 #include "CGrid.h"
 
-extern char* LabelFormat (float, float, char);
+extern char* LabelFormat (double, double, char);
 
 //---------------------------------------------------------------
 
@@ -115,8 +115,8 @@ void CGridLines::Draw (CDC* pDc)
 
 void CAxes::Draw (CDC* pDc)
 {
-    float ax[2] = {0., 0.};
-    vector<float> x;
+    double ax[2] = {0.0, 0.0};
+    vector<double> x;
     CPoint p;
     CRect r = m_pT->GetPhysical();
     x = m_pT->GetLogical();
@@ -227,8 +227,8 @@ void CCartesianGrid::Draw(CDC* pDc)
 void CCartesianGrid::Labels(CDC* pDc)
 {
     int k, iy;
-    vector<float> x;
-    float xt, yt;
+    vector<double> x;
+    double xt, yt;
     char xl[20], yl[20];
     char xform[16], yform[16];
 
@@ -246,12 +246,12 @@ void CCartesianGrid::Labels(CDC* pDc)
     CRect rect = m_pT->GetPhysical();
     x = m_pT->GetLogical();
 
-    float xmin = x[0];
-    float xmax = x[1];
-    float ymin = x[2];
-    float ymax = x[3];
-    float xdel = (xmax - xmin)/(float) nXtics;
-    float ydel = (ymax - ymin)/(float) nYtics;
+    double xmin = x[0];
+    double xmax = x[1];
+    double ymin = x[2];
+    double ymax = x[3];
+    double xdel = (xmax - xmin)/(double) nXtics;
+    double ydel = (ymax - ymin)/(double) nYtics;
 
     strcpy (xform, LabelFormat (xmin, xmax, 'X'));
     strcpy (yform, LabelFormat (ymin, ymax, 'Y'));
@@ -265,7 +265,7 @@ void CCartesianGrid::Labels(CDC* pDc)
     while (nXtics*xl_pixel_width/xkstep > rect.Width()) xkstep *= 2;
     if (xkstep > nXtics) xkstep = nXtics;
 
-    xkstep = (rect.Width()/((float) xl_width*tm.tmAveCharWidth) > 4.5) ? 2 : 5;
+    xkstep = (rect.Width()/((double) xl_width*tm.tmAveCharWidth) > 4.5) ? 2 : 5;
     iy = pDc->m_bInverted ? rect.BottomRight().y + 2*tm.tmHeight :
     rect.TopLeft().y - 2*tm.tmHeight;
 
@@ -281,7 +281,7 @@ void CCartesianGrid::Labels(CDC* pDc)
     while (nYtics*tm.tmHeight/ykstep > rect.Height()/2) ykstep *= 2;
     if (ykstep > nYtics) ykstep = nYtics;
 
-    ykstep = (rect.Height()/(float) tm.tmHeight > 4.5) ? 2 : 5;
+    ykstep = (rect.Height()/(double) tm.tmHeight > 4.5) ? 2 : 5;
     iy = pDc->m_bInverted ? tm.tmHeight/2 : -tm.tmHeight/2;
 
     for (k = 0; k <= nYtics; k += ykstep) {

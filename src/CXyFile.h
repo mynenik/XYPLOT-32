@@ -32,7 +32,7 @@ class CXyFile {
 	int m_nFail;
 	int m_nCols;
 	int m_bReadData;
-	float* m_pValues;
+	double* m_pValues;
 public:
 	char* m_szHeader;
 
@@ -42,15 +42,15 @@ public:
 	void WriteHeader (char*);
 	void WriteHeaderLines(char*, char*, char*);
 	int Columns (void);
-	int ReadData (float*, int, int []);
-	int WriteData (float*, int, int);
+	int ReadData (double*, int, int []);
+	int WriteData (double*, int, int);
 	int Fail () ;
 	void SetSaveOptions (SaveOptions s) {m_nSave = s;}
 	void GetFormatStrings(char*, char*, char*, char*);
 };
 
 extern int BlankLine (char*);
-extern int NumberParse (float*, char*);
+extern int NumberParse (double*, char*);
 #endif
 
 

@@ -20,7 +20,7 @@ CpsDC.h
 
 class CpsDC : public CDeviceContext
 {
-  float m_fRGB [MAX_PS_COLORS][3];
+        double m_fRGB [MAX_PS_COLORS][3];
 public:
 	CpsDC (int, int);
 	void OpenDisplay (char*);

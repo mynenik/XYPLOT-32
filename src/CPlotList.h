@@ -46,7 +46,7 @@ public:
     char* GetList();
 //    void DisplayList (CDC*);
     void Draw (CDC*);
-    vector<float> GetExtrema ();
+    vector<double> GetExtrema ();
     CPlot* operator[] (const int);
 //  BOOL Write (CFile*);
 };

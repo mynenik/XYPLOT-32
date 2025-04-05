@@ -2,7 +2,7 @@
 //
 // class CDatabase
 //
-// Copyright 1995-2018 Krishna Myneni
+// Copyright 1995-2023 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
@@ -37,7 +37,7 @@ public:
   CDataset* FindInList (char*);
   int MakeListOfNames (char**);
   void Clear();           // clear the database
-  CDataset* MakeDataset (vector<float*>, int, int, int, char*, char*);
+  CDataset* MakeDataset (vector<double*>, int, int, int, char*, char*);
   CDataset* MakeDataset (CWorkspace41*, int);
   CDataset* MakeDataset (int*);
   int GetColumnCount (char*);
@@ -51,10 +51,5 @@ public:
 };
 
 #endif
-
-
-
-
-
 
 

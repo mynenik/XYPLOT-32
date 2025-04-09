@@ -52,7 +52,7 @@ Public:
 
 	    c" Yn_vs_Ym" 1+ ds3  DatasetInfo->Name !
 	    c"  " 1+        ds3  DatasetInfo->Header !
-	    256             ds3  DatasetInfo->Type !
+	    REAL_DOUBLE     ds3  DatasetInfo->Type !
 	    Npts            ds3  DatasetInfo->Npts !
 	    2               ds3  DatasetInfo->Size !
 	    ynm{{           ds3  DatasetInfo->Data !

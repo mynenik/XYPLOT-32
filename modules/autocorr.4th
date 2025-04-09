@@ -38,7 +38,7 @@ Public:
 
 	    0e
 	    np @ 0 do
-	      i ds1 @xy fswap fdrop fdup f* f+
+	      i ds1 @xy fswap fdrop fsquare f+
 	    loop
 	    fcorrnorm f!
 

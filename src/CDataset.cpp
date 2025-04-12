@@ -280,7 +280,7 @@ void CDataset::CopyFromXY (float* x, float* y, int npts)
     {
         *p = (double) (*x); p++; x++;
         for (int j = 1; j < m_nDatumSize; j++) {
-          *p = (double) (*y); p++; x++;
+          *p = (double) (*y); p++; y++;
         }
     }
 }

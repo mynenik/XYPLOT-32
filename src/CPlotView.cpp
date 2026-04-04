@@ -1,9 +1,10 @@
 // CPlotView.cpp
 //
-// Copyright 2020--2023 Krishna Myneni
+// Copyright 2020--2025 Krishna Myneni
+// <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
-// GNU Affero General Public License (AGPL) v 3.0 or later.
+// GNU General Public License (GPL), v3.0 or later.
 //
 
 #include <vector>

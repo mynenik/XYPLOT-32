@@ -1,10 +1,10 @@
 // CPlotDisplay.cpp
 //
-// Copyright 1996--2023 Krishna Myneni 
+// Copyright 1996--2025 Krishna Myneni 
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
-// GNU Affero General Public License (AGPL), v 3.0 or later.
+// GNU General Public License (GPL), v3.0 or later.
 //
 
 #include "CPlotDisplay.h"
@@ -54,7 +54,7 @@ void CPlotDisplay::CreateView(COORDINATE_SYSTEM cdns, vector<double> x)
         pv->m_pGrid->SetLines(bXlines, bYlines);
         pv->m_pGrid->SetAxes(bXaxes, bYaxes);
       }
-    }    
+    }
     m_qiView = m_qPV.end() - 1;
 }
 //---------------------------------------------------------------
@@ -75,31 +75,29 @@ void CPlotDisplay::SetPlotRect (CRect wRect, CDC* pDC)
 //   allow for x and y axis labels and other area surrounding
 //   the plot.
 
-        if (pDC)
-        {
-	  TEXTMETRIC tm;
-	  pDC->GetTextMetrics (&tm);
-	  wRect.TopLeft().x += 12*tm.tmAveCharWidth;
-	  wRect.BottomRight().x -= 5*tm.tmAveCharWidth;
+    if (pDC) {
+      TEXTMETRIC tm;
+      pDC->GetTextMetrics (&tm);
 
-	 // Determine aspect corrected size
+      wRect.TopLeft().x += 12*tm.tmAveCharWidth;
+      wRect.BottomRight().x -= 5*tm.tmAveCharWidth;
 
-	  int y1;
+      // Determine aspect corrected size
 
-	  if (pDC->m_bInverted)
-	    {
-	      wRect.BottomRight().y -= 6*tm.tmHeight;
-	      y1 = (int)(wRect.BottomRight().y - wRect.Width()/m_fAspect);
-	      if (y1 < 2*tm.tmHeight) y1 = 2*tm.tmHeight; 
-	      wRect.TopLeft().y = y1;
-	    }
-	  else
-	    {
-	      wRect.TopLeft().y += 6*tm.tmHeight;
-	      y1 = (int)(wRect.TopLeft().y + wRect.Width()/m_fAspect);
-	      wRect.BottomRight().y = y1;
-	    }
-        }
+      int y1;
+
+      if (pDC->m_bInverted) {
+        wRect.BottomRight().y -= 6*tm.tmHeight;
+	y1 = (int)(wRect.BottomRight().y - wRect.Width()/m_fAspect);
+	if (y1 < 2*tm.tmHeight) y1 = 2*tm.tmHeight; 
+	wRect.TopLeft().y = y1;
+      }
+      else {
+        wRect.TopLeft().y += 6*tm.tmHeight;
+        y1 = (int)(wRect.TopLeft().y + wRect.Width()/m_fAspect);
+        wRect.BottomRight().y = y1;
+      }
+    }
 
     (*m_qiView)->m_pCt->SetPhysical (wRect);
 }
@@ -119,15 +117,13 @@ CPlot* CPlotDisplay::MakePlot(CDataset* ds, int plot_type)
     CPlot* p = NULL;
 
     switch (plot_type)
-      {
+    {
       case 0:
-	p = new CXyPlot(ds);
-	break;
+        p = new CXyPlot(ds);
+        break;
       default:
-	;
-      }
-
-    // Add to plot list
+        ;
+    }
 
     if (p) m_pPlotList->AddPlot (p);
     return p;
@@ -139,8 +135,8 @@ CPlot* CPlotDisplay::MakePlot (CWorkspace41* ws, CDataset* ds, int n)
 // Create corresponding plot for plot n in a 4.1 workspace
 
     CPlot* p = new CXyPlot (ds);
-    switch (ws->pv[n].sym)
-    {
+    if (p) {
+      switch (ws->pv[n].sym) {
         case 'p':
           p->SetSymbol(sym_POINT);
           break;
@@ -155,9 +151,10 @@ CPlot* CPlotDisplay::MakePlot (CWorkspace41* ws, CDataset* ds, int n)
           break;
         default:
           ;
+      }
+      m_pPlotList->AddPlot (p);
     }
 
-    m_pPlotList->AddPlot (p);
     return p;
 }
 //---------------------------------------------------------------
@@ -198,26 +195,25 @@ void CPlotDisplay::DeletePlotsOf (CDataset* d)
 
     CPlot* p;
 
-    while (p = m_pPlotList->PlotOf(d))
-    {
-        m_pPlotList->RemovePlot(p);
-        delete p;
+    while (p = m_pPlotList->PlotOf(d)) {
+      m_pPlotList->RemovePlot(p);
+      delete p;
     }
 }
 //---------------------------------------------------------------
 
 void CPlotDisplay::Draw(CDC *pDC)
 {
-  char s[16];
-  CPlotView* pView = *m_qiView;
-  pView->m_pGrid->SetColor(pDC->GetColor(strcpy(s,"black")));  // set color of grid
-  pView->m_pGrid->Draw(pDC);
-  pView->m_pGrid->Labels(pDC);
+    char s[16];
+    CPlotView* pView = *m_qiView;
+    pView->m_pGrid->SetColor(pDC->GetColor(strcpy(s,"black")));  // set color of grid
+    pView->m_pGrid->Draw(pDC);
+    pView->m_pGrid->Labels(pDC);
 
-  CRect rect = pView->m_pCt->GetPhysical();
-  pDC->SetClipRect(rect);  // enable clipping for plot area
-  m_pPlotList->Draw(pDC);
-  pDC->SetClipRect (pDC->GetClientRect()); // disable clipping
+    CRect rect = pView->m_pCt->GetPhysical();
+    pDC->SetClipRect(rect);  // enable clipping for plot area
+    m_pPlotList->Draw(pDC);
+    pDC->SetClipRect (pDC->GetClientRect()); // disable clipping
 }
 //---------------------------------------------------------------
 
@@ -270,13 +266,13 @@ void CPlotDisplay::GoForward()
 
 void CPlotDisplay::DeleteView ()
 {
-// Delete the current transformation and go to previous one,
-//   unless it is the first transformation.
+// Delete the current view and go to previous one,
+//   unless it is the first view.
 
-    if (m_qiView > m_qPV.begin())
-    {
+    if (m_qiView > m_qPV.begin()) {
+        m_qPV.erase(m_qiView);
         --m_qiView;
-        m_qPV.erase (m_qiView + 1, m_qiView + 2);
+        // m_qPV.erase (m_qiView + 1, m_qiView + 2);
 	ApplyCurrentView();
     }
 }

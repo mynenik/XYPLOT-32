@@ -29,17 +29,14 @@ CXyFile::CXyFile (char* name, int open_mode)
     m_nFail = 0;
     strcpy (m_szName, name);
 
-	if (open_mode)
-	{
-	  m_pOutFile = new ofstream (name, ios::out | ios::binary);
-	  if (m_pOutFile->fail()) m_nFail = 1;
-	}
-	else
-	{
-	  m_pInFile = new ifstream (name);
-	  if (m_pInFile->fail()) m_nFail = 1;
-	}
-
+    if (open_mode) {
+      m_pOutFile = new ofstream (name, ios::out | ios::binary);
+      if (m_pOutFile->fail()) m_nFail = 1;
+    }
+    else {
+      m_pInFile = new ifstream (name);
+      if (m_pInFile->fail()) m_nFail = 1;
+    }
 }
 //---------------------------------------------------------------
 
@@ -88,49 +85,42 @@ void CXyFile::ReadHeader()
 
     p = strstr (m_szFirstLine, HEADER_BEGIN);
 
-    if (p) 
-      {
-	do {
-            m_pInFile->getline(m_szFirstLine, MAX_LINE_LENGTH);
-            p = strstr (m_szFirstLine, HEADER_END);
-            if (! p)
-            {
-                strcat (m_szHeader, m_szFirstLine);
-                strcat (m_szHeader, "\n");
-            }
+    if (p) {
+      do {
+        m_pInFile->getline(m_szFirstLine, MAX_LINE_LENGTH);
+        p = strstr (m_szFirstLine, HEADER_END);
+        if (! p) {
+          strcat (m_szHeader, m_szFirstLine);
+          strcat (m_szHeader, "\n");
+        }
+      } while (!p && (!m_pInFile->fail()));
 
-        } while (!p && (!m_pInFile->fail()));
+      m_pInFile->getline(m_szFirstLine, MAX_LINE_LENGTH);
+    }
+    else if (*m_szFirstLine == '#') {
+      // Read unix style comment lines
 
-	m_pInFile->getline(m_szFirstLine, MAX_LINE_LENGTH);
+      p = m_szFirstLine;
+
+      do {
+        ++p;
+        if (*p == ' ') ++p;
+        strcat (m_szHeader, p);
+        strcat (m_szHeader, "\n");
+        m_pInFile->getline (m_szFirstLine, MAX_LINE_LENGTH);
+        p = m_szFirstLine;
       }
-    else if (*m_szFirstLine == '#')
-      {
-	// Read unix style comment lines
+      while ((*p == '#') && (!m_pInFile->fail()));
+    }
+    else {
+      return;
+    }
 
-	p = m_szFirstLine;
-
-	do
-	  {
-	    ++p;;
-	    if (*p == ' ') ++p;
-	    strcat (m_szHeader, p);
-	    strcat (m_szHeader, "\n");
-	    m_pInFile->getline (m_szFirstLine, MAX_LINE_LENGTH);
-	    p = m_szFirstLine;
-	  } 
-	while ((*p == '#') && (!m_pInFile->fail()));	  
-      }
-    else
-      {
-	return;
-      }
-      
     // Ignore blank lines after header
 
-    while (BlankLine (m_szFirstLine) && (!m_pInFile->fail()))
-      {
+    while (BlankLine (m_szFirstLine) && (!m_pInFile->fail())) {
 	m_pInFile->getline(m_szFirstLine, MAX_LINE_LENGTH);
-      }    
+    }
 }
 //---------------------------------------------------------------
 
@@ -140,14 +130,13 @@ void CXyFile::GetFormatStrings(char* prefix, char* delim, char* numFmt, char* eo
 //
     if (prefix) {  // set the prefix string
       if (m_nSave.HeaderType == 2)
-           strcpy(prefix, m_nSave.UserPrefix);
+        strcpy(prefix, m_nSave.UserPrefix);
       else
-           *prefix = '\000';  // N/A
+        *prefix = '\000';  // N/A
     }
 
     if (delim) {  // set the delimiter string
-      switch (m_nSave.Delimiter)
-      {
+      switch (m_nSave.Delimiter) {
         case 1:
             strcpy (delim, "\t");
             break;
@@ -160,8 +149,7 @@ void CXyFile::GetFormatStrings(char* prefix, char* delim, char* numFmt, char* eo
       }
     }
     if (numFmt) {  // set the number format string
-      switch (m_nSave.NumberFormat)
-      {
+      switch (m_nSave.NumberFormat) {
         case 1:
             strcpy (numFmt, "%lf");
             break;
@@ -188,31 +176,28 @@ void CXyFile::WriteHeaderLines(char* hdr, char* prefix, char* eol)
     cp2 = cp1;
     int nc;
     while (cp2) {
-	cp2 = strchr(cp1, (int) '\012');  // search for LF
-	if (cp2)
-	{
-	    nc = cp2 - cp1;
-	    if (nc > 255) nc = 255;      // enforce max line length
-	    strncpy(line, cp1, nc);      // extract line up to LF (not including LF)
-	    if (nc)
-	    {
-		if (line[nc-1] == '\015') --nc;  // strip CR
-	    } 
-	    line[nc] = 0;
+        cp2 = strchr(cp1, (int) '\012');  // search for LF
+        if (cp2) {
+            nc = cp2 - cp1;
+            if (nc > 255) nc = 255;      // enforce max line length
+            strncpy(line, cp1, nc);      // extract line up to LF (not including LF)
+            if (nc) {
+                if (line[nc-1] == '\015') --nc;  // strip CR
+            }
+            line[nc] = 0;
 
             if (prefix)
               *m_pOutFile << prefix << ' ' << line << eol;
             else
               *m_pOutFile << line << eol;
 
-	    cp1 = cp2+1;
-	}
-	else
-	{
-            if (prefix)
-	      if (*cp1) *m_pOutFile << prefix << ' ' << cp1 << eol;
-	}
-    }		    
+            cp1 = cp2+1;
+        }
+        else {
+          if (prefix)
+            if (*cp1) *m_pOutFile << prefix << ' ' << cp1 << eol;
+        }
+    }
 }
 //---------------------------------------------------------------
 
@@ -223,8 +208,7 @@ void CXyFile::WriteHeader (char* hdr)
     char prefix[16], eol[4];
     GetFormatStrings(prefix, NULL, NULL, eol);
 
-    switch (m_nSave.HeaderType)
-    {
+    switch (m_nSave.HeaderType) {
         case 0:   // No header
             break;
         case 1:   // Standard xyplot format (C comment)
@@ -233,7 +217,7 @@ void CXyFile::WriteHeader (char* hdr)
             *m_pOutFile << HEADER_END << eol;
             break;
         case 2:   // Prefix string on each line
-	    WriteHeaderLines(hdr, prefix, eol);
+            WriteHeaderLines(hdr, prefix, eol);
             break;
         default:  // no output
             break;
@@ -272,16 +256,14 @@ Return the number of points read from the file.
 
     // Read the requested data from the file.
 
-    if (m_bReadData == 0)
-    {
+    if (m_bReadData == 0) {
         // Parse the first line of data
 
         NumberParse (m_pValues, m_szFirstLine);
 
         cp = ColumnSelections;
         i = 0;
-        while (i < nSel)
-        {
+        while (i < nSel) {
             *d++ = m_pValues[*cp++];
             ++i;
         }
@@ -289,15 +271,13 @@ Return the number of points read from the file.
         ++nPts;
     }
 
-    while ((! m_pInFile->fail()) && (nPts < MAX_POINTS))
-    {
+    while ((! m_pInFile->fail()) && (nPts < MAX_POINTS)) {
         m_pInFile->getline (s, MAX_LINE_LENGTH);
         if (NumberParse (m_pValues, s) < m_nCols) break;  // stop reading if ncols changes
 
         cp = ColumnSelections;
         i = 0;
-        while (i < nSel)
-        {
+        while (i < nSel) {
             *d++ = m_pValues[*cp++];
             ++i;
         }

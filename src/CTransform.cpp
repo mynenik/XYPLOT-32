@@ -1,6 +1,6 @@
 // CTransform.cpp
 //
-// Copyright 1995--2024 Krishna Myneni
+// Copyright 1995--2025 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -53,11 +53,11 @@ CPoint C2D_Transform::Physical (double* x)
 
     p.x = (int)(m_nPRect.TopLeft().x +
      (x[0] - m_vEx[0])*m_nPRect.Width()/m_vDelta[0]);
+
     p.y = (int)(m_nPRect.BottomRight().y -
      (x[1] - m_vEx[2])*m_nPRect.Height()/m_vDelta[1]);
 
     return p;
-
 }
 //----------------------------------------------------------------
 
@@ -67,6 +67,7 @@ void C2D_Transform::Logical (CPoint p, double* x)
 
     x[0] = m_vEx[0] + (double)(p.x - m_nPRect.TopLeft().x)*
       m_vDelta[0]/m_nPRect.Width();
+
     x[1] = m_vEx[2] + (double)(m_nPRect.BottomRight().y - p.y)*
       m_vDelta[1]/m_nPRect.Height();
 }
@@ -80,20 +81,23 @@ CPoint C2Di_Transform::Physical (double* x)
 
     p.x = (int)(m_nPRect.TopLeft().x +
      (x[0] - m_vEx[0])*m_nPRect.Width()/m_vDelta[0]);
-    p.y = (int)(m_nPRect.TopLeft().y + 
+
+    p.y = (int)(m_nPRect.TopLeft().y +
      (x[1] - m_vEx[2])*m_nPRect.Height()/m_vDelta[1]);
+
     return p;
 }
 //----------------------------------------------------------------
 
 void C2Di_Transform::Logical (CPoint p, double* x)
 {
-  // Compute logical coordinates of point p
+    // Compute logical coordinates of point p
 
-  x[0] = m_vEx[0] + (double)(p.x - m_nPRect.TopLeft().x)*
-    m_vDelta[0]/m_nPRect.Width();
-  x[1] = m_vEx[2] + (double)(p.y - m_nPRect.BottomRight().y)*
-    m_vDelta[1]/m_nPRect.Height();
+    x[0] = m_vEx[0] + (double)(p.x - m_nPRect.TopLeft().x)*
+      m_vDelta[0]/m_nPRect.Width();
+
+    x[1] = m_vEx[2] + (double)(p.y - m_nPRect.BottomRight().y)*
+      m_vDelta[1]/m_nPRect.Height();
 }
 //---------------------------------------------------------------
 
@@ -105,8 +109,8 @@ vector<double> CTransform::Logical (CRect rect)
     double br[2], tl[2];
     vector<double> x(4);
 
-    Logical (rect.TopLeft(), tl);	// xmin, ymax
-    Logical (rect.BottomRight(), br);	// xmax, ymin
+    Logical (rect.TopLeft(), tl);     // xmin, ymax
+    Logical (rect.BottomRight(), br); // xmax, ymin
     x[0] = tl[0];
     x[1] = br[0];
     x[2] = br[1];
@@ -140,10 +144,12 @@ void C2D_PolarTransform::Logical (CPoint p, double* x)
 
     xLogical = m_vDelta[0]*(p.x - m_nPRect.TopLeft().x)/m_nPRect.Width()
         + m_vEx[0];
+
     yLogical = -m_vDelta[0]*(p.y - m_nPRect.BottomRight().y)/m_nPRect.Height()
         + m_vEx[2];
-	x[0] = atan2(yLogical, xLogical);
-	x[1] = sqrt(xLogical*xLogical + yLogical*yLogical);
+
+    x[0] = atan2(yLogical, xLogical);
+    x[1] = sqrt(xLogical*xLogical + yLogical*yLogical);
 }
 //---------------------------------------------------------------
 

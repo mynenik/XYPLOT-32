@@ -17,8 +17,8 @@
 #   1. If a debug version is being built, always invoke "make clean" 
 #      before "make debug".
 #
-COPYRIGHT=1999--2025
-VERSION=3.0.0
+COPYRIGHT=1999--2026
+VERSION=3.0.1
 KFORTH_VER=2.5.0
 MODULE_DIR_VAR=XYPLOT_DIR
 BUILD_DATE=`date +%F`

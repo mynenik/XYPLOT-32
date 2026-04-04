@@ -591,7 +591,21 @@ variable nplots
 : export_grace ( -- | prompt user for filename and export grace file )
     c" Enter the Grace (.agr) filename:" get_input
     IF
-      count 2dup ." Exporting Grace file, " type cr 
+      count strpck dup \ -- ^fname ^fname
+      file-exists IF
+        \ -- ^fname
+        c" File already exists! Overwrite (Y/N)?" get_input
+        IF  \ -- ^fname ^resp 
+          1+ c@ ucase 
+          [char] Y <> IF 
+            count ." Canceled export of " type cr 
+            EXIT 
+          THEN
+        ELSE
+          2drop EXIT
+        THEN
+      THEN 
+      count 2dup ." Exporting Grace file, " type cr
       W/O create-file 0 < IF  
         ." Unable to create output file!" cr
       ELSE 
@@ -599,6 +613,8 @@ variable nplots
         gr_fid @ close-file drop
         ." Grace file successfully written." cr 
       THEN
+    ELSE
+      drop
     THEN 
 ;
 

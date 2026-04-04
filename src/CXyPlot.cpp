@@ -1,6 +1,6 @@
 // CXyPlot.cpp
 //
-// Copyright 1995--2023 Krishna Myneni
+// Copyright 1995--2025 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
@@ -11,15 +11,15 @@
 
 CPlot::CPlot(CDataset* d)
 {
-  m_pSet = d;
-  m_nSymbol = sym_LINE;
+    m_pSet = d;
+    m_nSymbol = sym_LINE;
 }
 
 //---------------------------------------------------------------
 
 CXyPlot::CXyPlot(CDataset* ds) : CPlot(ds)
 {
-  m_nPointWidthScale = 200;
+    m_nPointWidthScale = 200;
 }
 //---------------------------------------------------------------
 
@@ -27,35 +27,33 @@ void CXyPlot::Draw(CDC* pDc)
 {
 // CPen pen(m_nStyle, m_nWidth, m_nColor);
 
-  pDc->SetForeground(m_nColor);
+    pDc->SetForeground(m_nColor);
 
-  switch (m_nSymbol)
-    {
-    case sym_POINT:
-      DrawPointPlot (pDc, DEF_POINT_WIDTH);
-      break;
+    switch (m_nSymbol) {
+      case sym_POINT:
+        DrawPointPlot (pDc, DEF_POINT_WIDTH);
+        break;
 
-    case sym_BIG_POINT:
-      DrawPointPlot (pDc, 2*DEF_POINT_WIDTH + 1);
-      break;
+      case sym_BIG_POINT:
+        DrawPointPlot (pDc, 2*DEF_POINT_WIDTH + 1);
+        break;
 
-    case sym_LINE_PLUS_POINT:
-      DrawPointPlot (pDc, DEF_POINT_WIDTH);
-      DrawLinePlot (pDc);
-      break;
+      case sym_LINE_PLUS_POINT:
+        DrawPointPlot (pDc, DEF_POINT_WIDTH);
+        DrawLinePlot (pDc);
+        break;
 
-    case sym_STICK:
-      DrawStickPlot (pDc);
-      break;
+      case sym_STICK:
+        DrawStickPlot (pDc);
+        break;
 
-    case sym_HISTOGRAM:
-      DrawHistogram (pDc);
-      break;
+      case sym_HISTOGRAM:
+        DrawHistogram (pDc);
+        break;
 
-    default:
-      DrawLinePlot (pDc);
+      default:
+        DrawLinePlot (pDc);
     }
-
 }
 
 //---------------------------------------------------------------
@@ -83,26 +81,22 @@ void CXyPlot::DrawPointPlot (CDC* pDc, int pt_width)
     vector<double> e = m_pT->GetLogical();
     vector<vector<double>::iterator> lim = m_pSet->Limits(e[0], e[1], bOverlap);
 
-    if (bOverlap)
-      {
+    if (bOverlap) {
+      vector<double>::iterator data = lim[0];
+      int step = m_pSet->SizeOfDatum();
+      if (m_pSet->begin() < data) data -= step;
+      if (lim[1] < (m_pSet->end() - step)) lim[1] += step;
 
-        vector<double>::iterator data = lim[0];
-        int step = m_pSet->SizeOfDatum();
-	if (m_pSet->begin() < data) data -= step;
-	if (lim[1] < (m_pSet->end() - step)) lim[1] += step;
-
-        while (data <= lim[1])
-	  {
-	    p = m_pT->Physical ((double*) &data[0]);
-            if ((p.x <= x2) && (p.x >= x1) && (p.y <= y2) && (p.y >= y1))
-	      {
-		for (k = -pt_width2; k <= pt_width2; k++)
-		  for (l = -pt_width2; l <= pt_width2; l++)
-		    pDc->SetPixel(p.x + k, p.y +l);
-	      }
-	    data += step;
-	  }
+      while (data <= lim[1]) {
+        p = m_pT->Physical ((double*) &data[0]);
+        if ((p.x <= x2) && (p.x >= x1) && (p.y <= y2) && (p.y >= y1)) {
+          for (k = -pt_width2; k <= pt_width2; k++)
+            for (l = -pt_width2; l <= pt_width2; l++)
+              pDc->SetPixel(p.x + k, p.y +l);
+          }
+	  data += step;
       }
+    }
 }
 //---------------------------------------------------------------
 
@@ -119,8 +113,7 @@ void CXyPlot::DrawLinePlot (CDC* pDc)
     vector<double> e = m_pT->GetLogical();
     vector<vector<double>::iterator> lim = m_pSet->Limits(e[0], e[1], bOverlap);
 
-    if (bOverlap)
-    {
+    if (bOverlap) {
         vector<double>::iterator vis_data_start = lim[0];
         vector<double>::iterator vis_data_end = lim[1];
 

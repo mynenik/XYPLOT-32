@@ -4,7 +4,7 @@
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the
-// GNU General Public License (AGPL), v3.0 or later.
+// GNU General Public License (GPL), v3.0 or later.
 //
 
 #include <string.h>
@@ -32,7 +32,6 @@ CDataset::CDataset(int nSize, int nPoints, char* name, char* hdr) :
     strcpy (m_szName, name);
   else
     *m_szName = '\0';
-
 }
 //---------------------------------------------------------------
 
@@ -51,7 +50,7 @@ void CDataset::SetExtrema()
 // element, and so on.
 
     int i, j, j2, nsize, ordering, equal_sp = 1;
-    vector<double>::iterator p = begin(); 
+    vector<double>::iterator p = begin();
     double last_x, delta;
 
     nsize = SizeOfDatum();
@@ -169,8 +168,8 @@ int CDataset::IsOverlapping (double x1, double x2)
 }
 //----------------------------------------------------------------
 
-vector<vector<double>::iterator> CDataset::Limits (double x1, double x2, 
-						  int& bOverlap)
+vector<vector<double>::iterator> CDataset::Limits (double x1, double x2,
+int& bOverlap)
 {
 // Return vector with iterators to start data and end data in interval (x1, x2)
 
@@ -352,7 +351,7 @@ CDataset* CComplex::Duplicate()
 // Create a new complex dataset, duplicate its contents
 //  and return a ptr to it
 
-    CComplex* ds = new CComplex (SizeOfDatum()/2, NumberOfPoints(), 
+    CComplex* ds = new CComplex (SizeOfDatum()/2, NumberOfPoints(),
       m_szName, m_szHeader);
     ds->CopyData (begin(), NumberOfPoints());
     ds->m_vEx = m_vEx;

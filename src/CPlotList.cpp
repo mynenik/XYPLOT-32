@@ -1,10 +1,10 @@
 // CPlotList.cpp
 //
-// Copyright (c) 1996--2024 Krishna Myneni
+// Copyright (c) 1996--2025 Krishna Myneni
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
-// GNU Affero General Public License (AGPL), v 3.0 or later.
+// GNU General Public License (GPL), v 3.0 or later.
 //
 
 #include "CPlotList.h"
@@ -414,15 +414,15 @@ vector<double> CPlotList::GetExtrema()
       node = node->Next;
 
       while (node) {
-	p = node->Plot;
-	d = p->GetSet();
-	e = d->GetExtrema();
-	if (e[0] < ex[0]) ex[0] = e[0];
-	if (e[1] > ex[1]) ex[1] = e[1];
-	if (e[2] < ex[2]) ex[2] = e[2];
-	if (e[3] > ex[3]) ex[3] = e[3];
+        p = node->Plot;
+        d = p->GetSet();
+        e = d->GetExtrema();
+        if (e[0] < ex[0]) ex[0] = e[0];
+        if (e[1] > ex[1]) ex[1] = e[1];
+        if (e[2] < ex[2]) ex[2] = e[2];
+        if (e[3] > ex[3]) ex[3] = e[3];
 
-	node = node->Next;
+        node = node->Next;
       }
     }
     else {

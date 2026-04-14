@@ -2,7 +2,7 @@
 //
 // Common declarations and data for kForth 32-bit Virtual Machine
 //
-// Copyright (c) 1998--2024 Krishna Myneni,
+// Copyright (c) 1998--2025 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -68,9 +68,9 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .long CPP_type, CPP_udot, CPP_variable, CPP_words # 116 -- 119
            .long CPP_does, L_2val, L_2fetch, C_search   # 120 -- 123
            .long L_or, C_compare, L_not, L_move    # 124 -- 127
-           .long L_fsin, L_fcos, C_ftan, C_fasin   # 128 -- 131
-           .long C_facos, C_fatan, C_fexp, C_fln   # 132 -- 135
-           .long C_flog, L_fatan2, L_ftrunc, L_ftrunctos    # 136 -- 139
+           .long L_fsin, L_fcos, L_ftan, L_fasin   # 128 -- 131
+           .long L_facos, L_fatan, L_fexp, L_fln   # 132 -- 135
+           .long L_flog, L_fatan2, L_ftrunc, L_ftrunctos    # 136 -- 139
            .long C_fmin, C_fmax, L_floor, L_fround # 140 -- 143
            .long L_dlt, L_dzeroeq, L_deq, L_twopush_r  # 144 -- 147
            .long L_twopop_r, L_tworfetch, L_stod, L_stof # 148 -- 151
@@ -82,7 +82,7 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .long L_swfetch, L_wstore, L_dffetch, L_dfstore  # 172 -- 175
            .long L_sffetch, L_sfstore, L_spfetch, L_plusstore # 176 -- 179
            .long L_fadd, L_fsub, L_fmul, L_fdiv    # 180 -- 183
-           .long L_fabs, L_fneg, C_fpow, L_fsqrt   # 184 -- 187
+           .long L_fabs, L_fneg, L_fpow, L_fsqrt   # 184 -- 187
            .long CPP_spstore, CPP_rpstore, L_feq, L_fne  # 188 -- 191
            .long L_flt, L_fgt, L_fle, L_fge        # 192 -- 195
            .long L_fzeroeq, L_fzerolt, L_fzerogt, L_nop # 196 -- 199
@@ -106,9 +106,9 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	   .long L_cputest, L_dsstar, CPP_compilecomma, CPP_compilename   # 268--271
 	   .long CPP_postpone, CPP_nondeferred, CPP_forget, C_forth_signal # 272--275
 	   .long C_raise, C_setitimer, C_getitimer, C_us2fetch  # 276--279
-	   .long C_tofloat, L_fsincos, C_facosh, C_fasinh # 280--283
-	   .long C_fatanh, C_fcosh, C_fsinh, C_ftanh   # 284--287
-	   .long C_falog, L_dzerolt, L_dmax, L_dmin    # 288--291
+	   .long C_tofloat, L_fsincos, L_facosh, L_fasinh # 280--283
+	   .long L_fatanh, L_fcosh, L_fsinh, L_ftanh   # 284--287
+	   .long L_falog, L_dzerolt, L_dmax, L_dmin    # 288--291
 	   .long L_dtwostar, L_dtwodiv, CPP_uddot, L_within  # 292--295
 	   .long CPP_twoliteral, C_tonumber, C_numberquery, CPP_sliteral  # 296--299
            .long CPP_fliteral, CPP_twovariable, CPP_twoconstant, CPP_synonym  # 300--303
@@ -127,7 +127,7 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .long L_nop, L_nop, L_nop, CPP_myname            # 352--355
            .long L_nop, L_nop, C_used, L_vmthrow            # 356--359
            .long L_precision, L_setprecision, L_nop, CPP_fsdot   # 360--363
-	   .long L_nop, L_nop, C_fexpm1, C_flnp1	    # 364--367
+	   .long L_nop, L_nop, L_fexpm1, L_flnp1	    # 364--367
 	   .long CPP_uddotr, CPP_ddotr, L_f2drop, L_f2dup   # 368--371
            .long L_nop, L_nop, L_nop, L_nop           # 372--375
            .long L_nop, L_nop, L_nop, L_nop           # 376--379
@@ -156,17 +156,13 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 // In: none
 // Out: ebx = DSP
 .macro LDSP
-  .ifndef __FAST__
         movl GlobalSp, %ebx
-  .endif
 .endm
 
 // Regs: ebx
 // In/Out: ebx = DSP
 .macro STSP
-  .ifndef __FAST__
 	movl %ebx, GlobalSp
-  .endif
 .endm
 
 // Regs: ebx
@@ -247,7 +243,7 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	incl %ebp		 # increment the Forth instruction ptr
 	movl %ebp, GlobalIp
   .ifdef __FAST__
-        movl %ebx, GlobalSp
+        STSP
   .endif
 	movb (%ebp), %al         # get the opcode
 	movl JumpTable(,%eax,4), %ecx	# machine code address of word
@@ -259,7 +255,6 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 // In/Out: ebx = DSP
 .macro DROP                     # increment DSP by 1 cell
         INC_DSP
-	STSP
 	INC_DTSP
 .endm
 
@@ -269,7 +264,6 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
         movl WSIZE(%ebx), %ecx
         movl %ecx, (%ebx)
 	DEC_DSP
-	STSP
   .ifndef __FAST__
         movl GlobalTp, %ecx
         movb 1(%ecx), %al
@@ -303,25 +297,22 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 .endm
 
 // Regs: eax, ebx, ecx, edx
-// In: none
+// In: ebx = DSP
 // Out: eax = 0, ebx = DSP
 .macro STOD
-	LDSP
 	movl $WSIZE, %ecx
 	movl WSIZE(%ebx), %eax
 	cdq
 	movl %edx, (%ebx)
 	subl %ecx, %ebx
-	STSP
 	STD_IVAL
 	xorl %eax, %eax
 .endm
 
 // Regs: eax, ebx
-// In: none
+// In: ebx = DSP
 // Out: eax = 0, ebx = DSP
 .macro DPLUS
-	LDSP
 	INC2_DSP
 	movl (%ebx), %eax
 	clc
@@ -330,16 +321,14 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	movl WSIZE(%ebx), %eax
 	adcl -WSIZE(%ebx), %eax
 	movl %eax, WSIZE(%ebx)
-	STSP
 	INC2_DTSP
 	xor %eax, %eax
 .endm
 
 // Regs: eax, ebx
-// In: none
+// In: ebx = DSP
 // Out: eax = 0, ebx = DSP
 .macro DMINUS
-	LDSP
 	INC2_DSP
 	movl 2*WSIZE(%ebx), %eax
 	clc
@@ -348,7 +337,6 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	movl WSIZE(%ebx), %eax
 	sbbl -WSIZE(%ebx), %eax
 	movl %eax, WSIZE(%ebx)
-	STSP
 	INC2_DTSP
 	xor %eax, %eax
 .endm
@@ -402,9 +390,9 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
         xor %eax, %eax
 .endm
 
-// Regs: eax, ebx
+// Regs: eax, ebx, edx
 // In: ebx = DSP
-// Out: eax = 0, ebx = DSP
+// Out: eax = 0, ebx = DSP, edx = remainder, TOS = quotient
 .macro STARSLASH
         cmpl $0, WSIZE(%ebx)
         jz E_div_zero
@@ -421,29 +409,45 @@ JumpTable: .long L_false, L_true, L_cells, L_cellplus # 0 -- 3
 // In: ebx = DSP
 // Out: eax = 0, ebx = DSP
 .macro TNEG
-        pushl %ebx
+        push %ebx
         movl $WSIZE, %eax
-        addl %eax, %ebx
-        movl (%ebx), %edx
-        addl %eax, %ebx
-        movl (%ebx), %ecx
-        addl %eax, %ebx
-        movl (%ebx), %eax
-        notl %eax
-        notl %ecx
-        notl %edx
+        add  %eax, %ebx
+        mov  (%ebx), %edx
+        add  %eax, %ebx
+        mov  (%ebx), %ecx
+        add  %eax, %ebx
+        mov  (%ebx), %eax
+        not  %eax
+        not  %ecx
+        not  %edx
         clc
         addl $1, %eax
         adcl $0, %ecx
         adcl $0, %edx
-        movl %eax, (%ebx)
+        mov  %eax, (%ebx)
         movl $WSIZE, %eax
-        subl %eax, %ebx
-        movl %ecx, (%ebx)
-        subl %eax, %ebx
-        movl %edx, (%ebx)
-        popl %ebx
-        xor %eax, %eax
+        sub  %eax, %ebx
+        mov  %ecx, (%ebx)
+        sub  %eax, %ebx
+        mov  %edx, (%ebx)
+        pop  %ebx
+        xor  %eax, %eax
+.endm
+
+// Regs: eax, ebx
+// In: ebx = DSP
+// Out: eax = 0, ebx = DSP
+.macro DOUBLE_FUNC func
+	INC_DSP
+	movl WSIZE(%ebx), %eax
+	push %eax
+	movl (%ebx), %eax
+	push %eax
+	call \func
+	addl $8, %esp
+	fstpl (%ebx)
+	DEC_DSP
+	xor %eax, %eax
 .endm
 
 // Error jumps
@@ -467,26 +471,18 @@ E_arg_type_mismatch:
 	movl $E_ARG_TYPE_MISMATCH, %eax
 	ret
 
-L_vmthrow:      # throw VM error (used as default exception handler)
-        LDSP
-        INC_DSP
-        INC_DTSP
-        movl (%ebx), %eax
-        STSP
-        ret
-
 L_cputest:
 	ret
 
 
 # set kForth's default fpu settings
 L_initfpu:
-	movl GlobalSp, %ebx
+	LDSP
 	fnstcw NDPcw           # save the NDP control word
 	movl NDPcw, %ecx
 	andb $240, %ch         # mask the high byte
         orb  $2,  %ch          # set double precision, round near
-        movl %ecx, (%ebx)
+        mov  %ecx, (%ebx)
 	fldcw (%ebx)
 	ret
 
@@ -512,46 +508,25 @@ L_abort:
   .endif
 	jmp L_quit
 
-L_jz:
-        LDSP
-	DROP
-        movl (%ebx), %eax
-        cmpl $0, %eax
-        jz jz1
-	movl $4, %eax
-        addl %eax, %ebp       # do not jump
-	xorl %eax, %eax
-        NEXT
-jz1:    movl %ebp, %ecx
-        incl %ecx
-        movl (%ecx), %eax       # get the relative jump count
-        decl %eax
-        addl %eax, %ebp
-	xorl %eax, %eax
-        NEXT
-
 L_jnz:				# not implemented
 	ret
 
 L_jmp:
-        movl %ebp, %ecx
-        incl %ecx
+        mov  %ebp, %ecx
+        inc  %ecx
         movl (%ecx), %eax       # get the relative jump count
-        addl %eax, %ecx
+        add  %eax, %ecx
         subl $2, %ecx
-        movl %ecx, %ebp		# set instruction ptr
-	xorl %eax, %eax
+        mov  %ecx, %ebp		# set instruction ptr
+	xor  %eax, %eax
         NEXT
 
 L_calladdr:
-	incl %ebp
-	movl %ebp, %ecx # address to execute (intrinsic Forth word or other)
+	inc  %ebp
+	mov  %ebp, %ecx # address to execute (intrinsic Forth word or other)
 	addl $WSIZE-1, %ebp
 	movl %ebp, GlobalIp
-#	call *(%ecx)
         jmpl *(%ecx)
-#	movl GlobalIp, %ebp
-#	ret
 
 L_binary:
 	movl $Base, %ecx
@@ -566,202 +541,124 @@ L_hex:
 	movl $16, (%ecx)
 	NEXT
 
-L_base:
-	LDSP
-	movl $Base, (%ebx)
-	DEC_DSP
-	STSP
-	STD_ADDR
-	NEXT	
-
-L_precision:
-	LDSP
-	movl Precision, %ecx
-        movl %ecx, (%ebx)
-	DEC_DSP
-	STSP
-	STD_IVAL
-	NEXT
-
-L_setprecision:
-	LDSP
-	DROP
-	movl (%ebx), %ecx
-	movl %ecx, Precision
-	NEXT
-
-L_false:
-	LDSP
-	movl $FALSE, (%ebx)
-	DEC_DSP
-	STSP
-	STD_IVAL
-	NEXT
-
-L_true:
-	LDSP
-	movl $TRUE, (%ebx)
-	DEC_DSP
-	STSP
-	STD_IVAL
-	NEXT
-
-L_bl:
-	LDSP
-	movl $32, (%ebx)
-	DEC_DSP
-	STSP
-	STD_IVAL
-	NEXT
-
 L_cellplus:
+  .ifndef __FAST__
 	LDSP
+  .endif
 	addl $WSIZE, WSIZE(%ebx)
 	NEXT
 
 L_cells:
+  .ifndef __FAST__
 	LDSP
+  .endif
 	sall $2, WSIZE(%ebx)
 	NEXT
 
-L_dfloatplus:	
+L_dfloatplus:
+  .ifndef __FAST__	
 	LDSP
+  .endif
 	addl $2*WSIZE, WSIZE(%ebx)
 	NEXT				
 
-L_dfloats:	
+L_dfloats:
+  .ifndef __FAST__	
 	LDSP
+  .endif
 	sall $3, WSIZE(%ebx)
 	NEXT
-
-L_dup:
-	LDSP
-	DUP
-        NEXT
-
-L_drop:
-	LDSP
-        DROP
-        NEXT
-
 L_inc:
+  .ifndef __FAST__
 	LDSP
+  .endif
         incl WSIZE(%ebx)
         NEXT
 
 L_dec:
+  .ifndef __FAST__
 	LDSP
+  .endif
         decl WSIZE(%ebx)
         NEXT
 
 L_neg:
+  .ifndef __FAST__
 	LDSP
+  .endif
 	negl WSIZE(%ebx)
         NEXT
 
-L_lshift:
-	LDSP
-	DROP
-	movl (%ebx), %ecx
-	cmp $MAX_SHIFT_COUNT, %ecx
-        jbe lshift1
-        movl $0, WSIZE(%ebx)
-        NEXT 
-lshift1:
-	shll %cl, WSIZE(%ebx)
-	NEXT
-
-L_rshift:
-	LDSP
-	DROP
-	movl (%ebx), %ecx
-	cmp $MAX_SHIFT_COUNT, %ecx
-	jbe rshift1
-	movl $0, WSIZE(%ebx)
-	NEXT
-rshift1:
-	shrl %cl, WSIZE(%ebx)
-	NEXT
-
 L_twoplus:
+  .ifndef __FAST__
 	LDSP
+  .endif
 	incl WSIZE(%ebx)
 	incl WSIZE(%ebx)
 	NEXT
 
 L_twominus:
+  .ifndef __FAST__
 	LDSP
+  .endif
 	decl WSIZE(%ebx)
 	decl WSIZE(%ebx)
 	NEXT
 
 L_twostar:
+  .ifndef __FAST__
 	LDSP
+  .endif
 	sall $1, WSIZE(%ebx)
 	NEXT
 
 L_twodiv:
+  .ifndef __FAST__
 	LDSP
+  .endif
 	sarl $1, WSIZE(%ebx)
 	NEXT
 
-L_sub:
-	LDSP
-	DROP         # result will have type of first operand
-	movl (%ebx), %eax
-	subl %eax, WSIZE(%ebx)	
-        xorl %eax, %eax
-        NEXT
-
-L_mul:
-	LDSP
-	movl $WSIZE, %ecx
-	addl %ecx, %ebx
-	STSP
-	movl (%ebx), %eax
-	addl %ecx, %ebx
-	imull (%ebx)
-	movl %eax, (%ebx)
-   .ifdef __FAST__
-        subl %ecx, %ebx
-   .endif
-	INC_DTSP
-	xorl %eax, %eax
-        NEXT
-
-L_stod:
-	STOD
-	NEXT
-
 L_fabs:
+  .ifndef __FAST__
 	LDSP
+  .endif
         fldl WSIZE(%ebx)
         fabs
         fstpl WSIZE(%ebx)
         NEXT
+
 L_fneg:
+  .ifndef __FAST__
         LDSP
+  .endif
         fldl WSIZE(%ebx)
         fchs
         fstpl WSIZE(%ebx)
         NEXT
 
 L_fsqrt:
+  .ifndef __FAST__
 	LDSP
+  .endif
 	fldl WSIZE(%ebx)
 	fsqrt
 	fstpl WSIZE(%ebx)
 	NEXT
 
-L_fsquare: 
+L_fsquare:
+  .ifndef __FAST__ 
         LDSP
+  .endif
         fldl WSIZE(%ebx)
         fmul %st 
         fstpl WSIZE(%ebx)
         NEXT
 
 L_degtorad:
+  .ifndef __FAST__
 	LDSP
+  .endif
 	fldl FCONST_180
 	INC_DSP
 	fldl (%ebx)
@@ -773,7 +670,9 @@ L_degtorad:
 	NEXT
 
 L_radtodeg:
+  .ifndef __FAST__
 	LDSP
+  .endif
 	INC_DSP
 	fldl (%ebx)
 	fldpi
@@ -786,19 +685,10 @@ L_radtodeg:
 	NEXT
 
 L_fcos:
+  .ifndef __FAST__
 	LDSP
-	INC_DSP
-	movl WSIZE(%ebx), %eax
-	pushl %ebx
-	pushl %eax
-	movl (%ebx), %eax
-	pushl %eax
-	call cos
-	addl $8, %esp
-	popl %ebx
-	fstpl (%ebx)
-	DEC_DSP
-	xorl %eax, %eax
+  .endif
+        DOUBLE_FUNC cos
 	NEXT
 
 // For native x86 FPU fcos instruction, use FSINCOS
@@ -811,19 +701,10 @@ L_fcos:
 //	NEXT
 
 L_fsin:
+  .ifndef __FAST__
 	LDSP
-	INC_DSP
-	movl WSIZE(%ebx), %eax
-	pushl %ebx
-	pushl %eax
-	movl (%ebx), %eax
-	pushl %eax
-	call sin
-	addl $8, %esp
-	popl %ebx
-	fstpl (%ebx)
-	DEC_DSP
-	xorl %eax, %eax
+  .endif
+        DOUBLE_FUNC sin
 	NEXT
 
 // For native x86 FPU fsin instruction, use FSINCOS
@@ -835,35 +716,156 @@ L_fsin:
 //	fstpl WSIZE(%ebx)
 //	NEXT
 
-L_fatan2:
-	LDSP
-	addl $2*WSIZE, %ebx
-	fldl WSIZE(%ebx)
-	fldl -WSIZE(%ebx)
-	fpatan
-	fstpl WSIZE(%ebx)
-	STSP
-	INC2_DTSP
-	NEXT
+L_ftan:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC tan
+        NEXT
+
+L_facos:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC acos
+        NEXT
+
+L_fasin:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC asin
+        NEXT
+
+L_fatan:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC atan
+        NEXT
+
+L_fsinh:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC sinh
+        NEXT
+
+L_fcosh:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC cosh
+        NEXT
+
+L_ftanh:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC tanh
+        NEXT
+
+L_fasinh:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC asinh
+        NEXT
+
+L_facosh:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC acosh
+        NEXT
+
+L_fatanh:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC atanh
+        NEXT
+
+L_fexp:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC exp
+        NEXT
+
+L_fexpm1:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC expm1
+        NEXT
+
+L_fln:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC log
+        NEXT
+
+L_flnp1:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC log1p
+        NEXT
+
+L_flog:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC log10
+        NEXT
+
+L_falog:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        DOUBLE_FUNC exp10
+        NEXT
 
 L_floor:
+  .ifndef __FAST__
 	LDSP
-	INC_DSP
-	movl WSIZE(%ebx), %eax
-	pushl %ebx
-	pushl %eax
-	movl (%ebx), %eax
-	pushl %eax
-	call floor
-	addl $8, %esp
-	popl %ebx
-	fstpl (%ebx)
-	DEC_DSP
-	xorl %eax, %eax		
+  .endif
+        DOUBLE_FUNC floor
 	NEXT
 
+L_fpow:
+  .ifndef __FAST__
+        LDSP
+  .endif
+       subl $16, %esp
+       DROP
+       movl 8(%ebx), %eax
+       mov  %eax, (%esp)
+       movl 12(%ebx), %eax
+       movl %eax, 4(%esp)
+       movl (%ebx), %eax
+       movl %eax, 8(%esp)
+       movl 4(%ebx), %eax
+       movl %eax, 12(%esp)
+#       call powA
+       call pow
+       INC2_DSP
+       fstpl (%ebx)
+       DEC_DSP
+  .ifndef __FAST__
+       STSP
+       INC_DTSP
+  .endif
+       addl $16, %esp
+       xor %eax, %eax
+       NEXT       
+
 L_fround:
+  .ifndef __FAST__
 	LDSP
+  .endif
 	INC_DSP
 	fldl (%ebx)
 	frndint
@@ -872,81 +874,20 @@ L_fround:
 	NEXT
 
 L_ftrunc:
+  .ifndef __FAST__
 	LDSP
+  .endif
 	INC_DSP
 	fldl (%ebx)
 	fnstcw NDPcw            # save NDP control word
         movl NDPcw, %ecx
 	movb $12, %ch
-	movl %ecx, (%ebx)
+	mov  %ecx, (%ebx)
 	fldcw (%ebx)
 	frndint
         fldcw NDPcw             # restore NDP control word
 	fstpl (%ebx)
 	DEC_DSP
-	NEXT
-
-L_fadd:
-	LDSP
-	movl $WSIZE, %eax
-        addl %eax, %ebx
-        fldl (%ebx)
-	sall $1, %eax
-        addl %eax, %ebx
-        faddl (%ebx)
-        fstpl (%ebx)
-	DEC_DSP
-	STSP
-	INC2_DTSP
-	xorl %eax, %eax
-        NEXT
-
-L_fsub:
-	LDSP
-	movl $3*WSIZE, %eax
-	addl %eax, %ebx
-        fldl (%ebx)
-	subl $WSIZE, %eax
-	subl %eax, %ebx
-        fsubl (%ebx)
-        addl %eax, %ebx
-        fstpl (%ebx)
-        DEC_DSP
-	STSP
-	INC2_DTSP
-	xorl %eax, %eax
-        NEXT
-
-L_fmul:
-	LDSP
-	movl $WSIZE, %eax
-        addl %eax, %ebx
-        fldl (%ebx)
-        addl %eax, %ebx
-	movl %ebx, %ecx
-	addl %eax, %ebx
-        fmull (%ebx)
-        fstpl (%ebx)
-        movl %ecx, %ebx
-	STSP
-	INC2_DTSP
-	xorl %eax, %eax
-        NEXT
-
-L_fdiv:
-	LDSP
-	movl $WSIZE, %eax
-        addl %eax, %ebx
-        fldl (%ebx)
-        addl %eax, %ebx
-	movl %ebx, %ecx
-	addl %eax, %ebx
-        fdivrl (%ebx)
-        fstpl (%ebx)
-        movl %ecx, %ebx
-	STSP
-	INC2_DTSP
-	xorl %eax, %eax
 	NEXT
 
 L_backslash:

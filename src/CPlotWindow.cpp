@@ -1,6 +1,6 @@
 // CPlotWindow.cpp
 //
-// Copyright 1996--2024 Krishna Myneni 
+// Copyright 1996--2026 Krishna Myneni 
 // <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the 
@@ -10,7 +10,7 @@
 #ifdef COPYRIGHT
 const char* copyright=COPYRIGHT;
 #else
-const char* copyright="1999--2024"
+const char* copyright="1999--2026"
 #endif
 
 #ifdef VERSION
@@ -55,6 +55,7 @@ extern void FileMenuCB (Widget, void*, void*);
 extern void EditMenuCB (Widget, void*, void*);
 extern void PlotMenuCB (Widget, void*, void*);
 extern void MathMenuCB (Widget, void*, void*);
+extern void ForthShellVerifyCB (Widget, void*, void*);
 extern void ForthCB (Widget, void*, void*);
 extern void RadioToggledCB (Widget, void*, void*);
 

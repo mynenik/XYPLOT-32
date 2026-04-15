@@ -39,6 +39,7 @@ void EditMenuCB (Widget, void*, void*);
 void PlotMenuCB (Widget, void*, void*);
 void MathMenuCB (Widget, void*, void*);
 void AboutCB (Widget, void*, void*);
+void ForthShellVerifyCB (Widget, void*, void*);
 void ForthCB (Widget, void*, void*);
 void SaveOptionsCB (Widget, void*, void*);
 void RadioToggledCB (Widget, void*, void*);
@@ -224,9 +225,11 @@ int main(int argc, char* argv[])
       VerifyCB, (void*) &verify_answer);
     XtAddCallback (pMainWnd->m_nVerifyDialog, XmNhelpCallback,
       VerifyCB, (void*) &verify_answer);
+    XtAddCallback (pMainWnd->m_nForthShell, XmNmodifyVerifyCallback,
+      ForthShellVerifyCB, NULL);
     XtAddCallback (pMainWnd->m_nForthShell, XmNvalueChangedCallback,
       ForthCB, NULL);
-
+    
     // Disable menu functions not yet implemented
     // XtSetSensitive (EditWidgets[ID_EDIT_COPY], False);
     XtAppMainLoop(xapp);
@@ -645,49 +648,76 @@ void MathMenuCB (Widget w, void* client_d,
     }
 }
 //---------------------------------------------------------------
+void ForthShellVerifyCB (Widget wSrc, void* client_d, void* call_d)
+{
+    XmTextVerifyCallbackStruct *v = 
+	    (XmTextVerifyCallbackStruct*) call_d;
+    int last = XmTextGetLastPosition(wSrc);
+    if (last) {
+      // Check to see if last line is being edited
+      int start = v->startPos;
+      int end   = v->endPos;
+      int curr  = v->currInsert;
+      if (start < curr) { // backspace pressed
+	// don't backspace beyond last line
+	if (v->text->ptr[curr] == '\n') {
+	  v->doit = False;
+	}
+	return;
+      }
+      if (curr != last) v->doit = False;
+    }
+    return;
+}
+//---------------------------------------------------------------
 
-void ForthCB (Widget wSrc, void* client_d,
-  void* call_d)
+void ForthCB (Widget wSrc, void* client_d, void* call_d)
 {
   caddr_t client_data = (caddr_t) client_d;
   XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
 
-  Widget w = pMainWnd->m_nForthShell;
+  static bool ignore = False;
   char s[256];
-  int nError, nPos, nLen;
   *s = '\0';
 
-  nPos = XmTextGetLastPosition(w);
-  static bool ignore = False;
-
-  char* fs = XmTextGetString(w); 
-
   if (client_data) {
-      strcpy (s, (char*) client_data);
+    // callback from selection of menu item
+    strcpy (s, (char*) client_data);
   }
   else {
+    // callback from Forth command shell whenever
+    // text changes.
+    Widget w = pMainWnd->m_nForthShell;
+    int nPos = XmTextGetLastPosition(w);
+    char* fs = XmTextGetString(w);
     if (nPos) {
       --nPos;
       if (fs[nPos] == '\n') {  // was Enter pressed?
         char* cp = fs + nPos;
         while (nPos) {         // find the beginning of this line
           --cp; --nPos;
-          if (*cp == '\n') break;	      
+          if (*cp == '\n') {
+            ++cp; break;
+          }	    
         }
-        strcpy (s, cp);        // copy the last line and execute
+	int len = strlen(cp)-1;
+        strncpy (s, cp, len);    // copy the last line and execute
+	s[len] = '\0';
       }
       else {
+	XtFree(fs);
         return;
       }
     }
     else
       return;
+
+    XtFree(fs);
   }
-  
+
   long int nLine;
   stringstream* pForthMessages = new stringstream();
-
-  nError = ExecuteForthExpression (s, (ostringstream*) pForthMessages,
+  int nError = ExecuteForthExpression (s, (ostringstream*) pForthMessages,
              &nLine);
 
   char out_s[2048], ErrorStr[64], Msg[1024];
@@ -717,13 +747,12 @@ void ForthCB (Widget wSrc, void* client_d,
     pForthMessages->getline(Msg, msgDisplayLength, 0);
     Msg[msgDisplayLength] = '\0';
     
-    sprintf (out_s, "%s\n  ok\n", Msg);
+    sprintf (out_s, "%s  ok\n", Msg);
     pMainWnd->WriteConsoleMessage(out_s);
 
     ignore = True;
   }
 
-  XtFree(fs);
   delete pForthMessages;
 }
 //---------------------------------------------------------------

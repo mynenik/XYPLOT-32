@@ -1,7 +1,7 @@
 /*
 XYPLOT.CPP
 
-  Copyright (c) 1995--2024 Krishna Myneni
+  Copyright (c) 1995--2026 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the
@@ -71,6 +71,7 @@ extern Widget MathWidgets[];
 extern Widget HelpWidgets[];
 
 int debug = False;                   // global variable for debug mode
+char sz_CurrentWorkingDir[4096];
 volatile int InputData;
 volatile int verify_answer;
 XmString old_filter;
@@ -128,6 +129,8 @@ int main(int argc, char* argv[])
 		    0, &argc, argv, NULL, NULL);
     XtRealizeWidget(TopLevel);
 
+    getcwd(sz_CurrentWorkingDir, 4096);
+
     pMainWnd = new CPlotWindow(argc, argv);
     OpenForth();       
     InitForthInterface();
@@ -143,8 +146,10 @@ int main(int argc, char* argv[])
         pMainWnd->LoadFile(*i);
       }
     }
-    else
+    else {
+      pMainWnd->WriteConsoleMessage (sz_CurrentWorkingDir);
       pMainWnd->WriteConsoleMessage ("Ready!");
+    }
 
     // Setup callbacks and event handlers
     XtAddCallback (pMainWnd->m_nPlotWindow, XmNexposeCallback, 
@@ -247,14 +252,6 @@ void ExitCB (Widget w, void* client_d, void* call_d)
 {
     caddr_t client_data = (caddr_t) client_d;
     XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
-
-//    delete pMainWnd;
-//    CloseForth();
-
-//    vector<char*>* v = &ForthMenuCommandList;
-//    v->erase(v->begin(), v->end());
-
-    // exit(0);
     XtAppSetExitFlag(xapp);
 }
 
@@ -416,6 +413,10 @@ void FileMenuCB (Widget w, void* client_d, void* call_d)
 	{
           strcpy (pMainWnd->m_pFileName, filename);
           pMainWnd->LoadFile(filename);
+	  // Update the current working directory
+	  XmStringGetLtoR(sel->dir, XmSTRING_DEFAULT_CHARSET, &s);
+	  chdir((const char*)s);
+	  XtFree(s);
 	}
 	else
 	  pMainWnd->MessageBox("Error parsing file name!");
@@ -441,6 +442,7 @@ void FileMenuCB (Widget w, void* client_d, void* call_d)
         sel = (XmFileSelectionBoxCallbackStruct *) call_data;
         XmStringGetLtoR(sel->value, XmSTRING_DEFAULT_CHARSET, &filename);
         pMainWnd->SaveFile(filename);
+	XtFree(filename);
         break;
       case PL_SAVE_CANCEL:
         XtUnmanageChild (pMainWnd->m_nFileSaveDialog);

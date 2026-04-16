@@ -50,6 +50,7 @@ extern int CompileAE (vector<byte>*, char* exp);
 extern "C" char* strupr (char*);
 extern int AddToHeader (char*, char*, bool);
 extern int LoadForthFile (char*);
+extern char sz_CurrentWorkingDir[];
 
 extern void FileMenuCB (Widget, void*, void*);
 extern void EditMenuCB (Widget, void*, void*);
@@ -175,7 +176,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 	NULL);
   XtManageChild(m_nMenuBar);
 
-  // Create the Forth shell dialog
+  // Create the Forth command shell/console dialog
 
   ac = 0;
   XtSetArg(al[ac], XmNeditMode, XmMULTI_LINE_EDIT);
@@ -1507,7 +1508,16 @@ BOOL CPlotWindow::OnFileNew ()
 
 bool CPlotWindow::OnFileOpen ()
 {
-  XtManageChild(m_nFileOpenDialog); return True; 
+  char s[8192];
+  getcwd(s, 4096);
+  strcpy(sz_CurrentWorkingDir, s);
+  strcat (s, "/*.dat");
+  // WriteConsoleMessage(s);
+  XmString cwd =  XmStringCreateLocalized(s);
+  XmFileSelectionDoSearch(m_nFileOpenDialog, cwd); 
+  XtManageChild(m_nFileOpenDialog);
+  XmStringFree(cwd);
+  return True; 
 }
 //--------------------------------------------------------------
 

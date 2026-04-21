@@ -158,6 +158,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   for (ac = 0; ac < 4; ac++) XmFontListEntryFree (&FontEntries[ac]);
 
   XtVaSetValues( TopLevel,
+	XmNfontList, FontList,
   	XmNheight, 640,
 	XmNwidth, 800,
 	NULL);
@@ -191,40 +192,44 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   m_nForthShell = XmCreateScrolledText(m_nForm, strcpy(s1,"Forth Shell"),
     al, ac);
   XtVaSetValues( m_nForthShell,
+	XmNfontList, FontList,
 	XmNheight, 100,
 	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
        	NULL);
   XtManageChild(m_nForthShell);
 
+  XmString xstr1;
+
   // Create the status message label widget and attach it below the
   //   drawing area (plot window)
-  XmString str1;
-  str1 = XmStringCreate(strcpy(s1, " "), XmSTRING_DEFAULT_CHARSET);
+  xstr1 = XmStringCreate(strcpy(s1, " "), XmSTRING_DEFAULT_CHARSET);
 
   m_nStatusBar = XtVaCreateManagedWidget("status_bar",
     xmLabelWidgetClass, m_nForm,
-    XmNlabelString, str1,
+    XmNlabelString, xstr1,
     XmNalignment, XmALIGNMENT_BEGINNING,
     XmNleftAttachment, XmATTACH_FORM,
     XmNbottomAttachment, XmATTACH_WIDGET,
     XmNbottomWidget, XtParent(m_nForthShell),
+//    XmNfontList, FontList,
     NULL);
   
-  XmStringFree(str1);
+  XmStringFree(xstr1);
 
   // Create coordinates label widget and attach it to the right of the
   //  status bar
-  str1 = XmStringCreate(strcpy(s1, " "),XmSTRING_DEFAULT_CHARSET); 
+  xstr1 = XmStringCreate(strcpy(s1, " "),XmSTRING_DEFAULT_CHARSET); 
 
   m_nCoordinates = XtVaCreateManagedWidget("coordinates",
     xmLabelWidgetClass, m_nForm,
-    XmNlabelString, str1,
+    XmNlabelString, xstr1,
     XmNrightAttachment, XmATTACH_FORM,
     XmNbottomAttachment, XmATTACH_WIDGET,
     XmNbottomWidget, XtParent(m_nForthShell),
+    XmNfontList, FontList,
     NULL);
 
-  XmStringFree(str1);
+  XmStringFree(xstr1);
 
   // Create the drawing area and attach it below the menu bar
   // and above the status bar
@@ -237,6 +242,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 	XmNleftAttachment, XmATTACH_FORM,
 	XmNbottomAttachment, XmATTACH_WIDGET,
 	XmNbottomWidget, m_nStatusBar,
+	XmNfontList, FontList,
 	XmNheight, 400,
 	XmNwidth, 800,
 	NULL);
@@ -287,50 +293,164 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   Widget temp;
 
+  strcpy(s1, "Open File");
   m_nFileOpenDialog = XmCreateFileSelectionDialog(TopLevel,
-     strcpy(s1, "Open File"), NULL, 0);
+     s1, NULL, 0);
+  xstr1 = XmStringCreateLocalized(s1);
+  XtVaSetValues( m_nFileOpenDialog,
+	XmNdialogTitle, xstr1,
+	NULL);
+  XmStringFree(xstr1);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_FILTER_LABEL);
+  XtVaSetValues( temp,
+	XmNfontList, FontList,
+       	NULL);
 
   temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_FILTER_TEXT);
-
   XtVaSetValues( temp,
+	XmNfontList, FontList,
 	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
        	NULL);
 
-  temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_TEXT);
-
+  temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_LIST_LABEL);
   XtVaSetValues( temp,
+	XmNfontList, FontList,
+	NULL);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_LIST);
+  XtVaSetValues( temp,
+	XmNfontList, FontList,
+	NULL);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_DIR_LIST_LABEL);
+  XtVaSetValues( temp,
+	XmNfontList, FontList,
+	NULL);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_DIR_LIST);
+  XtVaSetValues( temp,
+	XmNfontList, FontList,
+	XmNwidth,400,
+	NULL);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_SELECTION_LABEL);
+  XtVaSetValues( temp,
+	XmNfontList, FontList,
+	NULL);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_TEXT);
+  XtVaSetValues( temp,
+	XmNfontList, FontList,
+	XmNwidth, 400,
 	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
 	NULL);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_OK_BUTTON);
+  XtVaSetValues( temp,
+        XmNfontList, FontList,
+        NULL);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_OK_BUTTON);
+  XtVaSetValues( temp,
+        XmNfontList, FontList,
+        NULL);
+  temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_APPLY_BUTTON);
+  XtVaSetValues( temp,
+        XmNfontList, FontList,
+        NULL);
+  temp = XmFileSelectionBoxGetChild(m_nFileOpenDialog,XmDIALOG_CANCEL_BUTTON);
+  XtVaSetValues( temp,
+        XmNfontList, FontList,
+        NULL);
 
   XtUnmanageChild(XmSelectionBoxGetChild(m_nFileOpenDialog,
     XmDIALOG_HELP_BUTTON));
 
   // Create the file save dialog
 
+  strcpy(s1, "Save File");
   m_nFileSaveDialog = XmCreateFileSelectionDialog(TopLevel,
-     strcpy(s1, "Save File"), NULL, 0);
+     s1, NULL, 0);
+  xstr1 = XmStringCreateLocalized(s1);
+  XtVaSetValues( m_nFileSaveDialog,
+	XmNdialogTitle, xstr1,
+	NULL);
+  XmStringFree(xstr1);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_FILTER_LABEL);
+  XtVaSetValues( temp,
+        XmNfontList, FontList,
+        NULL);
 
   temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_FILTER_TEXT);
-
   XtVaSetValues( temp,
+	XmNfontList, FontList,
 	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
        	NULL);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_LIST_LABEL);
+  XtVaSetValues( temp,
+        XmNfontList, FontList,
+        NULL);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_LIST);
+  XtVaSetValues( temp,
+	XmNfontList, FontList,
+	NULL);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_DIR_LIST_LABEL);
+  XtVaSetValues( temp,
+        XmNfontList, FontList,
+        NULL);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_DIR_LIST);
+  XtVaSetValues( temp,
+	XmNfontList, FontList,
+	NULL);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_SELECTION_LABEL);
+  XtVaSetValues( temp,
+        XmNfontList, FontList,
+        NULL);
 
   temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_TEXT);
   XtVaSetValues( temp,
+	XmNfontList, FontList,
 	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
-       	NULL);
-    
+	NULL);
+
+  temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_OK_BUTTON);
+  XtVaSetValues( temp,
+        XmNfontList, FontList,
+        NULL);
+  temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_APPLY_BUTTON);
+  XtVaSetValues( temp,
+        XmNfontList, FontList,
+        NULL);
+  temp = XmFileSelectionBoxGetChild(m_nFileSaveDialog,XmDIALOG_CANCEL_BUTTON);
+  XtVaSetValues( temp,
+        XmNfontList, FontList,
+        NULL);
+
   XtUnmanageChild(XmSelectionBoxGetChild(m_nFileSaveDialog,
     XmDIALOG_HELP_BUTTON));
 
   // Create a dual purpose About/Message box
 
-  m_nAboutBox = XmCreateInformationDialog(TopLevel, 
-	strcpy(s1, "About XYPLOT"), NULL, 0);
+  strcpy(s1, "About XYPLOT");
+  m_nAboutBox = XmCreateInformationDialog(TopLevel, s1, NULL, 0);
+  xstr1 = XmStringCreateLocalized(s1);
+  XtVaSetValues( m_nAboutBox,
+	XmNdialogTitle, xstr1,
+        XtVaTypedArg, XmNbackground, XmRString, "LightGrey", 10,
+	NULL);
+  XmStringFree(xstr1);
 
-  // XtVaSetValues(m_nAboutBox, XtVaTypedArg, XmNbackground, XmRString, 
-  //	strcpy(s1, "LightGrey"), 10, NULL);
+//  temp = XmMessageBoxGetChild( m_nAboutBox, XmDIALOG_TEXT);
+//  XtVaSetValues( temp,
+//	XmNfontList, FontList,
+//	NULL);
 
   temp = XmMessageBoxGetChild (m_nAboutBox, XmDIALOG_CANCEL_BUTTON);
   XtUnmanageChild(temp);
@@ -358,18 +478,20 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   XtSetArg (al[ac], XmNfontList, FontList);
   ac++;
 
-  m_nInputDialog = XmCreatePromptDialog(TopLevel, 
-	strcpy(s1, "Input Dialog"), al, ac);
-
+  strcpy(s1, "Input Dialog");
+  m_nInputDialog = XmCreatePromptDialog(TopLevel, s1, al, ac);
+  xstr1 = XmStringCreateLocalized(s1);
   temp = XmSelectionBoxGetChild(m_nInputDialog, XmDIALOG_TEXT);
-
-  XtVaSetValues( temp, 
-	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
-       	NULL);
-
   XtVaSetValues( m_nInputDialog,
+	XmNdialogTitle, xstr1,
 	XmNinitialFocus, temp,
 	NULL);
+  XmStringFree(xstr1);
+
+  XtVaSetValues( temp,
+	XmNfontList, FontList, 
+	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
+       	NULL);
 
   XtUnmanageChild(XmSelectionBoxGetChild(m_nInputDialog, 
     XmDIALOG_HELP_BUTTON));
@@ -377,14 +499,20 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   // Create the header view/edit dialog
 
-  m_nHeaderDialog = XmCreateFormDialog(TopLevel, 
-	strcpy(s1,"Dataset Header"), NULL, 0);
+  strcpy(s1, "Dataset Header");
+  m_nHeaderDialog = XmCreateFormDialog(TopLevel, s1, NULL, 0);
+  xstr1 = XmStringCreateLocalized(s1);
+  XtVaSetValues( m_nHeaderDialog,
+	XmNdialogTitle, xstr1,
+	NULL);
+  XmStringFree(xstr1);
 
   Widget label1 = XtVaCreateManagedWidget(
 	"Dataset Name:", 
 	xmLabelWidgetClass, m_nHeaderDialog,
 	XmNtopAttachment, XmATTACH_FORM,
 	XmNleftAttachment, XmATTACH_FORM,
+	XmNfontList, FontList,
 	NULL);
 
   XtManageChild(label1);
@@ -409,6 +537,7 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 	xmLabelWidgetClass, m_nHeaderDialog,
 	XmNtopAttachment, XmATTACH_WIDGET,
 	XmNtopWidget, m_nDatasetName,
+	XmNfontList, FontList,
 	NULL );
   XtManageChild(label2);
 
@@ -433,17 +562,6 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   m_nHeaderText = XmCreateScrolledText(m_nHeaderDialog,
     strcpy(s1, "header_text"), al, ac);
 
-//  XtVaSetValues( m_nHeaderText,
-//	XmNeditMode, XmMULTI_LINE_EDIT,
-//	XmNtopAttachment, XmATTACH_WIDGET,
-//	XmNtopWidget, label2,
-//	XmNleftAttachment, XmATTACH_FORM,
-//	XmNrightAttachment, XmATTACH_FORM,
-//	XmNheight, 200,
-//	XmNwidth, 400,
-//	XmNfontList, FontList,
-//	NULL);
-
   XtManageChild(m_nHeaderText);
 
   m_nHeaderMessage = XmCreateMessageBox (m_nHeaderDialog, 
@@ -454,8 +572,14 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 	XmNtopWidget, m_nHeaderText,
 	XmNleftAttachment, XmATTACH_FORM,
 	XmNrightAttachment, XmATTACH_FORM,
+	XmNfontList, FontList,
 	NULL);
-     
+  
+  temp = XmMessageBoxGetChild(m_nHeaderMessage, XmDIALOG_OK_BUTTON);
+  XtVaSetValues( temp, XmNfontList, FontList, NULL );
+  temp = XmMessageBoxGetChild(m_nHeaderMessage, XmDIALOG_CANCEL_BUTTON);
+  XtVaSetValues( temp, XmNfontList, FontList, NULL );
+
   XtUnmanageChild(XmMessageBoxGetChild(m_nHeaderMessage, 
     XmDIALOG_HELP_BUTTON));
 
@@ -464,50 +588,140 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   // Create the Pick dialog
 
-  m_nPickDialog = XmCreateSelectionDialog(TopLevel, 
-    strcpy(s1, "Pick Dataset"), NULL, 0);
+  strcpy(s1, "Pick Dataset");
+  m_nPickDialog = XmCreateSelectionDialog(TopLevel, s1, NULL, 0);
+  xstr1 = XmStringCreateLocalized(s1);
+  XtVaSetValues( m_nPickDialog,
+	XmNdialogTitle, xstr1,
+	NULL);
+  XmStringFree(xstr1);
+
+  strcpy(s1, "Datasets");
+  xstr1 = XmStringCreateLocalized(s1);
+  temp = XmSelectionBoxGetChild(m_nPickDialog, XmDIALOG_LIST_LABEL);
+  XtVaSetValues( temp,
+	XmNlabelString, xstr1,
+	XmNfontList, FontList,
+	NULL);
+  XmStringFree(xstr1);
+
+  temp = XmSelectionBoxGetChild(m_nPickDialog, XmDIALOG_SELECTION_LABEL);
+  XtVaSetValues( temp,
+	XmNfontList, FontList,
+	NULL);
+
+  temp = XmSelectionBoxGetChild(m_nPickDialog, XmDIALOG_LIST);
+  XtVaSetValues( temp,
+	XmNfontList, FontList, 
+       	NULL);
+
   temp = XmSelectionBoxGetChild(m_nPickDialog, XmDIALOG_TEXT);
-  XtVaSetValues( temp, 
+  XtVaSetValues( temp,
+	XmNfontList, FontList, 
 	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
        	NULL);
+
+  temp = XmSelectionBoxGetChild(m_nPickDialog, XmDIALOG_OK_BUTTON);
+  XtVaSetValues( temp,
+	XmNfontList, FontList,
+	NULL);
+
+  temp = XmSelectionBoxGetChild(m_nPickDialog, XmDIALOG_CANCEL_BUTTON);
+  XtVaSetValues( temp,
+	XmNfontList, FontList,
+	NULL);
+
+  XtUnmanageChild(XmSelectionBoxGetChild(m_nPickDialog,
+    XmDIALOG_APPLY_BUTTON));
   XtUnmanageChild(XmSelectionBoxGetChild(m_nPickDialog, 
     XmDIALOG_HELP_BUTTON));
 
-  // Create the Symbol dialog
+  // Create the Symbols dialog
 
-  m_nSymbolDialog = XmCreateSelectionDialog (TopLevel, 
-    strcpy(s1, "Symbols"), NULL, 0);
+  strcpy(s1, "Symbols");
+  m_nSymbolDialog = XmCreateSelectionDialog (TopLevel, s1, NULL, 0);
+  xstr1 = XmStringCreateLocalized(s1);
+  XtVaSetValues( m_nSymbolDialog, XmNdialogTitle, xstr1, NULL);
+  XmStringFree(xstr1);
+
+  temp = XmSelectionBoxGetChild(m_nSymbolDialog, XmDIALOG_LIST_LABEL);
+  strcpy(s1, "Plot Symbols");
+  xstr1 = XmStringCreateLocalized(s1);
+  XtVaSetValues( temp,
+	XmNlabelString, xstr1,
+	XmNfontList, FontList,
+	NULL);
+  XmStringFree(xstr1);
+ 
+  temp = XmSelectionBoxGetChild(m_nSymbolDialog, XmDIALOG_LIST);
+  XtVaSetValues( temp, XmNfontList, FontList, NULL);
+
+  temp = XmSelectionBoxGetChild(m_nSymbolDialog, XmDIALOG_SELECTION_LABEL);
+  XtVaSetValues( temp, XmNfontList, FontList, NULL);
+
   temp = XmSelectionBoxGetChild(m_nSymbolDialog, XmDIALOG_TEXT);
-  XtVaSetValues( temp, 
+  XtVaSetValues( temp,
+	XmNfontList, FontList, 
 	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
        	NULL);
+
+  temp = XmSelectionBoxGetChild(m_nSymbolDialog, XmDIALOG_APPLY_BUTTON);
+  XtVaSetValues( temp, XmNfontList, FontList, NULL );
+  temp = XmSelectionBoxGetChild(m_nSymbolDialog, XmDIALOG_CANCEL_BUTTON);
+  XtVaSetValues( temp, XmNfontList, FontList, NULL );
+
   XtUnmanageChild(XmSelectionBoxGetChild(m_nSymbolDialog, 
     XmDIALOG_HELP_BUTTON));
   XtUnmanageChild(XmSelectionBoxGetChild(m_nSymbolDialog,
     XmDIALOG_OK_BUTTON));
+
   temp = XmSelectionBoxGetChild(m_nSymbolDialog, XmDIALOG_LIST);
   for (int i = 0; i < 7; i++) {
       XmListAddItem(temp, XmStringCreate((char*) SymbolNames[i], 
 	    XmSTRING_DEFAULT_CHARSET), 0);      
   }
 
-  // Create the Color dialog
+  // Create the Colors dialog
+  strcpy(s1, "Colors");
+  m_nColorDialog = XmCreateSelectionDialog (TopLevel, s1, NULL, 0);
+  xstr1 = XmStringCreateLocalized(s1);
+  XtVaSetValues( m_nColorDialog, XmNdialogTitle, xstr1, NULL);
+  XmStringFree(xstr1);
 
-  m_nColorDialog = XmCreateSelectionDialog (TopLevel, 
-    strcpy(s1, "Colors"), NULL, 0);
+  temp = XmSelectionBoxGetChild(m_nColorDialog, XmDIALOG_LIST_LABEL);
+  strcpy(s1, "Plot Colors");
+  xstr1 = XmStringCreateLocalized(s1);
+  XtVaSetValues( temp,
+	XmNlabelString, xstr1,
+	XmNfontList, FontList,
+	NULL);
+  XmStringFree(xstr1);
+
+  temp = XmSelectionBoxGetChild(m_nColorDialog, XmDIALOG_LIST);
+  XtVaSetValues( temp, XmNfontList, FontList, NULL);
+
+  temp = XmSelectionBoxGetChild(m_nColorDialog, XmDIALOG_SELECTION_LABEL);
+  XtVaSetValues( temp, XmNfontList, FontList, NULL);
+
   temp = XmSelectionBoxGetChild(m_nColorDialog, XmDIALOG_TEXT);
-  XtVaSetValues(temp, 
-   XtVaTypedArg, XmNbackground, XmRString, "White", 6,
+  XtVaSetValues(temp,
+    XmNfontList, FontList, 
+    XtVaTypedArg, XmNbackground, XmRString, "White", 6,
     NULL);
+
+  temp = XmSelectionBoxGetChild(m_nColorDialog, XmDIALOG_APPLY_BUTTON);
+  XtVaSetValues( temp, XmNfontList, FontList, NULL);
+  temp = XmSelectionBoxGetChild(m_nColorDialog, XmDIALOG_CANCEL_BUTTON);
+  XtVaSetValues( temp, XmNfontList, FontList, NULL );
+  
   XtUnmanageChild(XmSelectionBoxGetChild(m_nColorDialog, 
     XmDIALOG_HELP_BUTTON));
   XtUnmanageChild(XmSelectionBoxGetChild(m_nColorDialog,
     XmDIALOG_OK_BUTTON));
+
   temp = XmSelectionBoxGetChild(m_nColorDialog, XmDIALOG_LIST);
   for (int i = 0; i < MAX_COLORS; i++) {
-      XmListAddItem(temp, XmStringCreate((char*) color_names[i], 
-	    XmSTRING_DEFAULT_CHARSET), 0);      
-  }
+      XmListAddItem(temp, XmStringCreateLocalized((char*) color_names[i]), 0);   }
 
   // Create the Save Options dialog
  
@@ -515,15 +729,25 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 
   // Create the Grid dialog
 
-  Widget rowcol, btn;
+  Widget rowcol, label, btn;
   XmString one;
   
-  m_nGridDialog = XmCreateFormDialog(TopLevel, 
-	strcpy(s1, "Grid Options"), NULL, 0);
+  strcpy( s1, "Grid Options");
+  m_nGridDialog = XmCreateFormDialog(TopLevel, s1, NULL, 0);
+  xstr1 = XmStringCreateLocalized(s1);
+  XtVaSetValues( m_nGridDialog,
+	XmNdialogTitle, xstr1,
+	NULL);
+  XmStringFree(xstr1);
 
   rowcol = XtVaCreateManagedWidget ("rowcolumn", 
 	xmRowColumnWidgetClass, m_nGridDialog,
 	XmNnumColumns, 2,
+	NULL);
+
+  label = XtVaCreateManagedWidget("Axes Lines",
+	xmLabelWidgetClass, rowcol,
+	XmNfontList, FontList,
 	NULL);
 
   m_nGridXaxis = XmCreateToggleButton(rowcol, 
@@ -540,22 +764,37 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 	XmNset, True, 
 	NULL);
 
-  m_nGridYlines = XmCreateToggleButton(rowcol, 
-	strcpy(s1, "Hor grid lines"), NULL, 0);
+  XtVaCreateManagedWidget ("sep",
+        xmSeparatorGadgetClass, rowcol,
+        NULL);
+
+  XtVaCreateManagedWidget ("Grid Lines",
+        xmLabelWidgetClass, rowcol,
+        XmNfontList, FontList,
+        NULL);
+
+  strcpy(s1, "Horizontal");
+  m_nGridYlines = XmCreateToggleButton(rowcol, s1, NULL, 0);
 
   XtVaSetValues (m_nGridYlines, 
 	XmNset, True,
 	NULL);
 
-  m_nGridXlines = XmCreateToggleButton(rowcol, 
-	strcpy(s1, "Ver grid lines"), NULL, 0);
+  strcpy(s1, "Vertical");
+  m_nGridXlines = XmCreateToggleButton(rowcol, s1, NULL, 0);
+
 
   XtVaSetValues (m_nGridXlines, 
 	XmNset, True, 
 	NULL);
 
+  XtVaCreateManagedWidget ("sep",
+        xmSeparatorGadgetClass, rowcol,
+        NULL);
+ 
   XtVaCreateManagedWidget ("# X Tics:", 
-	xmLabelWidgetClass, rowcol, 
+	xmLabelWidgetClass, rowcol,
+	XmNfontList, FontList,	
 	NULL);
 
   m_nGridXtics = XmCreateTextField(rowcol, 
@@ -565,11 +804,14 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 	XmNeditable, True, 
 	XmNmaxLength, 4, 
 	XmNvalue, "10",
-	XmNwidth, 100, 
+	XmNwidth, 80,
+       	XmNfontList, FontList,
+	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
 	NULL );
 
   XtVaCreateManagedWidget ("# Y Tics:", 
 	xmLabelWidgetClass, rowcol,
+	XmNfontList, FontList,
 	NULL);
 
   m_nGridYtics = XmCreateTextField(rowcol, 
@@ -579,18 +821,21 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
 	XmNeditable, True, 
 	XmNmaxLength, 4, 
 	XmNvalue, "10", 
-	XmNwidth, 100,
+	XmNwidth, 80,
+	XmNfontList, FontList,
+	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
 	NULL );
 
-  one = XmStringCreateLocalized(strcpy(s1, "Set Tics"));
+  xstr1 = XmStringCreateLocalized(strcpy(s1, "Set Tics"));
 
   btn = XtVaCreateManagedWidget("button", 
 	xmPushButtonWidgetClass, rowcol, 
-	XmNlabelString, one,
+	XmNlabelString, xstr1,
+	XmNfontList, FontList,
 	NULL);
   
   XtAddCallback(btn, XmNactivateCallback, PlotMenuCB, (void*) PL_SET_GRID_TICS);
-  XmStringFree(one);
+  XmStringFree(xstr1);
 
   XtManageChild(m_nGridXlines);
   XtManageChild(m_nGridYlines);
@@ -600,8 +845,13 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   XtManageChild(m_nGridYtics);
 
   // Create the Verify dialog
-  m_nVerifyDialog = XmCreateQuestionDialog(TopLevel, 
-	strcpy(s1, "Verify"), NULL, 0);
+  strcpy(s1, "Verify");
+  m_nVerifyDialog = XmCreateQuestionDialog(TopLevel, s1, NULL, 0);
+  xstr1 = XmStringCreateLocalized(s1);
+  XtVaSetValues( m_nVerifyDialog,
+	XmNdialogTitle, xstr1,
+	NULL);
+  XmStringFree(xstr1);
 
   XtVaSetValues( m_nVerifyDialog, 
 	XmNdialogStyle, XmDIALOG_FULL_APPLICATION_MODAL, 
@@ -617,6 +867,7 @@ CPlotWindow::~CPlotWindow()
 
   delete m_pDb;
   delete m_pDi;
+  // need to free the font list entries
   m_pDc->CloseDisplay();
   delete m_pDc;
   delete [] m_pFileName;
@@ -1532,9 +1783,6 @@ void CPlotWindow::OnAbout()
   char s[512];
   sprintf(s, "XYPLOT %s for Linux/X Windows  (kForth %s)\nBuild: %s\n",
 		  ver, kfver, build);
-  // strcpy (s, "XYPLOT "); strcat (s, ver); strcat (s, " for Linux/X Windows");
-  // strcat (s, "  (kForth "); strcat (s, kfver);
-  // strcat (s, ")  Build: "); strcat (s, build); strcat(s, "\n"); 
   strcat (s, "\nCopyright (c) "); strcat (s, copyright);
   strcat (s, " Krishna Myneni and John Kielkopf\n");
   strcat (s, "e-mail: krishna.myneni@ccreweb.org\n\n");

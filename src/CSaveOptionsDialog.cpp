@@ -1,6 +1,6 @@
 // CSaveOptionsDialog.cpp
 //
-// Copyright 1998--2024 Krishna Myneni
+// Copyright 1998--2026 Krishna Myneni
 //
 // Provided under the terms of the GNU Affero General Public License
 // (AGPL) v 3.0 or later.
@@ -25,18 +25,27 @@
 #include <Xm/DialogS.h>
 #include "CSaveOptionsDialog.h"
 #include "CPlotMessage.h"
+
+extern XmFontList FontList;
 extern void SaveOptionsCB (Widget, void*, void*);
+
 //-------------------------------------------
 
 CSaveOptionsDialog::CSaveOptionsDialog(Widget topLevel)
 {
   // Create the Save Options dialog
   char s[64];
+  XmString xstr;
 
   Widget soDialog, rowCol, btn, hdrStyleLabel;
 
-  m_nW = XmCreateFormDialog(topLevel,
-    strcpy(s, "Save Options"), NULL, 0);
+  strcpy(s, "Save Options");
+  m_nW = XmCreateFormDialog(topLevel, s, NULL, 0);
+  xstr = XmStringCreateLocalized(s);
+  XtVaSetValues( m_nW,
+	XmNdialogTitle, xstr,
+	NULL);
+  XmStringFree(xstr);
 
   rowCol = XtVaCreateManagedWidget("rowcolumn",
          xmRowColumnWidgetClass, m_nW,
@@ -45,15 +54,16 @@ CSaveOptionsDialog::CSaveOptionsDialog(Widget topLevel)
   XmString one, two, three;
   hdrStyleLabel = XtVaCreateManagedWidget("Header Style",
         xmLabelWidgetClass, rowCol,
-        // XmNtopWidget, rowCol,
-        // XmNleftWidget, rowCol,
+	XmNfontList, FontList,
         NULL);
+
   one = XmStringCreateLocalized(strcpy(s,"none"));
   two = XmStringCreateLocalized(strcpy(s,"xyplot"));
   three = XmStringCreateLocalized(strcpy(s,"line prefix"));
 
+  strcpy(s, "Header Style"),
   m_nSaveHeader = XmVaCreateSimpleRadioBox( rowCol,
-        strcpy(s, "Header Style"),
+        s,
         0,
         SaveOptionsCB,
         XmVaRADIOBUTTON, one, NULL, NULL, NULL,
@@ -73,21 +83,27 @@ CSaveOptionsDialog::CSaveOptionsDialog(Widget topLevel)
   Widget prefixLabel;
   prefixLabel = XtVaCreateManagedWidget ("Prefix",
         xmLabelWidgetClass, rowCol,
+	XmNfontList, FontList,
         NULL);
 
-  m_nSavePrefix = XmCreateTextField(rowCol, strcpy(s,"text"), NULL, 0);
+  strcpy(s, "text");
+  m_nSavePrefix = XmCreateTextField(rowCol, s, NULL, 0);
   XtVaSetValues(m_nSavePrefix,
         XmNeditable, False,
-        // XmNtopWidget, m_nSaveHeader,
-        // XmNleftWidget, rowCol,
+	XmNfontList, FontList,
+	XtVaTypedArg, XmNbackground, XmRString, "White", 6,
         NULL);
 
-  XtVaCreateManagedWidget ("sep", xmSeparatorGadgetClass, rowCol, NULL);
+  XtVaCreateManagedWidget ("sep", 
+	xmSeparatorGadgetClass, rowCol,
+	NULL);
 
   Widget numberFormatLabel;
   numberFormatLabel = XtVaCreateManagedWidget ("Number Format",
         xmLabelWidgetClass, rowCol,
+	XmNfontList, FontList,
         NULL);
+
   one = XmStringCreateLocalized(strcpy(s,"exponential"));
   two = XmStringCreateLocalized(strcpy(s, "floating point"));
   three = XmStringCreateLocalized(strcpy(s, "integer"));
@@ -100,12 +116,20 @@ CSaveOptionsDialog::CSaveOptionsDialog(Widget topLevel)
         XmVaRADIOBUTTON, two, NULL, NULL, NULL,
         XmVaRADIOBUTTON, three, NULL, NULL, NULL,
         NULL);
+
   XmStringFree(one);
   XmStringFree(two);
   XmStringFree(three);
 
-  XtVaCreateManagedWidget ("sep", xmSeparatorGadgetClass, rowCol, NULL);
-  XtVaCreateManagedWidget ("Column Delimiter", xmLabelWidgetClass, rowCol, NULL);
+  XtVaCreateManagedWidget ("sep",
+	xmSeparatorGadgetClass, rowCol,
+	NULL);
+
+  XtVaCreateManagedWidget ("Column Delimiter",
+	xmLabelWidgetClass, rowCol,
+	XmNfontList, FontList,
+	NULL);
+
   one = XmStringCreateLocalized(strcpy(s,"space"));
   two = XmStringCreateLocalized(strcpy(s,"tab"));
   three = XmStringCreateLocalized(strcpy(s,"comma"));
@@ -119,22 +143,37 @@ CSaveOptionsDialog::CSaveOptionsDialog(Widget topLevel)
         XmVaRADIOBUTTON, three, NULL, NULL, NULL,
         NULL);
 
-  XtVaCreateManagedWidget ("sep", xmSeparatorGadgetClass, rowCol, NULL);
+  XmStringFree(one);
+  XmStringFree(two);
+  XmStringFree(three);
+
+  XtVaCreateManagedWidget ("sep",
+	xmSeparatorGadgetClass, rowCol,
+	NULL);
 
   XtVaCreateManagedWidget ("End of Line",
         xmLabelWidgetClass, rowCol,
+	XmNfontList, FontList,
         NULL);
+
   one = XmStringCreateLocalized(strcpy(s, "Unix"));
   two = XmStringCreateLocalized(strcpy(s, "DOS"));
+  
   m_nSaveEndOfLine = XmVaCreateSimpleRadioBox (rowCol,
         strcpy(s,"EOL"),
         0,
         SaveOptionsCB,
         XmVaRADIOBUTTON, one, NULL, NULL, NULL,
         XmVaRADIOBUTTON, two, NULL, NULL, NULL,
+	XmNfontList, FontList,
         NULL);
 
-  XtVaCreateManagedWidget ("sep", xmSeparatorGadgetClass, rowCol, NULL);
+  XmStringFree(one);
+  XmStringFree(two);
+
+  XtVaCreateManagedWidget ("sep",
+	xmSeparatorGadgetClass, rowCol,
+	NULL);
 
   one = XmStringCreateLocalized(strcpy(s, "Apply"));
 
@@ -142,6 +181,10 @@ CSaveOptionsDialog::CSaveOptionsDialog(Widget topLevel)
         xmPushButtonWidgetClass, rowCol,
         XmNlabelString, one,
         NULL);
+
+  XtVaSetValues( btn,
+	XmNfontList, FontList,
+	NULL);
 
   XtAddCallback (btn, XmNactivateCallback, SaveOptionsCB,
                   (void*) PL_SAVE_OPTIONS_APPLY);
@@ -152,12 +195,16 @@ CSaveOptionsDialog::CSaveOptionsDialog(Widget topLevel)
         xmPushButtonWidgetClass, rowCol,
         XmNlabelString, two,
         NULL);
+
   XtAddCallback (btn, XmNactivateCallback, SaveOptionsCB,
                   (void*) PL_SAVE_OPTIONS_CLOSE);
 
+  XtVaSetValues( btn,
+        XmNfontList, FontList,
+        NULL);
+
   XmStringFree(one);
   XmStringFree(two);
-  XmStringFree(three);
 
   XtManageChild(m_nSaveHeader);
   XtManageChild(m_nSavePrefix);

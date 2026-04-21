@@ -417,6 +417,7 @@ void FileMenuCB (Widget w, void* client_d, void* call_d)
 	  XmStringGetLtoR(sel->dir, XmSTRING_DEFAULT_CHARSET, &s);
 	  chdir((const char*)s);
 	  XtFree(s);
+	  XtFree(filename);
 	}
 	else
 	  pMainWnd->MessageBox("Error parsing file name!");
@@ -545,6 +546,7 @@ void PlotMenuCB (Widget w, void* client_d, void* call_d)
 	PlotMenuCB, (void*) PL_EXTREMA_CANCEL);
       XtUnmanageChild (pMainWnd->m_nInputDialog);
       pMainWnd->OnExtrema(s);
+      XtFree(s);
       break;
     case PL_EXTREMA_CANCEL:
       XtRemoveCallback (pMainWnd->m_nInputDialog, XmNokCallback,
@@ -637,6 +639,7 @@ void MathMenuCB (Widget w, void* client_d,
 	MathMenuCB, (void*) PL_EXPRESSION_CANCEL);  
       XtUnmanageChild (pMainWnd->m_nInputDialog);
       pMainWnd->OnExpression(s);
+      XtFree(s);
       break;
     case PL_EXPRESSION_CANCEL:
       XtRemoveCallback (pMainWnd->m_nInputDialog, XmNokCallback, 
@@ -1952,6 +1955,7 @@ void InputCB (Widget w, void* client_d, void* call_d)
       n = strlen(s);
       strcpy (rs + 1, s);
       *rs = n;
+      XtFree(s);
       break;
 
     case FALSE:
@@ -1979,7 +1983,6 @@ void InputCB (Widget w, void* client_d, void* call_d)
 
 void FileOpenCB (Widget w, void* client_d, void* call_d)
 {
-
     caddr_t client_data = (caddr_t) client_d;
     XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
     static char cfilename [256];
@@ -1995,6 +1998,7 @@ void FileOpenCB (Widget w, void* client_d, void* call_d)
 	    n = strlen(s);
 	    strcpy (cfilename + 1, s);
 	    *cfilename = n;
+	    XtFree(s);
 	    break;
 	case FALSE:
 	    *cfilename = 0;

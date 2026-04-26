@@ -27,6 +27,7 @@ System: Linux/X Windows/Motif
 #include <vector>
 using namespace std;
 #include "fbc.h"
+#include "kfmacros.h"
 #include "ForthCompiler.h"
 #include "ForthVM.h"
 #include "xyplot.h"
@@ -114,6 +115,7 @@ IfcFuncTemplate IfcFuncList[] = {
 	{ (const void*) radio_box,         "FN_RADIO_BOX"         },
 	{ (const void*) message_box,  	   "FN_MESSAGE_BOX"       },
 	{ (const void*) get_input,         "FN_GET_INPUT"         },
+	{ (const void*) verify_dialog,     "FN_VERIFY_DIALOG"     },
 	{ (const void*) file_open_dialog,  "FN_FILE_OPEN_DIALOG"  },
 	{ (const void*) file_save_dialog,  "FN_FILE_SAVE_DIALOG"  },
 	{ (const void*) set_save_options,  "FN_SET_SAVE_OPTIONS"  },
@@ -1908,6 +1910,69 @@ int get_input ()
 }
 //----------------------------------------------------------------
 
+int verify_dialog ()
+{
+    char msgLabel[64], okLabel[16], cancelLabel[16], helpLabel[16];
+    int len;
+    char* s;
+
+    DROP
+    if (*GlobalTp == OP_ADDR) {
+      s = *((char**) GlobalSp);
+      len = (int) (*s); ++s;
+      if (len > 15) len = 15;
+      strncpy( (char*) helpLabel, s, len );
+      helpLabel[len] = '\0';
+    }
+    else {
+      pMainWnd->MessageBox("Invalid HELP Button Label");
+      return -1;
+    }
+    DROP
+    if (*GlobalTp == OP_ADDR) {
+      s = *((char**) GlobalSp);
+      len = (int) (*s); ++s;
+      if (len > 15) len = 15;
+      strncpy( (char*) cancelLabel, s, len );
+      cancelLabel[len] = '\0';
+    }
+    else {
+      pMainWnd->MessageBox("Invalid CANCEL Button Label");
+      return -1;
+    }
+    DROP
+    if (*GlobalTp == OP_ADDR) {
+      s = *((char**) GlobalSp);
+      len = (int) (*s); ++s;
+      if (len > 15) len = 15;
+      strncpy( (char*) okLabel, s, len );
+      okLabel[len] = '\0';
+    }
+    else {
+      pMainWnd->MessageBox("Invalid OK Button Label");
+      return -1;
+    }
+    DROP
+    if (*GlobalTp == OP_ADDR) {
+      s = *((char**) GlobalSp);
+      len = (int) (*s); ++s;
+      if (len > 63) len = 63;
+      strncpy( (char*) msgLabel, s, len );
+      msgLabel[len] = '\0';
+    }
+    else {
+      pMainWnd->MessageBox("Invalid Message Label");
+      return -1;
+    }
+    
+    int result = pMainWnd->Verify( (char*) msgLabel, (char*) okLabel,
+		    (char*) cancelLabel, (char*) helpLabel );
+    
+    PUSH_IVAL( result );
+    return 0;
+}
+//----------------------------------------------------------------
+   
 int file_open_dialog ()
 {
     ++GlobalSp; ++GlobalTp;

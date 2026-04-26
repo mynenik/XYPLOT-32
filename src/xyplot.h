@@ -75,6 +75,7 @@ int set_foreground();
 int radio_box();
 int message_box();
 int get_input();
+int verify_dialog();
 int file_open_dialog();
 int file_save_dialog();
 int set_save_options();

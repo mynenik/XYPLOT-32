@@ -47,6 +47,7 @@
 \  radio_box ( ^label1 ^label2 ... n -- m ) Provide a radio button selection box.
 \  message_box ( a u -- ) Popup a message window to display text.
 \  get_input ( ^prompt -- ^resp flag ) Provide dialog for text input.
+\  verify_dialog ( ^msg ^okLabel ^cancelLabel ^helpLabel -- u )
 \  file_open_dialog ( ^filter -- ^filename flag ) Provide file selection dialog.
 \  get_window_limits ( -- fxmin fymin fxmax fymax ) Return window extrema.
 \  set_window_limits ( fxmin fymin fxmax fymax -- ) Set window extrema.
@@ -185,6 +186,17 @@ prec_DOUBLE  8 LSHIFT  data_REAL  OR  constant  REAL_DOUBLE
 
 : get_input ( ^prompt -- ^resp flag | get text input from dialog box )
     FN_GET_INPUT call ;
+
+[UNDEFINED] _WIN_32_ [IF]
+ 1 constant XmCR_HELP
+31 constant XmCR_OK
+32 constant XmCR_CANCEL
+
+: verify_dialog ( ^msgLabel ^okLabel ^cancelLabel ^helpLabel -- n )
+    \ n is one of: XmCR_OK  XmCR_CANCEL  XmCR_HELP
+    FN_VERIFY_DIALOG call
+;
+[THEN]
 
 : file_open_dialog ( ^filter -- ^filename flag )
     FN_FILE_OPEN_DIALOG call ;

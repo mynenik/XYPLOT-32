@@ -3,7 +3,7 @@ xyplot.h
 
   Header file for XYPLOT (C++/Linux/X Windows version)
 
-  Copyright (c) 1995--2023 Krishna Myneni 
+  Copyright (c) 1995--2026 Krishna Myneni 
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the 
@@ -28,6 +28,7 @@ vector<char*> GetStartupFileList (int, char**);
 void InitForthInterface();
 int LoadForthFile(char*);
 int ExecuteForthExpression (char*, ostringstream*, long int*);
+int verify_exit();
 
 struct IfcFuncTemplate
 {

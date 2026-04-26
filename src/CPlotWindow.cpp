@@ -166,7 +166,9 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   // Create a form widget
 
   m_nForm = XtVaCreateManagedWidget( "form", 
-	xmFormWidgetClass, TopLevel, NULL );
+	xmFormWidgetClass, TopLevel,
+	XmNfontList, FontList,
+       	NULL );
 
   // Create a menu bar and attach it to the form.
   m_nMenuBar = XmCreateMenuBar(m_nForm, strcpy(s1,"Menu Bar"), NULL, 0);
@@ -849,13 +851,10 @@ CPlotWindow::CPlotWindow(int argc, char* argv[])
   m_nVerifyDialog = XmCreateQuestionDialog(TopLevel, s1, NULL, 0);
   xstr1 = XmStringCreateLocalized(s1);
   XtVaSetValues( m_nVerifyDialog,
+	XmNdialogStyle, XmDIALOG_FULL_APPLICATION_MODAL, 
 	XmNdialogTitle, xstr1,
 	NULL);
   XmStringFree(xstr1);
-
-  XtVaSetValues( m_nVerifyDialog, 
-	XmNdialogStyle, XmDIALOG_FULL_APPLICATION_MODAL, 
-	NULL);
 
   OnFileNew();
 }
@@ -922,6 +921,8 @@ void CPlotWindow::OnReset ()
     m_pDi->GoHome();
     Invalidate ();
     if ( XtIsManaged(m_nHeaderDialog) ) OnHeader();
+    if (XtIsManaged(m_nGridDialog)) OnGrid();
+
 }
 //--------------------------------------------------------------
 
@@ -1523,6 +1524,84 @@ int CPlotWindow::GetInput (char* prompt, char* response)
 }
 //---------------------------------------------------------------
 
+int CPlotWindow::Verify (char* msgLabel, char* okLabel, 
+		char* cancelLabel, char* helpLabel)
+{
+// Display a verification dialog with a message string,
+// msgLabel, and button labels okLabel, cancelLabel,
+// and szHelpLabel for the OK, CANCEL, and HELP buttons.
+// Empty button label strings will unmanage the
+// corresponding buttons.
+// Return the corresponding button code:
+//
+    XmString xstr;
+    Widget w = m_nVerifyDialog;
+    Widget btn;
+
+    XtVaSetValues(w, 
+	XmNdefaultButtonType, XmDIALOG_CANCEL_BUTTON, NULL);
+
+    if (strlen(msgLabel)) {
+      xstr = XmStringCreateLocalized(msgLabel);
+      XtVaSetValues( w, 
+	XmNmessageString, xstr,
+	NULL);
+      XmStringFree(xstr);
+    }
+
+    btn = XmMessageBoxGetChild(w, XmDIALOG_OK_BUTTON);
+    if (strlen(okLabel)) {
+      xstr = XmStringCreateLocalized(okLabel);
+      XtVaSetValues( btn,
+	XmNlabelString, xstr,
+	XmNfontList, FontList,
+	NULL);
+      XmStringFree(xstr);
+      XtManageChild(btn);
+    }
+    else {
+      XtUnmanageChild(btn);
+    }
+
+    btn = XmMessageBoxGetChild(w, XmDIALOG_CANCEL_BUTTON);
+    if (strlen(cancelLabel)) {
+      xstr = XmStringCreateLocalized(cancelLabel);
+      XtVaSetValues( btn,
+	XmNlabelString, xstr,
+	XmNfontList, FontList,
+	NULL);
+      XmStringFree(xstr);
+      XtManageChild(btn);
+    }
+    else {
+      XtUnmanageChild(btn);
+    }
+
+    btn = XmMessageBoxGetChild(w, XmDIALOG_HELP_BUTTON);
+    if (strlen(helpLabel)) {
+      xstr = XmStringCreateLocalized(helpLabel);
+      XtVaSetValues( btn,
+	XmNlabelString, xstr,
+	XmNfontList, FontList,
+	NULL);
+      XmStringFree(xstr);
+      XtManageChild(btn);
+    }
+    else {
+      XtUnmanageChild(btn);
+    }
+
+    verify_answer = 0;
+
+    XtManageChild(w);
+    XtPopup(XtParent(w), XtGrabNone);
+    while (verify_answer == 0) XtAppProcessEvent(xapp,XtIMAll);
+    XtPopdown(XtParent(w));
+
+    return verify_answer;
+}
+//---------------------------------------------------------------
+
 void CPlotWindow::OnDelete()
 {
     CDataset* d = m_pDi->GetActiveSet();
@@ -1742,7 +1821,7 @@ void CPlotWindow::OnSetDatasetName (char* s)
 //---------------------------------------------------------------
 
 
-BOOL CPlotWindow::OnFileNew ()
+bool CPlotWindow::OnFileNew ()
 {
 	delete m_pDi;
 	delete m_pDb;
@@ -1750,10 +1829,13 @@ BOOL CPlotWindow::OnFileNew ()
 	m_pDb = new CDatabase();	// create database and display
 	m_pDi = new CPlotDisplay();
 
+	// Close popped up dialogs for which info is no longer valid
+	if (XtIsManaged(m_nHeaderDialog)) XtUnmanageChild(m_nHeaderDialog);
+	if (XtIsManaged(m_nPickDialog)) XtUnmanageChild(m_nPickDialog);
+	OnReset();
 	WriteConsoleMessage("Workspace cleared.");
 
-	OnReset();
-	return TRUE;
+	return True;
 }
 //---------------------------------------------------------------
 
@@ -1763,7 +1845,6 @@ bool CPlotWindow::OnFileOpen ()
   getcwd(s, 4096);
   strcpy(sz_CurrentWorkingDir, s);
   strcat (s, "/*.dat");
-  // WriteConsoleMessage(s);
   XmString cwd =  XmStringCreateLocalized(s);
   XmFileSelectionDoSearch(m_nFileOpenDialog, cwd); 
   XtManageChild(m_nFileOpenDialog);

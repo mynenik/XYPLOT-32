@@ -62,6 +62,8 @@ extern vector<byte>* pCurrentOps;
 extern size_t NUMBER_OF_INTRINSIC_WORDS;
 extern size_t NUMBER_OF_ROOT_WORDS;
 
+int exit_app();
+
 extern "C" {
 
   // functions provided by vmc.c
@@ -2269,12 +2271,8 @@ int CPP_forget ()
 
 int CPP_bye ()
 {
-  // stack: ( -- | close Forth and exit the process )
-
-  CloseForth();
-  *pOutStream << "Goodbye.\n";
-  exit(0);
-
+  // stack: ( -- | exit the process )
+  exit_app();
   return 0;
 }
 //--------------------------------------------------------------------

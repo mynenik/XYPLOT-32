@@ -3,7 +3,7 @@ CPlotWindow.h
 
   Header file for the CPlotWindow class
 
-  Copyright (c) 1996--2024 Krishna Myneni
+  Copyright (c) 1996--2026 Krishna Myneni
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the 
@@ -158,6 +158,7 @@ public:
 	void MessageBox (const char*);
 
         int GetInput (char*, char*);
+	int Verify (char*, char*, char*, char*);
         void SelectColumns (char*, int);
 	Symbol GetSymbol (char* name);
 	void Clear() {m_pDc->ClearDisplay();}

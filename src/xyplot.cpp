@@ -79,7 +79,7 @@ XmString old_filter;
 // Template array for Forth interface functions
 
 IfcFuncTemplate IfcFuncList[] = {
-	{ (const void*) get_color_map,     "FN_GET_COLOR_MAP"    },       
+	{ (const void*) get_color_map,     "FN_GET_COLOR_MAP"    },
 	{ (const void*) get_active_set,    "FN_GET_ACTIVE_SET"   },
 	{ (const void*) get_operand_set,   "FN_GET_OPERAND_SET"  },
 	{ (const void*) get_active_plot,   "FN_GET_ACTIVE_PLOT"  },
@@ -116,7 +116,7 @@ IfcFuncTemplate IfcFuncList[] = {
 	{ (const void*) get_input,         "FN_GET_INPUT"         },
 	{ (const void*) file_open_dialog,  "FN_FILE_OPEN_DIALOG"  },
 	{ (const void*) file_save_dialog,  "FN_FILE_SAVE_DIALOG"  },
-	{ (const void*) set_save_options,  "FN_SET_SAVE_OPTIONS"  }
+	{ (const void*) set_save_options,  "FN_SET_SAVE_OPTIONS"  },
 };
 
 vector<char*> ForthMenuCommandList;
@@ -252,7 +252,13 @@ void ExitCB (Widget w, void* client_d, void* call_d)
 {
     caddr_t client_data = (caddr_t) client_d;
     XmAnyCallbackStruct* call_data = (XmAnyCallbackStruct*) call_d;
-    XtAppSetExitFlag(xapp);
+    if (pMainWnd->m_pDb->Nsets()) {
+      if (verify_exit() == XmCR_OK)
+	XtAppSetExitFlag(xapp);
+    }
+    else {
+      XtAppSetExitFlag(xapp);
+    }
 }
 
 void ReDrawCB (Widget w, void* client_d, void* call_d)
@@ -395,13 +401,21 @@ void FileMenuCB (Widget w, void* client_d, void* call_d)
     XmSelectionBoxCallbackStruct* sel2;
     XmToggleButtonCallbackStruct* sel3;
     CDatabase* pDb;
+    SaveOptions sopt;
+    Widget wopt;
     char* filename;
     char* s;
     int i = (int) client_data;
 
     switch (i) {
       case PL_NEW:
+	// Keep and restore some settings for New Workspace
+	sopt = pMainWnd->m_pDb->GetSaveOptions();
         pMainWnd->OnFileNew();
+	pMainWnd->m_pDb->SetSaveOptions(sopt);
+	wopt = pMainWnd->m_pSaveOptionsDialog->m_nW;
+	if (XtIsManaged(wopt)) 
+	  SaveOptionsCB(wopt, (void*) PL_SAVE_OPTIONS, NULL);
         break;
       case PL_OPEN:
         pMainWnd->OnFileOpen();
@@ -464,9 +478,10 @@ void SaveOptionsCB (Widget w, void* client_d, void* call_d)
 
     if (data >= PL_SAVE_OPTIONS) {
         CDatabase* pDb = pMainWnd->m_pDb;
+	SaveOptions s = pDb->GetSaveOptions();
 	switch (data) {
 	  case PL_SAVE_OPTIONS:
-	      pDialogOptions->SetOptions( pDb->GetSaveOptions() );
+	      pDialogOptions->SetOptions( s );
 	      XtManageChild(pDialogOptions->m_nW);
 	      break;
 	  case PL_SAVE_OPTIONS_APPLY:
@@ -1099,6 +1114,30 @@ int LoadForthFile(char* fname)
     return nError;
 }
 
+int verify_exit()
+{
+// Returns either:
+//   XmCR_OK indicating yes
+//   XmCR_CANCEL indicating no
+
+    char s1[64], s2[16], s3[16], s4[16];
+    strcpy(s1, "Exit XYPLOT?");
+    strcpy(s2, "Yes");
+    strcpy(s3, "No");
+    s4[0] = '\0';
+    int v = pMainWnd->Verify((char*) s1, (char*) s2,
+		     (char*) s3, (char*) s4);
+
+    return v;
+}
+
+// For use by Forth BYE
+int exit_app()
+{
+    ExitCB(NULL, NULL, NULL);
+    return 0;
+}
+
 //----------------------------------------------------------------
 // WARNING:
 //
@@ -1502,6 +1541,9 @@ int set_grid_tics ()
   CPlotView* pView = pMainWnd->m_pDi->GetCurrentView();
   pView->m_pGrid->SetTics(nx, ny);
   pMainWnd->Invalidate();
+  if (XtIsManaged(pMainWnd->m_nGridDialog))
+    pMainWnd->OnGrid();
+
   return 0;
 }
 
@@ -1513,6 +1555,9 @@ int set_grid_lines ()
   CPlotView* pView = pMainWnd->m_pDi->GetCurrentView();
   pView->m_pGrid->SetLines(bx, by);
   pMainWnd->Invalidate();
+  if (XtIsManaged(pMainWnd->m_nGridDialog))
+    pMainWnd->OnGrid();
+
   return 0;
 }
 

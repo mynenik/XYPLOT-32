@@ -594,7 +594,7 @@ variable nplots
       count strpck dup \ -- ^fname ^fname
       file-exists IF
         \ -- ^fname
-        c" File already exists! Overwrite (Y/N)?"
+        c" File already exists! Overwrite?"
         c" Yes"  c" No" c" " verify_dialog
         XmCR_CANCEL = IF 
           count ." Canceled export of " type cr 

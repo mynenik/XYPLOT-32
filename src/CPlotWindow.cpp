@@ -2001,8 +2001,7 @@ bool CPlotWindow::LoadFile(char* fname)
 bool CPlotWindow::SaveFile (char* fname)
 {
     bool success = False;
-    char s[512];
-    XmString prompt, no;
+    char s[512]; 	      
 
     CDataset* d = m_pDi->GetActiveSet();
     if (d) {
@@ -2011,83 +2010,59 @@ bool CPlotWindow::SaveFile (char* fname)
 	  success = SaveWorkspace(fname);
       }
       else {
-	  // Save the active data set
+	// Save the active data set
+	vector<double> e = m_pDi->GetExtrema();
+	int bOverlap;
+	vector<int> lim = d->IndexLimits(e[0], e[1], bOverlap);
+	if (bOverlap) {
+	  sprintf (s, "Source file is %s\n", d->m_szName);
+	  AddToHeader (s, d->m_szHeader, True);
 
-	  vector<double> e = m_pDi->GetExtrema();
-	  int bOverlap;
-	  vector<int> lim = d->IndexLimits(e[0], e[1], bOverlap);
-	  if (bOverlap) {
-	      sprintf (s, "Source file is %s\n", d->m_szName);
-	      AddToHeader (s, d->m_szHeader, True);
-
-	      if ((lim[0] > 0) || (lim[1] < (d->NumberOfPoints()-1))) {
-		    verify_answer = 0;
-		    strcpy(s, "Save only data in window domain?"); 
-		    prompt = XmStringCreateLocalized(s);
-		    no = XmStringCreateLocalized(strcpy(s,"Save All"));
-		    XtVaSetValues(m_nVerifyDialog, 
-				  XmNmessageString, prompt, 
-				  XmNhelpLabelString, no,
-				  NULL);
-		    XmStringFree(prompt); XmStringFree(no);
-		    XtManageChild(m_nVerifyDialog);
-		    XtPopup (XtParent(m_nVerifyDialog), XtGrabNone);
-		    while (verify_answer == 0) XtAppProcessEvent (xapp, XtIMAll);
-		    XtPopdown (XtParent(m_nVerifyDialog));
-		    
-		  if (verify_answer == XmCR_HELP) {
-                    lim[0] = 0;
-                    lim[1] = d->NumberOfPoints()-1;
-		  }
-
-		  if (verify_answer == XmCR_CANCEL)
-		  {
-                    WriteConsoleMessage ("Save cancelled.");
-		    return success;
-		  }
-	      } // if ((lim[0] > 0 ...
+	  char s1[64], s2[16], s3[16], s4[16];
+	  int v;
+	  if ((lim[0] > 0) || (lim[1] < (d->NumberOfPoints()-1))) {
+	    strcpy(s1, "Save only data in window domain?");
+	    strcpy(s2, "Yes"); strcpy(s3, "Cancel"); strcpy(s4, "Save All");
+	    v = Verify((char*) s1, (char*) s2, (char*) s3, (char*) s4);    
+	    if (verify_answer == XmCR_HELP) {
+	      lim[0] = 0;
+	      lim[1] = d->NumberOfPoints()-1;
+	    }
+	    if (v == XmCR_CANCEL) {
+	      WriteConsoleMessage ("Save cancelled.");
+	      return success;
+	    }
+	  } // if ((lim[0] > 0 ...
 	      
-	      
-              int fd;
-	      if (fd = open(fname, O_RDONLY) != -1) {
-	        close(fd);
-	        verify_answer = 0;
-	        strcpy(s, "File already exists. Overwrite?");
-	        prompt = XmStringCreateLocalized(s);
-	        no = XmStringCreateLocalized(strcpy(s, "No"));
-	        XtVaSetValues( m_nVerifyDialog, 
-		    XmNmessageString, prompt, 
-		    XmNhelpLabelString, no, 
-		    NULL);
-    	        XmStringFree(prompt); XmStringFree(no);
-	        XtManageChild(m_nVerifyDialog);
-	        XtPopup (XtParent(m_nVerifyDialog), XtGrabNone);
-	        while (verify_answer == 0) XtAppProcessEvent (xapp, XtIMAll);
-	        XtPopdown (XtParent(m_nVerifyDialog));
-	      
-	        if (verify_answer == XmCR_OK) 
-		  success = m_pDb->SaveDataset (d, lim, fname);
-	        else {
-		  WriteConsoleMessage ("Save cancelled.");
-		  return success;
-	        }
-	      } // if (fd = open ...
-	      else
-	        success = m_pDb->SaveDataset (d, lim, fname);
+	  int fd;
+	  if (fd = open(fname, O_RDONLY) != -1) {
+	    close(fd);
+	    strcpy(s1, "File already exists. Overwrite?");
+	    strcpy(s2, "Yes"); strcpy(s3, "No"); s4[0] = '\0';
+	    v = Verify((char*) s1, (char*) s2, (char*) s3, (char*) s4); 
+	    if (v == XmCR_OK) 
+	      success = m_pDb->SaveDataset (d, lim, fname);
+	    else {
+	      WriteConsoleMessage ("Save cancelled.");
+	      return success;
+	    }
+	  } // if (fd = open ...
+	  else
+	    success = m_pDb->SaveDataset (d, lim, fname);
 
-	      if (success) {
-                strcpy (d->m_szName, fname);
-	        sprintf (s, "%d points written to %s", lim[1]-lim[0]+1, fname);
-	        WriteConsoleMessage (s);
-	      }
-	      else {
-		  MessageBox ("Error writing output file.");
-	      }
-	  } // if (bOverlap) ...
-	  else {
-	      MessageBox("Active dataset not visible in plot window.");
+	  if (success) {
+	    strcpy (d->m_szName, fname);
+	    sprintf (s, "%d points written to %s", lim[1]-lim[0]+1, fname);
+	    WriteConsoleMessage (s);
 	  }
+	  else {
+	    MessageBox ("Error writing output file.");
+	  }
+	} // if (bOverlap) ...
+	else {
+	  MessageBox("Active dataset not visible in plot window.");
 	}
+      }
     }
     return success;
 }
